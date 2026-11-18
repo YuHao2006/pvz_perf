@@ -81,6 +81,9 @@ target_link_options(pvz-perf PRIVATE -Oz -flto ${PVZ_WEB_SIMD_FLAGS} -fexception
 # --preload-file is a linker argument, not an inferred Ninja input.
 # Rebuild the data archive whenever the resource package changes.
 set_property(TARGET pvz-perf APPEND PROPERTY LINK_DEPENDS "${PVZ_WEB_PAK}")
+if(PVZ_WEB_BACKEND STREQUAL "WEBGL")
+    target_link_options(pvz-perf PRIVATE -sGL_PREINITIALIZED_CONTEXT=1)
+endif()
 if(PVZ_WEB_MEMORY64)
     target_compile_options(pvz-perf PRIVATE -sMEMORY64=1)
     target_link_options(pvz-perf PRIVATE -sMEMORY64=1)

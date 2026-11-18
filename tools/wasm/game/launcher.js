@@ -470,8 +470,8 @@ async function boot(){
  const memoryModel=selectMemoryModel(models,null);
  Module.pvzMemoryModel=memoryModel;
  if(config.version){document.title='pvz_perf · 高清网页 v'+config.version;document.getElementById('web-version').textContent='高清网页 v'+config.version}
- const {detectGraphics,capabilityText}=await import('./graphics.js');
- const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu&&(!config.simd128||simdSupported),webgl:!config.webgpu||config.fallback});
+ const {detectGraphics,capabilityText,prepareWebGLContext}=await import('./graphics.js');
+ const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu&&(!config.simd128||simdSupported),webgl:!config.webgpu||config.fallback,gameCanvas:canvas});
  // Reuse the normal WebGPU probe. A WebGL-only distribution may probe HD
  // separately without changing its available game runtimes or delaying startup.
  if(highResolutionLink(webConfig,memorySupported,simdSupported,true)){
@@ -481,8 +481,12 @@ async function boot(){
  }
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
- if(!capabilities.webgpu)throw Error('高清版需要 WebGPU，请检查浏览器和设备支持。');
- const backend='webgpu';
+ const webgpu=capabilities.webgpu&&(!config.webgpuMemory64Only||memoryModel==='wasm64');
+ let preferWebGL=false;
+ try{preferWebGL=localStorage.getItem('pvz_graphics_backend')==='webgl'}catch{}
+ const backend=webgpu&&!(preferWebGL&&capabilities.webgl)?'webgpu':capabilities.webgl?'webgl':null;
+ if(!backend)throw Error('未检测到可用的 WebGPU 或 WebGL 2 运行时。');
+ if(backend==='webgl')Module.preinitializedWebGLContext=prepareWebGLContext(canvas);
  Module.pvzSelectedBackend=backend;
  const stem=runtimeStem(config,backend,memoryModel);
  Module.pvzRuntimeStem=stem;

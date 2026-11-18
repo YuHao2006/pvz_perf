@@ -4833,7 +4833,17 @@
     "reanim/coin_black_gold.png": "current/reanim/coin_black_gold.png",
     "reanim/coin_black_gold": "current/reanim/coin_black_gold.png",
     "reanim/coin_gold_glow.png": "current/reanim/coin_gold_glow.png",
-    "reanim/coin_gold_glow": "current/reanim/coin_gold_glow.png"
+    "reanim/coin_gold_glow": "current/reanim/coin_gold_glow.png",
+    "reanim/snowpea_stalk.png": "current/reanim/snowpea_stalk.png",
+    "reanim/snowpea_stalk": "current/reanim/snowpea_stalk.png",
+    "reanim/cornpult_stalk1_bend": "current/reanim/cornpult_stalk1_bend.png",
+    "reanim/cornpult_stalk1_bend.png": "current/reanim/cornpult_stalk1_bend.png",
+    "reanim/cornpult_stalk1_bend_soft": "current/reanim/cornpult_stalk1_bend_soft.png",
+    "reanim/cornpult_stalk1_bend_soft.png": "current/reanim/cornpult_stalk1_bend_soft.png",
+    "reanim/cornpult_stalk2_bend": "current/reanim/cornpult_stalk2_bend.png",
+    "reanim/cornpult_stalk2_bend.png": "current/reanim/cornpult_stalk2_bend.png",
+    "reanim/cornpult_stalk2_bend_soft": "current/reanim/cornpult_stalk2_bend_soft.png",
+    "reanim/cornpult_stalk2_bend_soft.png": "current/reanim/cornpult_stalk2_bend_soft.png"
   },
   "logicalSizes": {
     "images/almanac_closebutton.png": [
@@ -24163,6 +24173,46 @@
     "reanim/coin_gold_glow": [
       79,
       79
+    ],
+    "reanim/snowpea_stalk.png": [
+      22,
+      40
+    ],
+    "reanim/snowpea_stalk": [
+      22,
+      40
+    ],
+    "reanim/cornpult_stalk1_bend": [
+      19,
+      21
+    ],
+    "reanim/cornpult_stalk1_bend.png": [
+      19,
+      21
+    ],
+    "reanim/cornpult_stalk1_bend_soft": [
+      19,
+      21
+    ],
+    "reanim/cornpult_stalk1_bend_soft.png": [
+      19,
+      21
+    ],
+    "reanim/cornpult_stalk2_bend": [
+      22,
+      20
+    ],
+    "reanim/cornpult_stalk2_bend.png": [
+      22,
+      20
+    ],
+    "reanim/cornpult_stalk2_bend_soft": [
+      22,
+      20
+    ],
+    "reanim/cornpult_stalk2_bend_soft.png": [
+      22,
+      20
     ]
   },
   "cards": {

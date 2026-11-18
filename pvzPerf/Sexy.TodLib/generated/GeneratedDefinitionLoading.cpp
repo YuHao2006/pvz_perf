@@ -2351,7 +2351,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[3].mTextures[0], 1372, 328, "compiled/reanim/finalwave.atlas.png");
         break;
     case 4:
-        DefinitionBindAtlasPath(Reanimations[4].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[4].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 5:
         DefinitionBindAtlasPath(Reanimations[5].mTextures[0], 1456, 408, "compiled/atlases/appearance_wallnut.atlas.png");
@@ -2386,10 +2386,10 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[12].mTextures[0], 1048, 552, "compiled/reanim/doomshroom.atlas.png");
         break;
     case 13:
-        DefinitionBindAtlasPath(Reanimations[13].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[13].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 14:
-        DefinitionBindAtlasPath(Reanimations[14].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[14].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 15:
         DefinitionBindAtlasPath(Reanimations[15].mTextures[0], 748, 276, "compiled/reanim/sunshroom.atlas.png");
@@ -3560,7 +3560,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[25].mTextures[0], 456, 304, "compiled/reanim/spikerock.atlas.png");
         break;
     case 26:
-        DefinitionBindAtlasPath(Reanimations[26].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[26].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 27:
         DefinitionBindAtlasPath(Reanimations[27].mTextures[0], 556, 472, "compiled/reanim/marigold.atlas.png");
@@ -3655,7 +3655,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[45].mTextures[0], 1304, 292, "compiled/reanim/torchwood.atlas.png");
         break;
     case 46:
-        DefinitionBindAtlasPath(Reanimations[46].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[46].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 47:
         DefinitionBindAtlasPath(Reanimations[47].mTextures[0], 496, 280, "compiled/reanim/seashroom.atlas.png");
@@ -5221,7 +5221,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[73].mTextures[0], 504, 504, "compiled/reanim/cabbagepult.atlas.png");
         break;
     case 74:
-        DefinitionBindAtlasPath(Reanimations[74].mTextures[0], 464, 620, "compiled/reanim/cornpult.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[74].mTextures[0], 480, 668, "compiled/reanim/cornpult.atlas.png");
         break;
     case 75:
         DefinitionBindAtlasPath(Reanimations[75].mTextures[0], 1000, 548, "compiled/atlases/melon_family.atlas.png");
@@ -5233,7 +5233,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[77].mTextures[0], 648, 604, "compiled/reanim/umbrellaleaf.atlas.png");
         break;
     case 78:
-        DefinitionBindAtlasPath(Reanimations[78].mTextures[0], 1208, 884, "compiled/atlases/pea_family.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[78].mTextures[0], 1076, 992, "compiled/atlases/pea_family.atlas.png");
         break;
     case 79:
         DefinitionBindAtlasPath(Reanimations[79].mTextures[0], 808, 360, "compiled/reanim/cattail.atlas.png");

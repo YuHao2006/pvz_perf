@@ -1,7 +1,10 @@
-// Probe a separate canvas, then release it: selecting a context on the game
-// canvas here would prevent switching that canvas to the other graphics API.
-function probeWebGL(){
- const canvas=document.createElement('canvas');canvas.width=canvas.height=2;
+// Probe WebGPU first. When it is unavailable, validate and retain the actual
+// game canvas's WebGL context so SDL/EGL can adopt the exact tested context.
+// A separate fallback probe is still necessary if WebGPU can use the game canvas.
+const retainedWebGLContexts=new WeakMap();
+function probeWebGL(gameCanvas=null,retain=false){
+ const canvas=gameCanvas||document.createElement('canvas');if(!gameCanvas)canvas.width=canvas.height=2;
+ let verified=false;
  let gl=null,reason='';const textures=[],framebuffers=[],shaders=[];let program=null,vao=null;
  canvas.addEventListener('webglcontextcreationerror',event=>{reason=event.statusMessage||reason});
  try{
@@ -15,7 +18,7 @@ function probeWebGL(){
   if(!gl.getExtension('EXT_color_buffer_float'))throw Error('缺少 EXT_color_buffer_float，无法绘制浮点中间纹理');
   const texture=(format,width,height,data=null)=>{
    const value=gl.createTexture();textures.push(value);gl.bindTexture(gl.TEXTURE_2D,value);
-   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
+   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
    // Match the native renderer's allocation type, not just framebuffer completeness.
    gl.texImage2D(gl.TEXTURE_2D,0,format,width,height,0,gl.RGBA,format===gl.RGBA16F?gl.FLOAT:gl.UNSIGNED_BYTE,data);
@@ -53,10 +56,18 @@ void main(){color=texture(image,uv);}`);
   gl.bindTexture(gl.TEXTURE_2D,floating);gl.drawArrays(gl.TRIANGLES,0,3);
   const pixel=new Uint8Array(4);gl.readPixels(1,1,1,1,gl.RGBA,gl.UNSIGNED_BYTE,pixel);
   const error=gl.getError();if(error!==gl.NO_ERROR)throw Error('WebGL 绘制验证失败，GL error '+error);
-  verifyProbePixel(pixel,'WebGL');
+  verifyProbePixel(pixel,'WebGL');verified=true;
   return {webgl:true,webglReason:'',webglLimits};
  }catch(error){return {webgl:false,webglReason:error.message||String(error)}}
- finally{if(gl){gl.bindFramebuffer(gl.FRAMEBUFFER,null);for(const value of framebuffers)gl.deleteFramebuffer(value);for(const value of textures)gl.deleteTexture(value);if(program)gl.deleteProgram(program);for(const value of shaders)gl.deleteShader(value);if(vao)gl.deleteVertexArray(vao);gl.getExtension('WEBGL_lose_context')?.loseContext()}}
+ finally{if(gl){gl.bindFramebuffer(gl.FRAMEBUFFER,null);for(const value of framebuffers)gl.deleteFramebuffer(value);for(const value of textures)gl.deleteTexture(value);if(program)gl.deleteProgram(program);for(const value of shaders)gl.deleteShader(value);if(vao)gl.deleteVertexArray(vao);gl.bindTexture(gl.TEXTURE_2D,null);gl.useProgram(null);gl.bindVertexArray(null);if(verified&&retain)retainedWebGLContexts.set(canvas,gl);else gl.getExtension('WEBGL_lose_context')?.loseContext()}}
+}
+// Emscripten's GL_PREINITIALIZED_CONTEXT path registers this context rather
+// than calling canvas.getContext a second time through SDL/EGL.
+export function prepareWebGLContext(canvas){
+ let gl=retainedWebGLContexts.get(canvas);
+ if(gl?.isContextLost?.())throw Error('WebGL 2 游戏画布上下文已丢失，请重新加载。');
+ if(!gl){const result=probeWebGL(canvas,true);if(!result.webgl)throw Error('WebGL 2 游戏画布初始化失败：'+result.webglReason);gl=retainedWebGLContexts.get(canvas)}
+ return gl;
 }
 function verifyProbePixel(pixel,backend){
  const expected=[102,76,76,255];
@@ -115,21 +126,20 @@ struct Vertex{ @builtin(position) position:vec4f, @location(0) uv:vec2f }
  }finally{readback?.destroy();for(const texture of textures)texture.destroy()}
 }
 // Capability probing happens before main, once per page load. Never in the draw loop.
-export async function detectGraphics(gpu, {webgpu:hasWebGPU=true,webgl:hasWebGL=true}={}){
- const result={backend:null,webgpu:false,webgpuProbed:false,reason:'',features:[],limits:{},adapter:{},framesInFlight:2,bindless:false,
-  ...(hasWebGL?probeWebGL():{webgl:false,webglReason:'此包未包含 WebGL 2'})};
- if(!hasWebGPU){
-  result.reason='此包未包含 WebGPU';
-  if(result.webgl)result.backend='webgl';
-  return result;
- }
- let timer;const controller=new AbortController();
- result.webgpuProbed=true;
- try{
-  Object.assign(result,await Promise.race([probeWebGPU(gpu,controller.signal),new Promise((_,reject)=>{timer=setTimeout(()=>{const error=Error('WebGPU 能力检测超时');controller.abort(error);reject(error)},10000)})]));
-  result.backend='webgpu';
- }catch(error){result.reason=error.message||String(error)}
- finally{clearTimeout(timer)}
+export async function detectGraphics(gpu, {webgpu:hasWebGPU=true,webgl:hasWebGL=true,gameCanvas=null}={}){
+ const result={backend:null,webgpu:false,webgpuProbed:false,reason:'',features:[],limits:{},adapter:{},framesInFlight:2,bindless:false};
+ if(hasWebGPU){
+  let timer;const controller=new AbortController();result.webgpuProbed=true;
+  try{
+   Object.assign(result,await Promise.race([probeWebGPU(gpu,controller.signal),new Promise((_,reject)=>{timer=setTimeout(()=>{const error=Error('WebGPU 能力检测超时');controller.abort(error);reject(error)},10000)})]));
+   result.backend='webgpu';
+  }catch(error){result.reason=error.message||String(error)}
+  finally{clearTimeout(timer)}
+ }else result.reason='此包未包含 WebGPU';
+ // Run the WebGPU test before GL setup so a normally completed test device
+ // has already been destroyed when the retained game context is created.
+ // If WebGPU is unavailable, the sole GL context is the one the game will use.
+ Object.assign(result,hasWebGL?probeWebGL(result.webgpu?null:gameCanvas,!!gameCanvas&&!result.webgpu):{webgl:false,webglReason:'此包未包含 WebGL 2'});
  if(!result.webgpu&&result.webgl)result.backend='webgl';
  return result;
 }

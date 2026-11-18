@@ -1,15 +1,15 @@
 {
   "format": "pvz-hd-package4x-validation-v1",
-  "imagesManifestSha256": "5536653650f1e1e0e83066da3637abd3cb59c02c8ffa2be789dd1758b8363a0d",
+  "imagesManifestSha256": "02f496211468549ddc1a586bb15a08e909b84ae13128793742948d0acf5a8660",
   "fontsManifestSha256": "11c3a3eb811425f75a66db6039ebe1a331cad3c91327f5c045a98b6ae3f1aab0",
-  "libraryCatalogSha256": "6b44761cf258a08cee01b373a970ccc772d71249d8e4d92fe7045429db815ba0",
+  "libraryCatalogSha256": "bca7581179c9d9d43e82add6d6ae97d59781367268428c5286f3f8b9ee5ea8ac",
   "pixelScale": 4,
   "atlasMaxSide": 8192,
   "solver": "maxrects",
   "unresolved": [],
   "lowResolutionFallbacks": [],
   "unreviewedRepairs": [],
-  "activePhysicalFiles": 2356,
+  "activePhysicalFiles": 2361,
   "reviewedPoolAssets": [
     "images/background3",
     "images/pool",

@@ -4,7 +4,7 @@
   "masterResolution": "preserve-native-or-approved-source-resolution",
   "masterDownsampledOnImport": false,
   "counts": {
-    "readyImages": 2413,
+    "readyImages": 2418,
     "pendingImages": 0,
     "cards": 6,
     "fontLayers": 24,
@@ -172257,7 +172257,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/reanim/cornpult_stalk1.png",
-        "sha256": "490e6d1f5b159a4628c23bbf0b367621d1a1035e6721d3848dc535e59926932a",
+        "sha256": "b7afd49e6883647b2de19cc9f3f1340d224af96dc89bcb32e7cc7735ce1deb0c",
         "physicalSize": [
           60,
           68
@@ -172265,8 +172265,7 @@
         "logicalSize": [
           15,
           17
-        ],
-        "thumbnail": "out/media/hd-library-thumbnails/490e6d1f5b159a4628c23bbf0b367621d1a1035e6721d3848dc535e59926932a.webp"
+        ]
       },
       "status": "ready",
       "history": {
@@ -172294,7 +172293,13 @@
           "exactRecipeProof": null
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "activeRecipe": "Replanted stalk atlas strip crops; approved per-frame Spine-fitted Reanim transforms",
+        "activeSource": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "stripNormalizedY": [
+          0.646,
+          1
+        ]
       },
       "sources": [
         {
@@ -172308,6 +172313,15 @@
           "origin": "ai",
           "originalPath": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/cornpult_stalk1/ai-master.png",
           "sha256": "5e37331b3d09a47685b5ec8c4db972b167c36f0c24a1956343d0e40d42e7b217"
+        },
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
+          "physicalSize": [
+            29,
+            187
+          ]
         }
       ],
       "category": "Reanim",
@@ -172327,8 +172341,7 @@
           15,
           17
         ],
-        "sha256": "490e6d1f5b159a4628c23bbf0b367621d1a1035e6721d3848dc535e59926932a",
-        "thumbnail": "out/media/hd-library-thumbnails/490e6d1f5b159a4628c23bbf0b367621d1a1035e6721d3848dc535e59926932a.webp"
+        "sha256": "b7afd49e6883647b2de19cc9f3f1340d224af96dc89bcb32e7cc7735ce1deb0c"
       },
       "sourceKinds": [
         "ai"
@@ -172363,7 +172376,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/reanim/cornpult_stalk2.png",
-        "sha256": "f1a43d4d685528e12854b8231eaf775e1b11e213c7eb578086aa4c2da9810896",
+        "sha256": "9695423885520b63fc3ffe0e845d04d7f6946e7af452c8420f7aee7dbef2a269",
         "physicalSize": [
           72,
           64
@@ -172371,8 +172384,7 @@
         "logicalSize": [
           18,
           16
-        ],
-        "thumbnail": "out/media/hd-library-thumbnails/f1a43d4d685528e12854b8231eaf775e1b11e213c7eb578086aa4c2da9810896.webp"
+        ]
       },
       "status": "ready",
       "history": {
@@ -172400,7 +172412,13 @@
           "exactRecipeProof": null
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "activeRecipe": "Replanted stalk atlas strip crops; approved per-frame Spine-fitted Reanim transforms",
+        "activeSource": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "stripNormalizedY": [
+          0.356,
+          0.654
+        ]
       },
       "sources": [
         {
@@ -172414,6 +172432,15 @@
           "origin": "ai",
           "originalPath": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/cornpult_stalk2/ai-master.png",
           "sha256": "17b92e6163acf761055bb157a990207a68e9cae6f226ed4310f2025cc2153815"
+        },
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
+          "physicalSize": [
+            29,
+            187
+          ]
         }
       ],
       "category": "Reanim",
@@ -172433,8 +172460,7 @@
           18,
           16
         ],
-        "sha256": "f1a43d4d685528e12854b8231eaf775e1b11e213c7eb578086aa4c2da9810896",
-        "thumbnail": "out/media/hd-library-thumbnails/f1a43d4d685528e12854b8231eaf775e1b11e213c7eb578086aa4c2da9810896.webp"
+        "sha256": "9695423885520b63fc3ffe0e845d04d7f6946e7af452c8420f7aee7dbef2a269"
       },
       "sourceKinds": [
         "ai"
@@ -172469,7 +172495,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/reanim/cornpult_stalk3.png",
-        "sha256": "757f2b4d0a311c8f7147d5bf7eff2e1bd825a1c19ff8fbed88400aa602d942fd",
+        "sha256": "97bce48c82afdc6000fef5bfc9523d4a43e0d78ffde0ccdbac22f056c43b7722",
         "physicalSize": [
           68,
           40
@@ -172477,8 +172503,7 @@
         "logicalSize": [
           17,
           10
-        ],
-        "thumbnail": "out/media/hd-library-thumbnails/757f2b4d0a311c8f7147d5bf7eff2e1bd825a1c19ff8fbed88400aa602d942fd.webp"
+        ]
       },
       "status": "ready",
       "history": {
@@ -172506,7 +172531,14 @@
           "exactRecipeProof": null
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "activeRecipe": "Replanted stalk atlas strip crops; approved per-frame Spine-fitted Reanim transforms",
+        "activeSource": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "stripNormalizedY": [
+          0,
+          0.364
+        ],
+        "basketEndTrimNormalizedY": 0.1
       },
       "sources": [
         {
@@ -172520,6 +172552,15 @@
           "origin": "ai",
           "originalPath": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/cornpult_stalk3/ai-master.png",
           "sha256": "f670f39e7af807709523d3bff070c284fbfafea47cf1975139d642988d883166"
+        },
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
+          "physicalSize": [
+            29,
+            187
+          ]
         }
       ],
       "category": "Reanim",
@@ -172539,8 +172580,7 @@
           17,
           10
         ],
-        "sha256": "757f2b4d0a311c8f7147d5bf7eff2e1bd825a1c19ff8fbed88400aa602d942fd",
-        "thumbnail": "out/media/hd-library-thumbnails/757f2b4d0a311c8f7147d5bf7eff2e1bd825a1c19ff8fbed88400aa602d942fd.webp"
+        "sha256": "97bce48c82afdc6000fef5bfc9523d4a43e0d78ffde0ccdbac22f056c43b7722"
       },
       "sourceKinds": [
         "ai"
@@ -306446,6 +306486,289 @@
       },
       "status": "ready",
       "revisionMethod": "Approved native coin edge sprites and pivot compensation, sampled to existing 21-frame reanim; no new tracks"
+    },
+    {
+      "id": "reanim/snowpea_stalk",
+      "kind": "reanim",
+      "aliases": [
+        "reanim/snowpea_stalk.png",
+        "reanim/snowpea_stalk"
+      ],
+      "current": {
+        "path": "assets/high-resolution/current/reanim/snowpea_stalk.png",
+        "sha256": "5c3d72dd64f7c6c6a6f7ec83a0f8ff5c8036d1db8a7b3a16a991244569dbefb4",
+        "physicalSize": [
+          88,
+          160
+        ],
+        "logicalSize": [
+          22,
+          40
+        ]
+      },
+      "status": "ready",
+      "history": {
+        "id": "reanim/snowpea_stalk",
+        "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/01cae98e6ddac8cd.png",
+        "method": "Existing Spine atlas region clipped to attachment UV triangles; per-frame affine registration in SnowPea.dsl"
+      },
+      "sources": [
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/01cae98e6ddac8cd.png",
+          "origin": "native",
+          "sha256": "5384809bfcc37f08689c8a3b93f9134865b3797928daddf0e388981a7d07565e"
+        }
+      ],
+      "category": "Reanim",
+      "group": "reanim/snowpea",
+      "owners": [
+        "reanim/snowpea"
+      ],
+      "original": "assets/runtime/reanim/SnowPea_stalk.png",
+      "export4x": {
+        "path": "assets/high-resolution/exports4x/reanim/snowpea_stalk.png",
+        "sha256": "5c3d72dd64f7c6c6a6f7ec83a0f8ff5c8036d1db8a7b3a16a991244569dbefb4",
+        "physicalSize": [
+          88,
+          160
+        ],
+        "logicalSize": [
+          22,
+          40
+        ],
+        "pixelScale": 4
+      },
+      "sourceKinds": [
+        "native"
+      ]
+    },
+    {
+      "id": "reanim/cornpult_stalk1_bend",
+      "kind": "reanim",
+      "aliases": [
+        "reanim/cornpult_stalk1_bend",
+        "reanim/cornpult_stalk1_bend.png"
+      ],
+      "current": {
+        "path": "assets/high-resolution/current/reanim/cornpult_stalk1_bend.png",
+        "sha256": "628c49345e2d0d06fe1ac234e299b698702a3e998ae2b813c3ed7b0f7cb5699f",
+        "physicalSize": [
+          76,
+          84
+        ],
+        "logicalSize": [
+          19,
+          21
+        ]
+      },
+      "export4x": {
+        "path": "assets/high-resolution/exports4x/reanim/cornpult_stalk1_bend.png",
+        "sha256": "628c49345e2d0d06fe1ac234e299b698702a3e998ae2b813c3ed7b0f7cb5699f",
+        "physicalSize": [
+          76,
+          84
+        ],
+        "logicalSize": [
+          19,
+          21
+        ],
+        "pixelScale": 4
+      },
+      "status": "ready",
+      "history": {
+        "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "method": "Outer bend cut extension and outline baked into approved Replanted stalk crop",
+        "referenceFrame": 28,
+        "outlineLogicalPixels": 0.75,
+        "extensionLogicalPixels": 0.5
+      },
+      "sources": [
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561"
+        }
+      ],
+      "category": "Reanim",
+      "group": "reanim/cornpult",
+      "owners": [
+        "reanim/cornpult"
+      ],
+      "original": "assets/runtime/reanim/cornpult_stalk1_bend.png",
+      "sourceKinds": [
+        "native"
+      ]
+    },
+    {
+      "id": "reanim/cornpult_stalk1_bend_soft",
+      "kind": "reanim",
+      "aliases": [
+        "reanim/cornpult_stalk1_bend_soft",
+        "reanim/cornpult_stalk1_bend_soft.png"
+      ],
+      "current": {
+        "path": "assets/high-resolution/current/reanim/cornpult_stalk1_bend_soft.png",
+        "sha256": "34ca7c391f024019d63be0519a49d4f45bc552d40d4311724ecc43dec5e259d6",
+        "physicalSize": [
+          76,
+          84
+        ],
+        "logicalSize": [
+          19,
+          21
+        ]
+      },
+      "export4x": {
+        "path": "assets/high-resolution/exports4x/reanim/cornpult_stalk1_bend_soft.png",
+        "sha256": "34ca7c391f024019d63be0519a49d4f45bc552d40d4311724ecc43dec5e259d6",
+        "physicalSize": [
+          76,
+          84
+        ],
+        "logicalSize": [
+          19,
+          21
+        ],
+        "pixelScale": 4
+      },
+      "status": "ready",
+      "history": {
+        "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "method": "Outer bend cut extension and outline baked into approved Replanted stalk crop",
+        "referenceFrame": 53,
+        "outlineLogicalPixels": 0.75,
+        "extensionLogicalPixels": 0.5
+      },
+      "sources": [
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561"
+        }
+      ],
+      "category": "Reanim",
+      "group": "reanim/cornpult",
+      "owners": [
+        "reanim/cornpult"
+      ],
+      "original": "assets/runtime/reanim/cornpult_stalk1_bend_soft.png",
+      "sourceKinds": [
+        "native"
+      ]
+    },
+    {
+      "id": "reanim/cornpult_stalk2_bend",
+      "kind": "reanim",
+      "aliases": [
+        "reanim/cornpult_stalk2_bend",
+        "reanim/cornpult_stalk2_bend.png"
+      ],
+      "current": {
+        "path": "assets/high-resolution/current/reanim/cornpult_stalk2_bend.png",
+        "sha256": "8ba7ee8a25af68138b7b48e1a60923380ef847a62aa6f3945d0a8d219562beb4",
+        "physicalSize": [
+          88,
+          80
+        ],
+        "logicalSize": [
+          22,
+          20
+        ]
+      },
+      "export4x": {
+        "path": "assets/high-resolution/exports4x/reanim/cornpult_stalk2_bend.png",
+        "sha256": "8ba7ee8a25af68138b7b48e1a60923380ef847a62aa6f3945d0a8d219562beb4",
+        "physicalSize": [
+          88,
+          80
+        ],
+        "logicalSize": [
+          22,
+          20
+        ],
+        "pixelScale": 4
+      },
+      "status": "ready",
+      "history": {
+        "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "method": "Outer bend cut extension and outline baked into approved Replanted stalk crop",
+        "referenceFrame": 28,
+        "outlineLogicalPixels": 0.75,
+        "extensionLogicalPixels": 0.5
+      },
+      "sources": [
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561"
+        }
+      ],
+      "category": "Reanim",
+      "group": "reanim/cornpult",
+      "owners": [
+        "reanim/cornpult"
+      ],
+      "original": "assets/runtime/reanim/cornpult_stalk2_bend.png",
+      "sourceKinds": [
+        "native"
+      ]
+    },
+    {
+      "id": "reanim/cornpult_stalk2_bend_soft",
+      "kind": "reanim",
+      "aliases": [
+        "reanim/cornpult_stalk2_bend_soft",
+        "reanim/cornpult_stalk2_bend_soft.png"
+      ],
+      "current": {
+        "path": "assets/high-resolution/current/reanim/cornpult_stalk2_bend_soft.png",
+        "sha256": "7c21db2fcca334b12a3a8482848ed1d53f249202b5728c8ba22fdedf7866a135",
+        "physicalSize": [
+          88,
+          80
+        ],
+        "logicalSize": [
+          22,
+          20
+        ]
+      },
+      "export4x": {
+        "path": "assets/high-resolution/exports4x/reanim/cornpult_stalk2_bend_soft.png",
+        "sha256": "7c21db2fcca334b12a3a8482848ed1d53f249202b5728c8ba22fdedf7866a135",
+        "physicalSize": [
+          88,
+          80
+        ],
+        "logicalSize": [
+          22,
+          20
+        ],
+        "pixelScale": 4
+      },
+      "status": "ready",
+      "history": {
+        "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+        "method": "Outer bend cut extension and outline baked into approved Replanted stalk crop",
+        "referenceFrame": 53,
+        "outlineLogicalPixels": 0.75,
+        "extensionLogicalPixels": 0.5
+      },
+      "sources": [
+        {
+          "path": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+          "origin": "native",
+          "sha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561"
+        }
+      ],
+      "category": "Reanim",
+      "group": "reanim/cornpult",
+      "owners": [
+        "reanim/cornpult"
+      ],
+      "original": "assets/runtime/reanim/cornpult_stalk2_bend_soft.png",
+      "sourceKinds": [
+        "native"
+      ]
     }
   ],
   "fixedDataTextures": [

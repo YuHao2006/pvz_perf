@@ -63558,71 +63558,65 @@
     {
       "original": "reanim/cornpult_stalk1.png",
       "file": "current/reanim/cornpult_stalk1.png",
-      "source": "assets/source-art/archive/2026-11-16-pre-library/ai\\reanim72\\cornpult_stalk1\\candidate-2x.png",
-      "sourceSha256": "776d6b0c9d89976acc9759269caa47a04d8e8589f8c867dede02af2f3fa13079",
+      "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+      "sourceSha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
       "logicalSize": [
         15,
         17
       ],
       "physicalSize": [
-        30,
-        34
+        60,
+        68
       ],
-      "method": "Original -> two Anime4K UL passes -> individual built-in AI repair -> uniform original-canvas alignment",
-      "details": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/prompts.json",
-      "previousTechnicalCheckNote": "User overnight authorization; offline comparison inspected; no animation definitions or runtime transforms changed",
+      "method": "Direct crop of Replanted stalk atlas strip; per-frame affine transforms fitted to Spine mesh",
       "reviewStatus": "pass",
       "runtimeIntegrated": true,
       "activeMapping": true,
       "retainedOnly": false,
-      "reviewNote": "用户明确要求接入之前已修复的玉米投手；同步接入 joints122 接缝补偿定义。重植版原生资源仍优先，旧合并茎不可未经拆分直接映射。",
-      "reviewFile": "assets/source-art/archive/2026-11-16-pre-library/replanted/reviews/2026-11-15/corn-joints-integration/approval.json"
+      "reviewNote": "用户通过三段裁片网页对照，2026-11-19 接入。",
+      "definition": "assets/definitions/reanim/units/Cornpult.dsl"
     },
     {
       "original": "reanim/cornpult_stalk2.png",
       "file": "current/reanim/cornpult_stalk2.png",
-      "source": "assets/source-art/archive/2026-11-16-pre-library/ai\\reanim72\\cornpult_stalk2\\candidate-2x.png",
-      "sourceSha256": "a6e5b7adebfb2ef4d4d32e908cb49f3de9ecff58bdec279bebf5a34b0c2373d4",
+      "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+      "sourceSha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
       "logicalSize": [
         18,
         16
       ],
       "physicalSize": [
-        36,
-        32
+        72,
+        64
       ],
-      "method": "Original -> two Anime4K UL passes -> individual built-in AI repair -> uniform original-canvas alignment",
-      "details": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/prompts.json",
-      "previousTechnicalCheckNote": "User overnight authorization; offline comparison inspected; no animation definitions or runtime transforms changed",
+      "method": "Direct crop of Replanted stalk atlas strip; per-frame affine transforms fitted to Spine mesh",
       "reviewStatus": "pass",
       "runtimeIntegrated": true,
       "activeMapping": true,
       "retainedOnly": false,
-      "reviewNote": "用户明确要求接入之前已修复的玉米投手；同步接入 joints122 接缝补偿定义。重植版原生资源仍优先，旧合并茎不可未经拆分直接映射。",
-      "reviewFile": "assets/source-art/archive/2026-11-16-pre-library/replanted/reviews/2026-11-15/corn-joints-integration/approval.json"
+      "reviewNote": "用户通过三段裁片网页对照，2026-11-19 接入。",
+      "definition": "assets/definitions/reanim/units/Cornpult.dsl"
     },
     {
       "original": "reanim/cornpult_stalk3.png",
       "file": "current/reanim/cornpult_stalk3.png",
-      "source": "assets/source-art/archive/2026-11-16-pre-library/ai\\reanim72\\cornpult_stalk3\\candidate-2x.png",
-      "sourceSha256": "d87150219798ff2a98a7d386c22d33937505c1c1cf4aa2a5aec7888e829b5783",
+      "source": "assets/source-art/archive/2026-11-16-pre-library/replanted/spine-attachment-review/74d95c3546e29bc9.png",
+      "sourceSha256": "3975e787f4f038bc4ccb33e5d06e3460374f09575438a4e5c7ba677fa6486561",
       "logicalSize": [
         17,
         10
       ],
       "physicalSize": [
-        34,
-        20
+        68,
+        40
       ],
-      "method": "Original -> two Anime4K UL passes -> individual built-in AI repair -> uniform original-canvas alignment",
-      "details": "assets/source-art/archive/2026-11-16-pre-library/ai/reanim72/prompts.json",
-      "previousTechnicalCheckNote": "User overnight authorization; offline comparison inspected; no animation definitions or runtime transforms changed",
+      "method": "Direct crop of Replanted stalk atlas strip; per-frame affine transforms fitted to Spine mesh",
       "reviewStatus": "pass",
       "runtimeIntegrated": true,
       "activeMapping": true,
       "retainedOnly": false,
-      "reviewNote": "用户明确要求接入之前已修复的玉米投手；同步接入 joints122 接缝补偿定义。重植版原生资源仍优先，旧合并茎不可未经拆分直接映射。",
-      "reviewFile": "assets/source-art/archive/2026-11-16-pre-library/replanted/reviews/2026-11-15/corn-joints-integration/approval.json"
+      "reviewNote": "用户通过三段裁片网页对照，2026-11-19 接入。",
+      "definition": "assets/definitions/reanim/units/Cornpult.dsl"
     },
     {
       "original": "reanim/peashooter_headleaf_2rdfarthest.png",

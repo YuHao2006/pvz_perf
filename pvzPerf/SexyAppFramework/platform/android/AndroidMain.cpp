@@ -221,7 +221,7 @@ void android_main(android_app* state) {
                     if (!fs2::exists(to)) fs2::copy_file(entry.path(), to);
                 }
                 // Publish the profile index only after its records are present.
-                for (const char* name : {"settings.json", "scale.json", "users.dat"}) {
+                for (const char* name : {"settings.json", "users.dat"}) {
                     const auto from = source / name, to = settingsDirectory / name;
                     if (!fs2::exists(to) && fs2::is_regular_file(from)) fs2::copy_file(from, to);
                 }
@@ -250,13 +250,12 @@ void android_main(android_app* state) {
         const std::filesystem::path userDirectory(dataPath ? dataPath : state->activity->internalDataPath);
         // Run after legacy-directory migration so an existing preference is
         // never replaced. Only the first launch creates these Android defaults.
-        if (!std::filesystem::exists(settingsPath)) {
-            JsonDoc settings;
-            settings.SetBool("landscapeUI", true);
-            settings.SetBool("autoDetectFrameRate", true);
-            if (!settings.SaveFile(settingsPath))
-                throw std::runtime_error("Cannot create settings: " + settingsPath);
-        }
+        const auto defaultsPath = std::filesystem::path(state->activity->internalDataPath) / "bundled-settings.json";
+        ExtractAsset(state->activity->assetManager, "settings.json", defaultsPath);
+        JsonDoc defaults;
+        defaults.LoadFile(defaultsPath.string());
+        setenv("PVZ_ANDROID_TEXTURE_PACK_SCALE", defaults.GetInt("texturePackScale", 2) == 4 ? "4" : "2", 1);
+        std::filesystem::copy_file(defaultsPath, settingsPath, std::filesystem::copy_options::skip_existing);
         if (!std::filesystem::exists(userDirectory / "users.dat")) {
             for (const char* name : {"user1.dat64", "game1_58.dat64", "users.dat"}) {
                 const std::string asset = std::string("bundled-saves/") + name;

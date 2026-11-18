@@ -144,6 +144,30 @@ struct WebGPURenderer::Impl
         Submit(context.queue, pendingEncoder);
         pendingEncoder = nullptr;
     }
+    GpuClip SceneRect(int logicalWidth, int logicalHeight, int surfaceWidth, int surfaceHeight) const
+    {
+        // CSS already aspect-fits the canvas. Rounding to physical and logical
+        // pixels independently can otherwise introduce a one-pixel border.
+        const auto delta = int64_t(surfaceWidth)*logicalHeight - int64_t(surfaceHeight)*logicalWidth;
+        if (std::abs(delta)*2 <= int64_t(surfaceHeight)+logicalHeight+logicalWidth)
+            return {0,0,surfaceWidth,surfaceHeight};
+        return FitSceneToSurface(logicalWidth,logicalHeight,surfaceWidth,surfaceHeight);
+    }
+    std::pair<int,int> ScenePixels(int w, int h) const
+    {
+        const auto rect = SceneRect(w,h,context.width,context.height);
+        return context.resolution.Fit(rect.width,rect.height);
+    }
+    WebGPUTexture *AllocateScene(int logicalWidth, int logicalHeight)
+    {
+        const auto [pixelsWide,pixelsHigh] = ScenePixels(logicalWidth,logicalHeight);
+        auto *target = Allocate(pixelsWide,pixelsHigh,TextureFormat::RGBA8Unorm,false);
+        target->drawingWidth = logicalWidth;
+        target->drawingHeight = logicalHeight;
+        const std::array<float,4> params{float(logicalWidth),float(logicalHeight),0,0};
+        context.queue.WriteBuffer(target->targetParams,0,&params,sizeof(params));
+        return target;
+    }
     void Register(WebGPUTexture *t)
     {
         for (unsigned int i = 1; i < staticBase; i++)
@@ -291,7 +315,7 @@ struct WebGPURenderer::Impl
                 pass.SetPipeline(pipeline);
                 previousPipeline = pipeline.Get();
             }
-            const auto &group = SourceGroup(batch.texture, batch.sampler);
+            const auto &group = SourceGroup(batch.texture, batch.sampler & 2U);
             if (group.Get() != previousGroup)
             {
                 pass.SetBindGroup(1, group);
@@ -347,9 +371,17 @@ struct WebGPURenderer::Impl
         clip.width = static_cast<int>(std::max(0LL, right - clip.x));
         clip.height = static_cast<int>(std::max(0LL, bottom - clip.y));
         if (!clip.width || !clip.height)
-        clip.x*=target->pixelScale; clip.y*=target->pixelScale;
-        clip.width*=target->pixelScale; clip.height*=target->pixelScale;
             return;
+        if (target == scene) {
+            const auto x = [&](int edge){ return int(int64_t(edge)*target->width/target->drawingWidth); };
+            const auto y = [&](int edge){ return int(int64_t(edge)*target->height/target->drawingHeight); };
+            clip = {x(clip.x),y(clip.y),x(int(right))-x(clip.x),y(int(bottom))-y(clip.y)};
+        } else {
+            clip.x *= target->pixelScale;
+            clip.y *= target->pixelScale;
+            clip.width *= target->pixelScale;
+            clip.height *= target->pixelScale;
+        }
         WebGPUTexture *feedback = nullptr;
         for (size_t first = 0; first < input.size();)
         {
@@ -473,6 +505,7 @@ struct WebGPURenderer::Impl
         pass.End();
         Submit(context.queue, encoder);
     }
+    uint64_t reportedSurfaceGeneration = 0;
     bool Present()
     {
         if (!context.BeginPresent())
@@ -487,12 +520,17 @@ struct WebGPURenderer::Impl
             DrainPending();
             return false;
         }
-        const auto rect = FitSceneToSurface(width, height, context.width, context.height);
+        if (reportedSurfaceGeneration != context.swapchainGeneration) {
+            EM_ASM({ Module.pvzPresentedExtent = ({width:$0,height:$1}); },
+                   surface.texture.GetWidth(), surface.texture.GetHeight());
+            reportedSurfaceGeneration = context.swapchainGeneration;
+        }
+        const auto rect = SceneRect(width, height, context.width, context.height);
         auto &frame = frames[frameIndex];
         if (!pendingEncoder) pendingEncoder = context.device.CreateCommandEncoder();
         auto pass = Pass(pendingEncoder, surface.texture.CreateView(), true);
         pass.SetPipeline(presentPipeline);
-        pass.SetBindGroup(0, SourceGroup(scene, 1));
+        pass.SetBindGroup(0, SourceGroup(scene, rect.width > scene->width || rect.height > scene->height ? 1U : 0U));
         pass.SetViewport(rect.x, rect.y, rect.width, rect.height, 0, 1);
         pass.Draw(3);
         pass.End();
@@ -519,7 +557,7 @@ WebGPURenderer::WebGPURenderer(WebGPUContext &c, int w, int h, const std::filesy
         if (hdr)
             impl_->hdr = *hdr;
         PrepareLoadingPipelines();
-        impl_->scene = impl_->Allocate(w, h, TextureFormat::RGBA8Unorm, false);
+        impl_->scene = impl_->AllocateScene(w,h);
         impl_->Clear(impl_->scene);
         const unsigned int white = ~0U;
         impl_->white = CreateTexture(1, 1, &white, 4, true);
@@ -625,7 +663,7 @@ void WebGPURenderer::PrepareLoadingPipelines()
     for (unsigned int i = 0; i < 4; i++)
     {
         SamplerDescriptor desc;
-        desc.minFilter = desc.magFilter = (i & 1) ? FilterMode::Linear : FilterMode::Nearest;
+        desc.minFilter = desc.magFilter = i == 1 ? FilterMode::Linear : FilterMode::Nearest;
         desc.addressModeU = desc.addressModeV = (i & 2) ? AddressMode::Repeat : AddressMode::ClampToEdge;
         s.samplers[i] = d.CreateSampler(&desc);
     }
@@ -1032,12 +1070,13 @@ bool WebGPURenderer::ResizePresent()
 void WebGPURenderer::ResizeScene(int w, int h)
 {
     auto &s = *impl_;
-    if (s.width == w && s.height == h)
+    const auto [pixelsWide,pixelsHigh] = s.ScenePixels(w,h);
+    if (s.width == w && s.height == h && s.scene->width == pixelsWide && s.scene->height == pixelsHigh)
         return;
     if (s.open || s.selected)
         throw std::logic_error("Resize WebGPU between scenes");
     auto *old = s.scene;
-    s.scene = s.Allocate(w, h, TextureFormat::RGBA8Unorm, false);
+    s.scene = s.AllocateScene(w,h);
     s.width = w;
     s.height = h;
     s.sceneInitialized = false;
@@ -1075,7 +1114,7 @@ WebGPURenderer::ScaleCounts WebGPURenderer::GetScaleCounts() const
 }
 GpuClip WebGPURenderer::PresentRect(int w, int h) const
 {
-    return FitSceneToSurface(impl_->width, impl_->height, w, h);
+    return impl_->SceneRect(impl_->width, impl_->height, w, h);
 }
 unsigned int WebGPURenderer::MaxImageDimension2D() const
 {
@@ -1159,7 +1198,16 @@ ImagePixels WebGPURenderer::ReadTexturePixels(WebGPUTexture *t)
 }
 std::vector<unsigned int> WebGPURenderer::ReadScenePixels()
 {
-    return ReadTexturePixels(impl_->scene).pixels;
+    const auto &s = *impl_;
+    auto physical = ReadTexturePixels(s.scene);
+    std::vector<unsigned int> logical(size_t(s.width)*s.height);
+    for (int y=0; y<s.height; ++y)
+        for (int x=0; x<s.width; ++x) {
+            const int px=int((2LL*x+1)*s.scene->width/(2*s.width));
+            const int py=int((2LL*y+1)*s.scene->height/(2*s.height));
+            logical[size_t(y)*s.width+x]=physical.pixels[size_t(py)*s.scene->width+px];
+        }
+    return logical;
 }
 std::vector<unsigned int> WebGPURenderer::ReadScalePixels(bool)
 {

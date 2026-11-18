@@ -166,7 +166,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.1.1";
+    mProductVersion = "4.1.2";
 	std::string aTitleName = "pvz_perf HD";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -3442,7 +3442,7 @@ void LawnApp::SwitchScreenMode(bool wantWindowed, bool force)
 		// 同步显示状态，不回调：listener 回调会在切换刚结束时反向触发
 		// CheckboxChecked，叠加进尚未稳定的模式状态。
 #if defined(__ANDROID__)
-        aNewOptionsDialog->mFullscreenCheckbox->SetChecked(false, false);
+        aNewOptionsDialog->mFullscreenCheckbox->SetChecked(mLandscapeUI, false);
 #else
 		aNewOptionsDialog->mFullscreenCheckbox->SetChecked(!mIsWindowed, false);
 #endif

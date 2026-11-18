@@ -39,7 +39,7 @@ VulkanEffectProgram::VulkanEffectProgram(VkDevice device,VkPipelineCache cache,c
         const VkSpecializationInfo specialization{uint32_t(entries.size()),entries.data(),values.size()*4,values.data()};
         for(const auto& sampler:effect.mSamplers) {
             VkSamplerCreateInfo info{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-            info.magFilter=info.minFilter=static_cast<VkFilter>(sampler.mFilter);
+            info.magFilter=info.minFilter=VK_FILTER_NEAREST;
             info.mipmapMode=VK_SAMPLER_MIPMAP_MODE_NEAREST;
             info.addressModeU=info.addressModeV=info.addressModeW=static_cast<VkSamplerAddressMode>(sampler.mAddress);
             info.borderColor=VK_BORDER_COLOR_FLOAT_TRANSPARENT_BLACK;

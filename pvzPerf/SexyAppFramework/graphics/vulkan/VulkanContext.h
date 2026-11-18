@@ -1,6 +1,7 @@
 #pragma once
 #include "SexyAppFramework/platform/NativeHandles.h"
 #include <vulkan/vulkan.h>
+#include "graphics/RenderResolution.h"
 #include <cstdint>
 #include <optional>
 #include <vector>
@@ -25,6 +26,7 @@ struct VulkanInitConfig {
     std::vector<const char*> extraExtensions;
     std::vector<const char*> extraLayers;
     std::vector<const char*> deviceExtensions;
+    Sexy::RenderResolution resolution;
     bool enableValidation = false;
     VulkanGpuFilter gpuFilter = [](VkPhysicalDevice) { return true; };
     VkPhysicalDeviceFeatures features{};
@@ -48,6 +50,7 @@ public:
     VulkanContext(VulkanContext&&) = delete;
     VulkanContext& operator=(VulkanContext&&) = delete;
 
+    Sexy::RenderResolution resolution;
     // Android 恢复会换绑新的 ANativeWindow（NotifySurfaceWindow）；其他平台恒定。
     NativeWindowHandle hwnd;
     // Shared GPU lifetime is retained for the renderer's existing resources.
@@ -116,6 +119,7 @@ private:
     void CreatePresentSemaphores();
 
     VkSwapchainCreateInfoKHR swapchainConfig_{};
+
     bool counted_ = false;
     std::vector<VkFramebuffer> framebuffers_;
     struct FrameResources {

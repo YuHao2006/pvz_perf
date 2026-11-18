@@ -19,6 +19,9 @@ void SexyAppBase::MakeWindow() {
     mNativeWindow = std::make_unique<NativeWindow>(config);
     mHWnd = mNativeWindow.get();
     mGpuContext = std::make_unique<GpuContext>(mHWnd, false, false);
+#ifdef PVZ_GPU_WEBGPU
+    mGpuContext->resolution = mResolution;
+#endif
     mUseExternalHWND = false;
     mExternalHWND = nullptr;
     mIsPhysWindowed = true;

@@ -42,7 +42,7 @@ export async function cloudCall(operation){
 }
 export function deadline(operation){let timer;return Promise.race([operation,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error('云端进度请求超时')),15000)})]).finally(()=>clearTimeout(timer))}
 export class ProgressStorage {
- constructor(fs,root,{cloudEnabled,provideToy,report,sharedStorageId='',canApplyRemote=()=>true,onRestore=async()=>{},uploadState=()=>{}}){Object.assign(this,{fs,root,cloudEnabled,provideToy,report,sharedStorageId,canApplyRemote,onRestore,uploadState});this.head=null;this.saving=null;this.pending=null;this.lastLocal='';this.lastCloud='';this.localText='';this.modifiedAt=0;this.applying=false}
+ constructor(fs,root,{cloudEnabled,provideToy,report,sharedStorageId='',sharedOnly=false,onEmptySharedSave,canApplyRemote=()=>true,onRestore=async()=>{},uploadState=()=>{}}){Object.assign(this,{fs,root,cloudEnabled,provideToy,report,sharedStorageId,sharedOnly,onEmptySharedSave,canApplyRemote,onRestore,uploadState});this.head=null;this.saving=null;this.pending=null;this.lastLocal='';this.lastCloud='';this.localText='';this.modifiedAt=0;this.applying=false}
  snapshot(){
   const files={};for(const name of this.fs.readdir(this.root).filter(profileName).sort())files[name]=encode(this.fs.readFile(this.root+'/'+name));
   return hasOwn(files,'users.dat')?files:null;
@@ -58,8 +58,8 @@ export class ProgressStorage {
  async remote(){
   if(!this.cloudEnabled)throw Error('云端进度仅在登录后的 B 站 Toy 中可用');
   const toy=await deadline(this.provideToy());
-  if(typeof toy?.getCloudStorage!=='function'||typeof toy?.setCloudStorage!=='function')throw Error('当前宿主未开放云存储');
-  return this.sharedStorageId?sharedStorage(toy,this.sharedStorageId,this.uploadState):toy;
+  if(!this.sharedOnly&&(typeof toy?.getCloudStorage!=='function'||typeof toy?.setCloudStorage!=='function'))throw Error('当前宿主未开放云存储');
+  return this.sharedStorageId?sharedStorage(toy,this.sharedStorageId,this.uploadState,this.sharedOnly):toy;
  }
  async readCloud(){
   const toy=await this.remote(),rows=await deadline(cloudCall(()=>toy.getCloudStorage([headKey]))),raw=rows[headKey];
@@ -86,6 +86,7 @@ export class ProgressStorage {
   }catch(error){this.report('本地进度备份不可用：'+error.message)}
   if(this.cloudEnabled)try{
    const saved=await this.readCloud(),local=this.snapshot();
+   if(!saved && this.onEmptySharedSave){this.onEmptySharedSave();return restored}
    if(saved&&(!local||JSON.stringify(local)!==saved.text&&preferCloud(this.modifiedAt,saved))){
     if(local)await backup('put',{files:local,savedAt:this.modifiedAt,modifiedAt:this.modifiedAt},'conflict');
     this.apply(saved.files,savedTime(saved));restored=true;this.report('已自动恢复云端用户进度；关卡状态仍使用本地 DAT64');

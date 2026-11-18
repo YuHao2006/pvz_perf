@@ -49,6 +49,7 @@ void SexyAppBase::MakeWindow()
         .presentMode = VK_PRESENT_MODE_MAILBOX_KHR,
         .clipped = VK_TRUE
     };
+    init.resolution = mResolution;
 #if defined(__ANDROID__)
     mScaleHDREnabled = false;
 #endif

@@ -19,6 +19,22 @@ export async function authorizeReward(config,provideToy){
   throw Error('尚未检测到给 '+bvid+' 投满两个币。投币后可再次点击领取。');
 }
 
+export async function authorizeFullUnlock(config,provideToy){
+ if(config.bypassBilibiliChecks===true)return;
+ const bvid=config.unlockVideoBvid;
+ if(!/^BV[0-9A-Za-z]{10}$/.test(bvid||'') || bvid===config.rewardVideoBvid)
+  throw Error('全解锁视频尚未开放。');
+ const toy=await provideToy();
+ const relation=await toy.getAuthorRelation();
+ if(relation?.status!=='ok'||relation.data?.isFollowing!==true)
+  throw Error('请先关注作者，再领取全解锁。');
+ const result=await toy.getVideoUserActions({videos:[{bvid}]});
+ const item=result?.items?.find(entry=>entry.bvid===bvid && entry.status==='ok');
+ if(!['ok','partial'].includes(result?.status)||!item||
+    item.liked!==true||item.favorited!==true||!Number.isInteger(item.coinCount)||item.coinCount<1)
+  throw Error('请给 '+bvid+' 点赞、投币并收藏后再试。');
+}
+
 let sdk;
 export function provideBilibiliToy(){
  if(globalThis.toy)return Promise.resolve(globalThis.toy);

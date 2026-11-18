@@ -1,5 +1,7 @@
 ﻿#include "../NativeWindow.h"
 #include "AndroidWindow.h"
+#include <android/asset_manager.h>
+#include <string_view>
 #include "AndroidTouchInput.h"
 #include "SexyAppFramework/Common.h"
 #include "widget/EditWidget.h"
@@ -118,7 +120,6 @@ void EmitEvent(const NativeWindowEvent& event)
 }
 
 void BindAndroidApp(android_app* state) { gApp = state; }
-
 extern "C" JNIEXPORT void JNICALL
 Java_com_openpvz_perf_PerfActivity_nativeSurfaceOriginChanged(JNIEnv*, jclass, jint left, jint top)
 {

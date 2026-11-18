@@ -182,8 +182,7 @@ def run(args, build):
     output.mkdir(parents=True, exist_ok=False)
     os.sched_setaffinity(0, {15})
     (output / 'game-log').mkdir()
-    env = dict(os.environ, PVZ_APPDATA_DIR=str(data_dir), PVZ_LOG_DIR=str(output / 'game-log'),
-               PVZ_SCALE_CONFIG_FILE=str(game.parent / 'scale.json'))
+    env = dict(os.environ, PVZ_APPDATA_DIR=str(data_dir), PVZ_LOG_DIR=str(output / 'game-log'))
     metadata = dict(schema=1, status='starting', scene=args.scene,
                     executable=str(game), executable_sha256=sha(game),
                     layout=manifest, game_affinity=[14], observer_affinity=sorted(os.sched_getaffinity(0)),
@@ -192,7 +191,7 @@ def run(args, build):
                     cpu_basis='process user+system ticks; one logical CPU = 100%',
                     frequency_policy='Affinity only; no fixed clock ratio configured or claimed',
                     fixture_sha256=expected_hash if args.scene == 'endless' else None,
-                    scale_config_sha256=sha(game.parent / 'scale.json'),
+                    settings_sha256=sha(data_dir / 'settings.json') if (data_dir / 'settings.json').is_file() else None,
                     profile_sha256=sha(data_dir / 'user1.dat64'), sample_interval_s=1,
                     warmup_seconds=args.warmup, formal_measurement=False,
                     duration_limit_seconds=args.seconds,

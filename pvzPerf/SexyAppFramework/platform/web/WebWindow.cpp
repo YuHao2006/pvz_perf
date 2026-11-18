@@ -11,6 +11,8 @@
 #include <stdexcept>
 
 EM_JS(int, WebViewportWidth, (), { return Module.pvzViewport?.width || 800; });
+EM_JS(int, WebPixelWidth, (), { return Module.pvzViewport?.pixelWidth || 800; });
+EM_JS(int, WebPixelHeight, (), { return Module.pvzViewport?.pixelHeight || 600; });
 EM_JS(double, WebRefreshRate, (), { return Module.pvzRefreshRate || 60; });
 
 namespace Sexy {
@@ -34,8 +36,8 @@ extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_refresh_rate(unsigned int rate) {
 extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_resize(int width, int height) {
     // DOM events only publish dimensions. Apply them in the normal event phase,
     // never from a JS callback in the middle of a game draw/Asyncify unwind.
-    pendingWidth = std::clamp(width, 800, 1400);
-    pendingHeight = 600;
+    pendingWidth = std::max(1,width);
+    pendingHeight = std::max(1,height);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_pointer(int kind, int id, double x, double y, int button, double time) {
     // Mobile hosts may not restore SDL's keyboard focus after their overlay
@@ -85,7 +87,7 @@ NativeWindow::NativeWindow(const NativeWindowConfig& config) : impl_(new Impl) {
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 0);
     SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 0);
 #endif
-    Width = std::clamp(WebViewportWidth(), 800, 1400); Height = 600; Focused = true;
+    Width = WebPixelWidth(); Height = WebPixelHeight(); Focused = true;
     impl_->window = SDL_CreateWindow(config.title.c_str(), 0, 0, Width, Height,
 #if defined(PVZ_GPU_WEBGPU)
         0
@@ -200,7 +202,7 @@ void NativeWindow::Show() { Visible = true; SDL_StartTextInput(); }
 void NativeWindow::ApplyCursor(NativeCursor cursor) { SDL_ShowCursor(cursor == NativeCursor::Hidden ? SDL_DISABLE : SDL_ENABLE); }
 void NativeWindow::SetTitle(const std::string& title) { SDL_SetWindowTitle(impl_->window, title.c_str()); }
 void NativeWindow::SetFullscreen(bool fullscreen) { EM_ASM({ Module.pvzSetFullscreen(!!$0); }, fullscreen); }
-void NativeWindow::Resize(int w, int h) { Width = w; Height = h; SDL_SetWindowSize(impl_->window, w, h); }
+void NativeWindow::Resize(int w, int h) { Width = WebPixelWidth(); Height = WebPixelHeight(); SDL_SetWindowSize(impl_->window, Width, Height); }
 bool NativeWindow::Minimized() const { return false; }
 double NativeWindow::RefreshRate() const { return WebRefreshRate(); }
 NativeWindowBackend NativeWindow::Backend() const { return NativeWindowBackend::Browser; }

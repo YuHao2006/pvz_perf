@@ -4,7 +4,7 @@
 
 **高清分支说明：当前高清版（2×／4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
 
-**高清分支 [v4.1.1](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.1) 提供 Windows 10 Vulkan 1.3、Android 14 Vulkan 1.3（2× 与 4×）、独立 4× PAK64 和完美存档。普通版见 main 分支。**
+**高清分支 [v4.1.2](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.2) 提供 Windows 10 与 Android 14 的 Vulkan 1.3 完整包（各有 1200p 和 2400p）、高清网页包和完美存档。普通版见 main 分支。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
@@ -20,7 +20,7 @@
 
 发行附件提供完美用户档、无尽基准和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
 
-**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.1.1.md)。
+**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.1.2.md)。
 
 ## 设置与存档
 
@@ -33,7 +33,7 @@
 
 `settings.json` 可设置 `"unlockAllLevels": true`，临时开放全部已实现的小游戏、解谜、生存关卡，并在小游戏选择页显示 Limbo 入口；默认为 `false`。修改后重启生效，不修改用户进度；改回 `false` 后恢复按用户存档解锁。未实现的“自制关卡”占位始终隐藏。
 
-Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。桌面缩放配置由 `scale.json` 管理，各后端支持范围见[GPU 提交](docs/gpu-submission.md)。
+Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。高清版在 `settings.json` 的 `resolution` 中设置内部渲染范围。默认下限为 800×600，1200p 档的上限为 2800×1200，2400p 档为 5600×2400。窗口和交换链跟随实际显示尺寸；游戏画面超过任一上限时，按比例渲染到上限，再用双线性放大上屏。安卓菜单的横板 UI 在重启后生效，各后端支持范围见[GPU 提交](docs/gpu-submission.md)。
 
 ## 性能与实现
 

@@ -119,16 +119,7 @@ vec4 filterSource(uint descriptorIndex, bool straightResult)
 {
     const ivec2 extent = textureSize(sampler2D(images[nonuniformEXT(descriptorIndex)],
                                               samplers[nonuniformEXT(samplerIndex)]), 0);
-    if ((samplerIndex & 1u) == 0u)
-        return filterTexel(ivec2(floor(uv * vec2(extent))), extent, descriptorIndex, straightResult);
-    const vec2 position = uv * vec2(extent) - vec2(0.5);
-    const ivec2 base = ivec2(floor(position));
-    const vec2 weight = fract(position);
-    const vec4 top = mix(filterTexel(base, extent, descriptorIndex, straightResult),
-                         filterTexel(base + ivec2(1, 0), extent, descriptorIndex, straightResult), weight.x);
-    const vec4 bottom = mix(filterTexel(base + ivec2(0, 1), extent, descriptorIndex, straightResult),
-                            filterTexel(base + ivec2(1, 1), extent, descriptorIndex, straightResult), weight.x);
-    return mix(top, bottom, weight.y);
+    return filterTexel(ivec2(floor(uv * vec2(extent))), extent, descriptorIndex, straightResult);
 }
 
 void main()
@@ -146,39 +137,26 @@ void main()
         outColor = premultipliedOutput ? vec4(source.rgb * source.a, source.a) : source;
     } else if (premultipliedOutput) {
         const bool generated = (slot & 0x80000000u) != 0u;
-        const bool linear = (samplerIndex & 1u) != 0u;
         const bool independent = (slot & 0x40000000u) != 0u;
         if (colorFilterKind != 0u || sandStraight) {
-            // Transform each straight texel before interpolation, retaining the
-            // existing choice of independent or premultiplied channel filtering.
-            source = (linear || sandStraight) ? filterSource(descriptorIndex, independent) :
+            source = sandStraight ? filterSource(descriptorIndex, independent) :
                 filterSample(source, independent);
             if (independent)
                 source.rgb *= source.a;
         } else if (independent) {
             if (generated)
-                source = linear ? filterSource(descriptorIndex, true) :
-                    vec4(source.a > 0.0 ? source.rgb / source.a : vec3(0.0), source.a);
+                source = vec4(source.a > 0.0 ? source.rgb / source.a : vec3(0.0), source.a);
             source.rgb *= source.a;
-        } else if (!generated && linear) {
-            // Filtering straight RGB first leaks transparent texel colors.
-            // Convert each tap to premultiplied before the weighted sum.
-            source = filterSource(descriptorIndex, false);
         } else if (!generated) {
             source.rgb *= source.a;
         }
         outColor = vec4(source.rgb * color.rgb * color.a, source.a * color.a);
     } else {
         const bool generated = (slot & 0x80000000u) != 0u;
-        // Raw filter aliases must interpolate the same premultiplied texels as
-        // a prefiltered render image. Explicit independent sampling is retained.
         const bool filteredPremult = !generated && colorFilterKind != 0u &&
             (slot & 0x40000000u) == 0u;
         if (colorFilterKind != 0u || sandStraight) {
-            const bool linear = (samplerIndex & 1u) != 0u;
-            // Ordinary scene sampling interpolates generated sources as
-            // premultiplied, but straight sources as independent channels.
-            source = (linear || sandStraight) ? filterSource(descriptorIndex, !generated && !filteredPremult) :
+            source = sandStraight ? filterSource(descriptorIndex, !generated && !filteredPremult) :
                 filterSample(source, !generated && !filteredPremult);
         }
         if (generated || filteredPremult)

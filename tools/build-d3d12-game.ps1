@@ -22,7 +22,7 @@ if($StageRuntime){
             Copy-Item -LiteralPath (Join-Path $source $name) -Destination $target
         }
     }
-    if(!(Test-Path -LiteralPath (Join-Path $destination 'scale.json'))){
-        Copy-Item -LiteralPath (Join-Path $projectRoot 'scale.json') -Destination (Join-Path $destination 'scale.json')
+    if(!(Test-Path -LiteralPath (Join-Path $destination 'settings.json'))){
+        Copy-Item -LiteralPath (Join-Path $projectRoot 'config/default-settings.json') -Destination (Join-Path $destination 'settings.json')
     }
 }

@@ -89,8 +89,10 @@ if(!fixedMobileRate)import('./frame-rate.js').then(({createFrameRateObserver})=>
   updateControls();
  });
 });
-function startFps(){const label=document.getElementById("game-fps");clearInterval(fpsTimer);fpsTimer=0;label.hidden=!showFps.checked;if(label.hidden)return;let time=performance.now(),draws=Module._pvz_web_draws();fpsTimer=setInterval(()=>{const now=performance.now(),next=Module._pvz_web_draws();label.textContent="FPS "+((next-draws)*1000/(now-time)).toFixed(1);time=now;draws=next},1000)}
-let runtimeReady=false,running=false,formEdited=false,refreshRate=60,resizeScheduled=false,lastWidth=0;
+function startFps(){const label=document.getElementById("game-fps");clearInterval(fpsTimer);fpsTimer=0;label.hidden=!showFps.checked;if(label.hidden)return;let time=performance.now(),draws=Module._pvz_web_draws();fpsTimer=setInterval(()=>{const now=performance.now(),next=Module._pvz_web_draws();const view=Module.pvzViewport,surface=Module.pvzPresentedExtent;
+ label.textContent="FPS "+((next-draws)*1000/(now-time)).toFixed(1)+(surface?
+  ` · 可见 ${view.visibleWidth}×${view.visibleHeight} · 交换链 ${surface.width}×${surface.height}`:"");time=now;draws=next},1000)}
+let runtimeReady=false,running=false,formEdited=false,refreshRate=60,resizeScheduled=false,lastWidth=0,lastHeight=0;
 function readPreferences(){try{return JSON.parse(localStorage.getItem(storageKey)||'{}')||{}}catch{return {}}}
 function normalizePreferences(value){
  const finite=(x,fallback)=>Number.isFinite(Number(x))?Number(x):fallback;
@@ -101,7 +103,13 @@ function normalizePreferences(value){
   fullscreen:typeof value.screenMode==='string'?value.screenMode==='fullscreen':value.fullscreen===true,
   aspect:['auto','4:3','16:9','21:9'].includes(value.aspect)?value.aspect:'auto'};
 }
-function fillPreferences(value){const p=normalizePreferences(value);fps.value=p.targetFps;autoFps.checked=p.autoDetectFrameRate;showFps.checked=p.showFps;unlockAll.checked=p.unlockAllLevels;landscape.checked=p.landscapeUI;volume.value=p.sfxVolume;musicVolume.value=p.musicVolume;launchFullscreen.checked=p.fullscreen;aspect.value=p.aspect;updateControls()}
+let resolution={minWidth:800,minHeight:600,maxWidth:2800,maxHeight:1200};
+function readResolution(settings={}){
+ const bound=(key,fallback,min,max)=>Number.isInteger(settings?.[key])?Math.max(min,Math.min(max,settings[key])):fallback;
+ const minWidth=bound('minWidth',800,800,5600),minHeight=bound('minHeight',600,600,2400);
+ return {minWidth,minHeight,maxWidth:bound('maxWidth',Math.max(2800,minWidth),minWidth,5600),maxHeight:bound('maxHeight',Math.max(1200,minHeight),minHeight,2400)};
+}
+function fillPreferences(value){if(value.resolution)resolution=readResolution(value.resolution);const p=normalizePreferences(value);fps.value=p.targetFps;autoFps.checked=p.autoDetectFrameRate;showFps.checked=p.showFps;unlockAll.checked=p.unlockAllLevels;landscape.checked=p.landscapeUI;volume.value=p.sfxVolume;musicVolume.value=p.musicVolume;launchFullscreen.checked=p.fullscreen;aspect.value=p.aspect;updateControls()}
 function preferences(){return normalizePreferences({targetFps:fps.value,autoDetectFrameRate:autoFps.checked,showFps:showFps.checked,unlockAllLevels:unlockAll.checked,landscapeUI:landscape.checked,sfxVolume:volume.value,musicVolume:musicVolume.value,fullscreen:launchFullscreen.checked,aspect:aspect.value})}
 function showError(message){
  // Safari stacks can contain only frames, omitting the exception name/message.
@@ -144,9 +152,10 @@ function updateControls(){
 function viewportFor(width,height,mode,minimumWidth=800){
  const requested=mode==='auto'?width/height:Number(mode.split(':')[0])/Number(mode.split(':')[1]);
  const logicalWidth=Math.round(Math.max(minimumWidth,Math.min(1400,requested*600)));
- const ratio=logicalWidth/600,cssWidth=Math.min(width,height*ratio);
+ const ratio=Math.max(minimumWidth/600,Math.min(1400/600,requested)),cssWidth=Math.min(width,height*ratio);
  return {width:logicalWidth,height:600,cssWidth,cssHeight:cssWidth/ratio};
 }
+let measuredCanvas=null;
 function fitCanvas(){
  resizeScheduled=false;
  if(running&&Module.pvzTextInput?.active)return; // The soft keyboard must not rotate/resize the game underneath an editor.
@@ -159,9 +168,23 @@ function fitCanvas(){
  const p=preferences(),w=stage.clientWidth,h=playing?stage.clientHeight:Math.max(1,innerHeight-document.querySelector('header').offsetHeight-document.querySelector('footer').offsetHeight);
  const view=viewportFor(mobile?Math.max(w,h):w,mobile?Math.min(w,h):h,p.aspect,running&&Module.pvzLandscapeActive?890:800);
  canvas.style.width=`${view.cssWidth}px`;canvas.style.height=`${view.cssHeight}px`;
- Module.pvzViewport={width:view.width,height:view.height};
- document.getElementById('viewport-info').textContent=`${view.width} × 600 · ${(view.width/600).toFixed(2)}:1`;
- if(running&&runtimeReady&&lastWidth!==view.width){Module._pvz_web_resize(view.width,view.height);lastWidth=view.width}
+ const box=canvas.getBoundingClientRect();
+ const displayWidth=(rotate?box.height:box.width)||view.cssWidth;
+ const displayHeight=(rotate?box.width:box.height)||view.cssHeight;
+ const dpr=devicePixelRatio||1;
+ const estimatedWidth=Math.max(1,Math.round(displayWidth*dpr)),estimatedHeight=Math.max(1,Math.round(displayHeight*dpr));
+ // Some compositors report an unscaled device-pixel box under DPI emulation.
+ // Prefer edge-snapped layout pixels, but never undersize by a scale factor.
+ const exact=playing && measuredCanvas?.dpr===dpr &&
+  measuredCanvas.width>=estimatedWidth-1 && measuredCanvas.height>=estimatedHeight-1 &&
+  Math.abs(measuredCanvas.cssWidth-displayWidth)<0.02 && Math.abs(measuredCanvas.cssHeight-displayHeight)<0.02;
+ const visibleWidth=exact?measuredCanvas.width:estimatedWidth;
+ const visibleHeight=exact?measuredCanvas.height:estimatedHeight;
+ const pixelWidth=visibleWidth,pixelHeight=visibleHeight;
+ Module.pvzViewport={width:view.width,height:view.height,pixelWidth,pixelHeight,visibleWidth,visibleHeight};
+ document.getElementById('viewport-info').textContent=playing?
+  `可见 ${visibleWidth}×${visibleHeight} · DPR ${dpr}`:`逻辑 ${view.width}×600`;
+ if(running&&runtimeReady&&(lastWidth!==pixelWidth||lastHeight!==pixelHeight)){Module._pvz_web_resize(pixelWidth,pixelHeight);lastWidth=pixelWidth;lastHeight=pixelHeight}
  return view;
 }
 function scheduleResize(){if(!resizeScheduled){resizeScheduled=true;requestAnimationFrame(fitCanvas)}}
@@ -213,6 +236,12 @@ window.addEventListener('keydown',()=>{if(running)Module.pvzMusic?.resumeIfInter
 for(const type of ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','touchcancel'])
  canvas.addEventListener(type,e=>{if(running){e.preventDefault();e.stopImmediatePropagation()}},{capture:true,passive:false});
 window.addEventListener('resize',scheduleResize);
+function observePixelRatio(){
+ matchMedia('(resolution: '+devicePixelRatio+'dppx)').addEventListener('change',()=>{
+  scheduleResize();observePixelRatio();
+ },{once:true});
+}
+observePixelRatio();
 async function measureRefreshRate(){
  const samples=[];let previous;for(let i=0;i<25;i++)await new Promise(resolve=>requestAnimationFrame(time=>{if(previous!==undefined){const dt=time-previous;if(dt>=1&&dt<=100)samples.push(dt)}previous=time;resolve()}));
  if(samples.length>=12){samples.sort((a,b)=>a-b);const raw=1000/samples[Math.floor(samples.length/2)];const rates=[30,48,50,60,72,75,90,100,120,144,165,180,200,240,360,480];const nearest=rates.reduce((a,b)=>Math.abs(b-raw)<Math.abs(a-raw)?b:a);refreshRate=Math.max(30,Math.round(Math.abs(nearest-raw)/raw<.035?nearest:raw))}
@@ -220,9 +249,11 @@ async function measureRefreshRate(){
 }
 function loadNativeSettings(){try{return JSON.parse(Module.FS.readFile(saveRoot+'/settings.json',{encoding:'utf8'}))||{}}catch{return {}}}
 async function saveSettings(p){
- const settings={...loadNativeSettings(),targetFps:p.autoDetectFrameRate?refreshRate:p.targetFps,
+ const previous=loadNativeSettings();
+ delete previous.customScale;
+ const settings={landscapeUI:false,autoDetectFrameRate:true,targetFps:60,musicVolume:85,sfxVolume:100,screenMode:"windowed",hdr:false,resolution,...previous,targetFps:p.autoDetectFrameRate?refreshRate:p.targetFps,
   autoDetectFrameRate:p.autoDetectFrameRate,landscapeUI:p.landscapeUI&&Module.pvzViewport.width>=890,
-  unlockAllLevels:p.unlockAllLevels,sfxVolume:p.sfxVolume,musicVolume:p.musicVolume,screenMode:p.fullscreen?'fullscreen':'windowed',customScale:0,hdr:false};
+  unlockAllLevels:p.unlockAllLevels,sfxVolume:p.sfxVolume,musicVolume:p.musicVolume,screenMode:p.fullscreen?'fullscreen':'windowed',resolution,hdr:false};
  Module.pvzLandscapeActive=settings.landscapeUI;
  Module.FS.writeFile(saveRoot+'/settings.json',JSON.stringify(settings,null,2)+'\n');
  try{localStorage.setItem(storageKey,JSON.stringify(p))}catch{}
@@ -270,11 +301,15 @@ async function preparePersistentFiles(){
  Module.FS.mkdirTree(saveRoot);
  const {ProgressStorage}=await progressToolsReady;
  progressStorage=new ProgressStorage(Module.FS,saveRoot,{cloudEnabled:!webConfig.bypassBilibiliChecks,
-  sharedStorageId:webConfig.sharedStorageId,canApplyRemote:()=>!running,onRestore:()=>syncSaves(),
+  sharedStorageId:webConfig.sharedStorageId,sharedOnly:true,
+  onEmptySharedSave:()=>document.getElementById('migration-notice').showModal(),
+  canApplyRemote:()=>!running,onRestore:()=>syncSaves(),
   provideToy:async()=>(await import('./rewards.js')).provideBilibiliToy(),
   report:message=>{document.getElementById('cloud-status').textContent=message},
   uploadState:cloudUploadState});
  if(await progressStorage.prepare())await syncSaves();
+ if(webConfig.bypassBilibiliChecks && new URLSearchParams(location.search).get('sharedSave')==='empty')
+  document.getElementById('migration-notice').showModal();
  const {LineupStorage}=await lineupStorageReady;
  lineupStorage=new LineupStorage(localStorage,{cloudEnabled:!webConfig.bypassBilibiliChecks,remote:()=>progressStorage.remote(),report:lineupStatus,uploadState:cloudUploadState});
  await lineupStorage.prepare();
@@ -297,10 +332,14 @@ if(!webConfig.bypassBilibiliChecks)import('./rewards.js').then(m=>m.provideBilib
 rewardStatus.textContent=webConfig.bypassBilibiliChecks?'本地版：已绕过 B 站接口。':'给 '+webConfig.rewardVideoBvid+' 投满两个币，解锁自定义存档（含用户进度、布阵与 DAT64 导入／导出）；作者本人可直接使用。';
 let rewardBusy=false;
 async function authorize(){const {authorizeReward,provideBilibiliToy}=await import('./rewards.js');await authorizeReward(webConfig,provideBilibiliToy)}
+async function authorizeUnlock(){
+ const {authorizeFullUnlock,provideBilibiliToy}=await import('./rewards.js');
+ await authorizeFullUnlock(webConfig,provideBilibiliToy);
+}
 unlockAll.addEventListener('change',async()=>{
  if(!unlockAll.checked)return;
  rewardBusy=true;unlockAll.disabled=true;start.disabled=true;
- try{await authorize();unlockAuthorized=true;rewardStatus.textContent='已解锁全部关卡与 Limbo 入口。'}
+ try{await authorizeUnlock();unlockAuthorized=true;rewardStatus.textContent='已解锁全部关卡与 Limbo 入口。'}
  catch(error){unlockAll.checked=false;unlockAuthorized=false;rewardStatus.textContent=error.message||String(error)}
  finally{rewardBusy=false;unlockAll.disabled=false;start.disabled=!runtimeReady}
 });
@@ -344,8 +383,6 @@ async function returnToSettings(){
  document.documentElement.classList.remove('playing');window.scrollTo(0,0);
  for(const input of form.elements)input.disabled=false;
  formEdited=false;fillPreferences({...readPreferences(),...loadNativeSettings()});
- document.getElementById('graphics-backend').disabled=document.getElementById('graphics-backend').options.length<2;
- document.getElementById('memory-model').disabled=document.getElementById('memory-model').options.length<2;
 
  statusText.textContent='准备就绪';startupPhase='设置页面';start.disabled=false;scheduleResize();
 }
@@ -363,6 +400,14 @@ var Module={canvas,locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:m
 fillPreferences(readPreferences());
 form.addEventListener('input',()=>{formEdited=true;updateControls()});form.addEventListener('change',()=>{formEdited=true;updateControls()});
 new ResizeObserver(scheduleResize).observe(stage);
+const canvasObserver=new ResizeObserver(([entry])=>{
+ const size=entry.devicePixelContentBoxSize?.[0];
+ if(!size?.inlineSize||!size.blockSize){measuredCanvas=null;return}
+ measuredCanvas={width:size.inlineSize,height:size.blockSize,cssWidth:entry.contentRect.width,
+  cssHeight:entry.contentRect.height,dpr:devicePixelRatio||1};
+ scheduleResize();
+});
+try{canvasObserver.observe(canvas,{box:'device-pixel-content-box'})}catch{canvasObserver.observe(canvas)}
 form.addEventListener('submit',async event=>{
  event.preventDefault();if(!runtimeReady||running||rewardBusy)return;
  localSaveStorage.requestPersistence().then(persistent=>diagnostics?.record('persistent-storage',JSON.stringify({granted:persistent})));
@@ -370,7 +415,7 @@ form.addEventListener('submit',async event=>{
  if(p.unlockAllLevels&&!unlockAuthorized){
   // Unlock WebAudio inside this gesture even if the account check awaits I/O.
   const audio=Module.pvzMusic.unlock();audio.catch(()=>{});
-  try{await authorize();unlockAuthorized=true}catch(error){unlockAll.checked=false;rewardStatus.textContent=error.message||String(error);start.disabled=false;return}
+  try{await authorizeUnlock();unlockAuthorized=true}catch(error){unlockAll.checked=false;rewardStatus.textContent=error.message||String(error);start.disabled=false;return}
  }
  diagnostics?.start();
  try{
@@ -378,15 +423,23 @@ form.addEventListener('submit',async event=>{
   const audio=Module.pvzMusic.unlock();
   await startupDeadline(Promise.all([audio,textInputReady,full]),'初始化音频与输入');
   document.documentElement.classList.add('playing');document.body.classList.add('playing');window.scrollTo(0,0);fitCanvas();
+  const label=document.getElementById('startup-status');
+  function showPreparation(phase){
+   setStartupPhase(phase);
+   label.textContent=phase+'…';
+   label.hidden=false;
+  }
+  showPreparation('同步用户进度');
   await synchronizeProgress();
+  showPreparation('保存启动设置');
   await startupDeadline(saveSettings(p),'保存启动设置');
+  showPreparation('检查本地关卡存档');
   try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
-  running=true;lastWidth=Module.pvzViewport.width;stage.classList.add('running');
+  running=true;lastWidth=Module.pvzViewport.pixelWidth;lastHeight=Module.pvzViewport.pixelHeight;stage.classList.add('running');
   for(const input of form.elements)input.disabled=true;
   fitCanvas();canvas.focus();startFps();setStartupPhase('初始化窗口与图形');
   startupMonitor?.stop();
   const {createStartupMonitor}=await startupToolsReady;
-  const label=document.getElementById('startup-status');label.hidden=false;
   startupMonitor=createStartupMonitor({
    readState:()=>({loaded:!!Module._pvz_web_loading_complete?.(),updates:Module._pvz_web_updates?.()||0,draws:Module._pvz_web_draws?.()||0}),
    onProgress:(phase,elapsed)=>{label.textContent=phase+'… '+Math.floor(elapsed/1000)+' 秒'},
@@ -404,29 +457,9 @@ async function boot(){
  const {supportsMemory64,supportsSimd128,memoryModels,selectMemoryModel,runtimeStem,highResolutionLink}=await import('./runtime-selection.js');
  const memorySupported=supportsMemory64(),simdSupported=supportsSimd128(),models=memoryModels(config,memorySupported,simdSupported);
  Module.pvzSimdSupported=simdSupported;
- let savedMemory=null;try{savedMemory=localStorage.getItem('pvz_wasm_memory_override')}catch{}
- const memoryModel=selectMemoryModel(models,savedMemory);
+ const memoryModel=selectMemoryModel(models,null);
  Module.pvzMemoryModel=memoryModel;
- const memoryDropdown=document.getElementById('memory-model');
- document.getElementById('memory-field').hidden=false;
- memoryDropdown.replaceChildren(...models.map(model=>new Option(model==='wasm32'?'32 位':'64 位（Memory64，优先）',model)));
- memoryDropdown.value=memoryModel;memoryDropdown.disabled=models.length<2;
- // An old automatic wasm32 selection is not a manual override.
- const switchRuntime=async(key,value)=>{
-  try{
-   if(runtimeReady)await saveSettings(preferences());
-   localStorage.setItem(key,value);localStorage.setItem(storageKey,JSON.stringify(preferences()));
-   location.reload();
-  }catch(error){showError('切换运行时前保存设置失败，未重新加载：'+error.message)}
- };
- memoryDropdown.onchange=()=>switchRuntime('pvz_wasm_memory_override',memoryDropdown.value);
- document.getElementById('memory-info').textContent=models.length>1
-  ?'已检测到 Memory64，默认优先 64 位；仍可手动选择 32 位。切换会重新加载，设置和存档共用。'
-  :config.simd128&&!simdSupported?'未检测到 SIMD128，使用 32 位 WebGL 2 兼容版本。':!memorySupported?'当前浏览器不支持 Memory64，使用 32 位。':config.memory64?'此包仅包含 Memory64 诊断版本。':'此包仅包含 32 位版本。';
- if(config.version){document.title='pvz_perf · 网页 v'+config.version;document.getElementById('web-version').textContent='网页 v'+config.version}
- const dropdown=document.getElementById('graphics-backend');
- document.getElementById('graphics-field').hidden=false;
- dropdown.replaceChildren(new Option('正在检测图形接口…',''));dropdown.disabled=true;
+ if(config.version){document.title='pvz_perf · 高清网页 v'+config.version;document.getElementById('web-version').textContent='高清网页 v'+config.version}
  const {detectGraphics,capabilityText}=await import('./graphics.js');
  const capabilities=await detectGraphics(navigator.gpu,{webgpu:config.webgpu&&(!config.simd128||simdSupported),webgl:!config.webgpu||config.fallback});
  // Reuse the normal WebGPU probe. A WebGL-only distribution may probe HD
@@ -438,21 +471,8 @@ async function boot(){
  }
  document.getElementById('graphics-capabilities').textContent=capabilityText(capabilities);
  Module.pvzGraphicsCapabilities=capabilities;
- const available=[['webgpu','WebGPU'],['webgl','WebGL 2']].filter(([name])=>capabilities[name]&&!(name==='webgpu'&&config.webgpuMemory64Only&&memoryModel!=='wasm64'));
- if(!available.length){
-  dropdown.replaceChildren(new Option('无可用图形接口',''));
-  throw Error(config.fallback?'当前浏览器的 WebGPU 和 WebGL 2 都无法运行本游戏。请查看下方检测结果，或换用其他浏览器。':'此包提供的图形接口无法运行本游戏。请查看下方检测结果。');
- }
- // Preferences cannot make an unavailable API selectable. Reset stale values
- // to auto so browser upgrades can use a newly available backend next time.
- let saved='auto';try{saved=localStorage.getItem('pvz_graphics_backend')||'auto'}catch{}
- const mode=saved==='auto'||available.some(([name])=>name===saved)?saved:'auto';
- if(mode!==saved)try{localStorage.setItem('pvz_graphics_backend',mode)}catch{}
- const backend=mode==='auto'?available[0][0]:mode;
- dropdown.replaceChildren(...(available.length>1?[new Option('自动（优先 WebGPU）','auto')]:[]),...available.map(([name,label])=>new Option(label,name)));
- dropdown.value=available.length>1?mode:backend;dropdown.disabled=available.length<2;
- dropdown.onchange=()=>switchRuntime('pvz_graphics_backend',dropdown.value);
- document.getElementById('graphics-info').textContent='当前使用 '+(backend==='webgpu'?'WebGPU':'WebGL 2')+'；切换接口会重新加载设置页，存档保留。';
+ if(!capabilities.webgpu)throw Error('高清版需要 WebGPU，请检查浏览器和设备支持。');
+ const backend='webgpu';
  Module.pvzSelectedBackend=backend;
  const stem=runtimeStem(config,backend,memoryModel);
  Module.pvzRuntimeStem=stem;

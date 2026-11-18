@@ -1,13 +1,13 @@
 // One adapter per snapshot read. Legacy Toy storage is read-only; only a
 // complete, validated snapshot may be copied to the shared storage space.
-export function sharedStorage(toy,storageId,uploadState=()=>{}){
+export function sharedStorage(toy,storageId,uploadState=()=>{},sharedOnly=false){
  if(!/^st_[a-z0-9]{16}$/.test(storageId)||typeof toy.getSharedStorage!=='function'||typeof toy.setSharedStorage!=='function')throw Error('当前宿主未开放指定的共享存档');
  let legacy=false,headKey,headRaw;const captured={};
  return {
   async getCloudStorage(keys){
    if(keys.length===1&&/^pvz_(progress|lineups)_v1$/.test(keys[0])){
     legacy=false;headKey=keys[0];const rows=await toy.getSharedStorage(storageId,keys);
-    if(rows[headKey])return rows;
+    if(sharedOnly||rows[headKey])return rows;
     legacy=true;
    }
    const rows=legacy?await toy.getCloudStorage(keys):await toy.getSharedStorage(storageId,keys);

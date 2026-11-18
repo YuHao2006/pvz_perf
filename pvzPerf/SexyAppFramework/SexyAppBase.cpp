@@ -1,3 +1,6 @@
+#ifdef __ANDROID__
+#include "platform/android/AndroidWindow.h"
+#endif
 #include "graphics/GpuBackend.h"
 #include <stdexcept>
 #include "platform/ApplicationHost.h"
@@ -1337,22 +1340,29 @@ bool SexyAppBase::RegistryWriteData(const std::string&, const uchar*, unsigned i
 void SexyAppBase::WriteToRegistry()
 {
 	JsonDoc aDoc;
-	aDoc.SetInt("targetFps", mFrameTiming.mTargetFps);
-	aDoc.SetBool("autoDetectFrameRate",mAutoDetectFrameRate);
     aDoc.SetBool("landscapeUI",mLandscapeUI);
-    aDoc.SetBool("unlockAllLevels",mUnlockAllLevels);
-#if defined(__ANDROID__)
-    aDoc.SetBool("hdr", false);
-#else
-    aDoc.SetBool("hdr", mHdrRequested);
-    aDoc.SetFloat("hdrStrength", mScaleHDRStrength);
-#endif
+    aDoc.SetBool("autoDetectFrameRate",mAutoDetectFrameRate);
+    aDoc.SetInt("targetFps",mFrameTiming.mTargetFps);
     // Persist slider percentages, not mixer gain. The original SFX slider's
     // full-scale gain is 0.65; both JSON fields still range from 0 to 100.
     aDoc.SetInt("musicVolume", std::llround(std::clamp(mMusicVolume, 0.0f, 1.0f) * 100.0));
     aDoc.SetInt("sfxVolume", std::llround(std::clamp(mSfxVolume / 0.65, 0.0, 1.0) * 100.0));
 	aDoc.SetInt("muted", (mMuteCount - mAutoMuteCount > 0) ? 1 : 0);
 	aDoc.SetString("screenMode", mIsWindowed ? "windowed" : "fullscreen");
+#if defined(__ANDROID__)
+    aDoc.SetBool("hdr", false);
+#else
+    aDoc.SetBool("hdr", mHdrRequested);
+    aDoc.SetFloat("hdrStrength", mScaleHDRStrength);
+#endif
+    aDoc.SetInt("resolution/minWidth",mResolution.minWidth);
+    aDoc.SetInt("resolution/minHeight",mResolution.minHeight);
+    aDoc.SetInt("resolution/maxWidth",mResolution.maxWidth);
+    aDoc.SetInt("resolution/maxHeight",mResolution.maxHeight);
+    aDoc.SetBool("unlockAllLevels",mUnlockAllLevels);
+#ifdef __ANDROID__
+    aDoc.SetInt("texturePackScale",mTexturePackScale);
+#endif
 #ifdef _WIN32
     aDoc.SetInt("windowWidth", mWindowClientWidth);
     aDoc.SetInt("windowHeight", mWindowClientHeight);
@@ -1716,8 +1726,24 @@ void SexyAppBase::ReadFromRegistry()
 	// no registry / user-profile dependency). 缺失/损坏 → 全默认（沿袭
 	// XML 时代静默默认）；键缺失 → 成员保持构造默认，故逐键 Has 后再赋值。
 	JsonDoc aDoc;
-	if (!aDoc.LoadFile(SettingsPath().c_str()))
-		return;
+    aDoc.LoadFile(SettingsPath());
+#ifdef __ANDROID__
+    const char* packScale = std::getenv("PVZ_ANDROID_TEXTURE_PACK_SCALE");
+    mTexturePackScale = packScale && std::string_view(packScale) == "4" ? 4 : 2;
+#endif
+    const int previousScale=int(std::clamp(aDoc.GetInt("texturePackScale",mTexturePackScale),2LL,4LL));
+    const auto readDimension=[&](const char* key,int fallback,int minimum,int maximum){
+        return int(std::clamp(aDoc.GetInt(key,fallback),(long long)minimum,(long long)maximum));
+    };
+    mResolution.minWidth=readDimension("resolution/minWidth",800,800,5600);
+    mResolution.minHeight=readDimension("resolution/minHeight",600,600,2400);
+    mResolution.maxWidth=readDimension("resolution/maxWidth",1400*mTexturePackScale,mResolution.minWidth,5600);
+    mResolution.maxHeight=readDimension("resolution/maxHeight",600*mTexturePackScale,mResolution.minHeight,2400);
+    if (previousScale!=mTexturePackScale && mResolution.maxWidth==1400*previousScale && mResolution.maxHeight==600*previousScale) {
+        mResolution.maxWidth=std::max(mResolution.minWidth,1400*mTexturePackScale);
+        mResolution.maxHeight=std::max(mResolution.minHeight,600*mTexturePackScale);
+    }
+    if (aDoc.mStatus!=JsonDoc::LoadStatus::Loaded) return;
 	mAutoDetectFrameRate=aDoc.GetBool("autoDetectFrameRate",true);
     mLandscapeUI=aDoc.GetBool("landscapeUI",false);
     mUnlockAllLevels=aDoc.GetBool("unlockAllLevels",false);
@@ -1749,8 +1775,8 @@ void SexyAppBase::ReadFromRegistry()
 	if (aDoc.Has("screenMode"))
 		mIsWindowed = LowerScaleText(aDoc.GetString("screenMode", "")) == "windowed";
 #ifdef _WIN32
-    mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,5600LL));
-    mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",0),0LL,2400LL));
+    mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,static_cast<long long>(INT_MAX / 2)));
+    mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",0),0LL,static_cast<long long>(INT_MAX / 2)));
 #endif
 	if (aDoc.Has("preferredX"))
 		mPreferredX = (int)aDoc.GetInt("preferredX", 0);

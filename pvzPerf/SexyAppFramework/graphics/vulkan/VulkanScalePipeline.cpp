@@ -257,8 +257,6 @@ struct VulkanScalePipeline::Impl {
             std::vector<Image*> textures(effect.mTextures.size());
             textures[ScaleSlot(effect.mInput)]=output;
             std::set<Image*> produced{output},readOnly{output};
-            const bool linear=std::any_of(effect.mSamplers.begin(),effect.mSamplers.end(),
-                [](const auto& sampler){ return sampler.mFilter==VK_FILTER_LINEAR; });
             for (const auto& texture:effect.mTextures) {
                 if (texture.mId==effect.mInput) continue;
                 Image* image=nullptr;
@@ -299,7 +297,6 @@ struct VulkanScalePipeline::Impl {
                 for (const auto id:desc.mInputs) {
                     auto* image=resolve(id);
                     if (!produced.contains(image)) throw std::runtime_error("Scale pass reads unwritten resource "+std::to_string(ScaleSlot(id)));
-                    if (linear) RequireFormat(context.physical,image->native.format,VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT);
                     pass.inputs.push_back(image);
                 }
                 for (const auto id:desc.mOutputs) {

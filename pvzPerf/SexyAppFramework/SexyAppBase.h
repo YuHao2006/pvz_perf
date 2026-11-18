@@ -3,6 +3,7 @@
 #include "platform/NativeHandles.h"
 #include "misc/Rect.h"
 #include "graphics/Color.h"
+#include "graphics/RenderResolution.h"
 #include "widget/ButtonListener.h"
 #include "widget/DialogListener.h"
 #include "misc/Buffer.h"
@@ -404,7 +405,9 @@ public:
 	// 运行时探测（微软 AutoHDR 同源，启动读一次，不轮询）。
 	// 渲染为 AutoHDR 复刻（dxgi.dll Sdr2HdrData 反汇编重建）；无饱和度
 	// 参数（Windows 校准色度矩阵已作用于全部内容）。
-	bool mHdrRequested = false;
+	RenderResolution mResolution;
+    int mTexturePackScale=2;
+    bool mHdrRequested = false;
     bool								mScaleHDREnabled = false;
 	float								mScaleHDRPaperWhite = 80.0f;   // nits ↔ PaperWhiteNits
 	float								mScaleHDRMaxNits = 1000.0f;    // nits ↔ MaxTVNits（私有查询/面板元数据）

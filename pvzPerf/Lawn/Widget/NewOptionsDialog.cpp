@@ -62,9 +62,7 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
     mSfxVolumeSlider->SetValue(theApp->mSfxVolume / 0.65);
 
 #if defined(__ANDROID__)
-    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, false);
-    mFullscreenCheckbox->mDisabled = true;
-    mFullscreenCheckbox->SetVisible(false);
+    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, theApp->mLandscapeUI);
 #else
     mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
 #endif
@@ -204,7 +202,7 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
     TodDrawString(g, ("Sound FX"), 186, 167 + aSfxOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     TodDrawString(g, mHdrCheckbox->mDisabled ? "HDR" : "HDR (Restart)", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, mHdrCheckbox->mDisabled ? Color(150, 150, 150) : aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     if (mFullscreenCheckbox->mVisible)
-        TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+        TodDrawString(g, BuildConfig::System==BuildConfig::TargetSystem::Android ? "Landscape UI (Restart)" : gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 }
 
 //0x45CF50
@@ -241,7 +239,8 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
         break;
     case NewOptionsDialog::NewOptionsDialog_Fullscreen:
 #if defined(__ANDROID__)
-        // This widget is HDR on Android. Never feed it into windowed/fullscreen.
+        mApp->mLandscapeUI = checked;
+        mApp->WriteToRegistry();
         break;
 #else
         if (!checked && mApp->mForceFullscreen)

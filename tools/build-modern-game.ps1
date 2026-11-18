@@ -41,8 +41,8 @@ if($StageRuntime){
             Copy-Item -LiteralPath (Join-Path $source $file) -Destination (Join-Path $dest $file)
         }
     }
-    if(!(Test-Path -LiteralPath (Join-Path $dest 'scale.json'))){
-        Copy-Item -LiteralPath (Join-Path $root 'scale.json') -Destination (Join-Path $dest 'scale.json')
+    if(!(Test-Path -LiteralPath (Join-Path $dest 'settings.json'))){
+        Copy-Item -LiteralPath (Join-Path $root 'config/default-settings.json') -Destination (Join-Path $dest 'settings.json')
     }
     Copy-Item -LiteralPath (Join-Path $root 'tools\start-lp14.cmd') -Destination (Join-Path $dest 'start-lp14.cmd') -Force
 }

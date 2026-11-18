@@ -28,7 +28,11 @@ if (!$OutputDirectory) { $OutputDirectory = Join-Path $root "out\$platform" }
 # Resolve while still in the caller's directory; Gradle runs after Push-Location.
 $OutputDirectory = [IO.Path]::GetFullPath([IO.Path]::Combine($PWD.Path, $OutputDirectory))
 if ($TexturePack -and !$PakFile) { throw 'Specify -PakFile for the selected HD texture pack.' }
-$packageVariant = if ($TexturePack) { "$platform-hd-$TexturePack" } else { $platform }
+$packageVariant = switch ($TexturePack) {
+    '2x' { "$platform-hd-1200p" }
+    '4x' { "$platform-hd-2400p" }
+    default { $platform }
+}
 if (!$PakFile) { $PakFile = Join-Path $build "Release\main.pak64" }
 if (!(Test-Path -LiteralPath $PakFile)) { throw "main.pak64 not found: $PakFile" }
 $project = Join-Path $root 'android'
@@ -57,6 +61,15 @@ foreach ($required in @('game_vs.spv', 'game_ps.spv', 'game_sprite_ps.spv', 'gam
     }
 }
 New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
+$packScale = if ($TexturePack -eq '4x') { 4 } else { 2 }
+$settings = Get-Content (Join-Path $root 'config/default-settings.json') -Raw | ConvertFrom-Json
+$settings.landscapeUI = $true
+$settings.resolution.maxWidth = 1400 * $packScale
+$settings.resolution.maxHeight = 600 * $packScale
+$settings | Add-Member -NotePropertyName texturePackScale -NotePropertyValue $packScale
+[IO.File]::WriteAllText((Join-Path $assetDir 'settings.json'), ($settings | ConvertTo-Json), [Text.UTF8Encoding]::new($false))
+$oldMarker = Join-Path $assetDir 'render-height.txt'
+if (Test-Path -LiteralPath $oldMarker) { Remove-Item -LiteralPath $oldMarker }
 $stagedLegacyScale = Join-Path $assetDir 'scale.json'
 if (Test-Path -LiteralPath $stagedLegacyScale -PathType Leaf) { Remove-Item -LiteralPath $stagedLegacyScale }
 New-Item -ItemType Directory -Force -Path $jniDir | Out-Null

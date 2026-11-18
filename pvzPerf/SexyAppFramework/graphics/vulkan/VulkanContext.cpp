@@ -371,7 +371,7 @@ std::optional<VkExtent2D> VulkanContext::QuerySwapchainExtent(VkSurfaceCapabilit
         return std::nullopt;
     VK_CHECK(vkGetPhysicalDeviceSurfaceCapabilitiesKHR(physicalDevice,surface,&caps));
     return ChooseVulkanSurfaceExtent(caps,static_cast<int>(drawable.width),
-                                     static_cast<int>(drawable.height));
+                                            static_cast<int>(drawable.height));
 }
 
 void VulkanContext::CreateSwapchain(const VkSurfaceCapabilitiesKHR& caps, VkExtent2D extent) {
@@ -593,7 +593,7 @@ void VulkanContext::CreatePresentSemaphores() {
 
 VulkanContext::VulkanContext(const VulkanInitConfig& config, NativeWindowHandle borrowedWindow,
                              const VkSwapchainCreateInfoKHR& swapchainConfig)
-    : hwnd(borrowedWindow), swapchainConfig_(swapchainConfig) {
+    : resolution(config.resolution), hwnd(borrowedWindow), swapchainConfig_(swapchainConfig) {
     VulkanSurfacePlatform::Validate(hwnd);
     try {
         InitializeVulkan(config);

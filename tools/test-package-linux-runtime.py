@@ -59,7 +59,7 @@ class RuntimePackageTests(unittest.TestCase):
             (release / "shaders").mkdir()
             (release / "shaders/probe.spv").write_bytes(b"shader-path-probe")
             (release / "main.pak64").write_bytes(b"resource-root-probe")
-            (release / "scale.json").write_text('{"user_config": true}\n')
+            (release / "settings.json").write_text('{"user_config": true}\n')
             (release / "Windows.exe").write_bytes(b"MZ-preserve-me")
             (release / "start.cmd").write_text("@echo WSL launcher\n")
             output = root / "package"
@@ -84,8 +84,8 @@ class RuntimePackageTests(unittest.TestCase):
                 self.assertEqual(hashlib.sha256((output / entry["path"]).read_bytes()).hexdigest(),
                                  entry["sha256"])
             self.assertEqual((output / "Windows.exe").read_bytes(), b"MZ-preserve-me")
-            self.assertEqual((output / "scale.json").read_bytes(),
-                             (release / "scale.json").read_bytes())
+            self.assertEqual((output / "settings.json").read_bytes(),
+                             (release / "settings.json").read_bytes())
             moved = root / "moved package's directory"
             output.rename(moved)
             link = root / "launcher"

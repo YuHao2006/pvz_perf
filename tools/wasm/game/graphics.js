@@ -15,7 +15,7 @@ function probeWebGL(){
   if(!gl.getExtension('EXT_color_buffer_float'))throw Error('缺少 EXT_color_buffer_float，无法绘制浮点中间纹理');
   const texture=(format,width,height,data=null)=>{
    const value=gl.createTexture();textures.push(value);gl.bindTexture(gl.TEXTURE_2D,value);
-   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.LINEAR);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.LINEAR);
+   gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MIN_FILTER,gl.NEAREST);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_MAG_FILTER,gl.NEAREST);
    gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_S,gl.CLAMP_TO_EDGE);gl.texParameteri(gl.TEXTURE_2D,gl.TEXTURE_WRAP_T,gl.CLAMP_TO_EDGE);
    // Match the native renderer's allocation type, not just framebuffer completeness.
    gl.texImage2D(gl.TEXTURE_2D,0,format,width,height,0,gl.RGBA,format===gl.RGBA16F?gl.FLOAT:gl.UNSIGNED_BYTE,data);
@@ -99,7 +99,7 @@ struct Vertex{ @builtin(position) position:vec4f, @location(0) uv:vec2f }
   const floating=texture('rgba16float',[2,2],GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.TEXTURE_BINDING);
   const output=texture('rgba8unorm',[2,2],GPUTextureUsage.RENDER_ATTACHMENT|GPUTextureUsage.COPY_SRC);
   device.queue.writeTexture({texture:source},new Uint8Array([153,51,0,128]),{bytesPerRow:4},[1,1]);
-  const sampler=device.createSampler({minFilter:'linear',magFilter:'linear'});
+  const sampler=device.createSampler({minFilter:'nearest',magFilter:'nearest'});
   const encoder=device.createCommandEncoder();
   const draw=(target,image,program,clearValue)=>{
    const pass=encoder.beginRenderPass({colorAttachments:[{view:target.createView(),loadOp:'clear',storeOp:'store',clearValue}]});

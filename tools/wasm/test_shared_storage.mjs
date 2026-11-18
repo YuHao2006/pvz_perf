@@ -70,3 +70,20 @@ assert.deepEqual(backupRows.get('conflict').files,files('old local'),'Automatic 
 let seen;startup.store=async(value,modifiedAt)=>{seen={value,modifiedAt}};
 await startup.save();assert.equal(seen.modifiedAt,time+300,'Saving unchanged restored data preserves its version');
 console.log('Shared Toy storage: legacy migration, namespace priority, checksum, clock conflicts, stale uploads, racing chunks, cleanup and restore timestamps passed');
+{
+ const hd=fixture();
+ await legacySnapshot(hd,files('ordinary private save'));
+ let notices=0;
+ const options={sharedOnly:true,onEmptySharedSave:()=>notices++};
+ await hd.create({},options).prepare();
+ assert.equal(notices,1);
+ assert.equal(hd.legacyReads,0);
+ assert.deepEqual(hd.shared,{});
+ Object.assign(hd.shared,hd.legacy);
+ await hd.create({},options).prepare();
+ assert.equal(notices,1);
+ hd.toy.getSharedStorage=async()=>{throw Error('offline')};
+ await hd.create({},options).prepare();
+ assert.equal(notices,1);
+ console.log('PASS HD notice follows shared progress: empty, existing, offline');
+}

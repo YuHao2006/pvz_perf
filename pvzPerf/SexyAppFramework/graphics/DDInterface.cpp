@@ -249,11 +249,11 @@ int DDInterface::ResizePreparedPresent()
     if (!mRenderInterface->ResizePresent(width,height)) return RESULT_DEFERRED;
     auto viewport = GameViewport::Fit(width,height);
     if(mApp->mLandscapeUIActive && viewport.width<890)viewport=GameViewport::Fit(890,600);
-#if defined(__ANDROID__)
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU)
     mRenderInterface->ResizeScene(viewport.width, viewport.height);
 #endif
     if (viewport.width != mWidth || viewport.height != mHeight) {
-#if !defined(__ANDROID__)
+#if !defined(PVZ_GPU_VULKAN) && !defined(PVZ_GPU_WEBGPU)
         mRenderInterface->ResizeScene(viewport.width, viewport.height);
 #endif
         mWidth = viewport.width;

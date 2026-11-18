@@ -518,47 +518,11 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal)
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/metal/shaders")
 endif()
-if(APPLE)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(PVZ_RENDER_BACKEND STREQUAL "OPENGL")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(PVZ_RENDER_BACKEND STREQUAL "D3D9")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+if(gameShaderDirectory)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
         VERBATIM)
-else()
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_SOURCE_DIR}/scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-
 endif()
 
 set(ADDITIONAL_LIBRARY_DEPENDENCIES

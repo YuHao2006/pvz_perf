@@ -64,7 +64,6 @@ int main(int argc,char** argv) {
         Require(argc==2,"Pass the paired Release runtime directory");
         const auto runtime=std::filesystem::absolute(argv[1]);
         Require(std::filesystem::is_directory(runtime),"Release directory does not exist");
-        Require(std::filesystem::is_regular_file(runtime/"scale.json"),"Release scale.json is required");
         Require(Sexy::NativeWindowsWindowApi::EnableSystemDpiAwareness(),"Cannot set DPI awareness");
         const auto profile=std::filesystem::temp_directory_path()/
             ("pvz-scale-residency-"+std::to_string(GetCurrentProcessId())+"-"+std::to_string(GetTickCount64()));

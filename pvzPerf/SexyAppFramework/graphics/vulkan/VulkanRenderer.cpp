@@ -61,19 +61,16 @@ VulkanClip FitGameSceneToSurface(int sceneWidth, int sceneHeight, int width, int
 
 VulkanClip ScenePixelExtent(const VulkanContext& window, int width, int height)
 {
-#if defined(__ANDROID__)
-    if (window.swapchainExtent.width && window.swapchainExtent.height)
-        return FitGameSceneToSurface(width, height,
-            int(window.swapchainExtent.width), int(window.swapchainExtent.height));
-#else
-    (void)window;
-#endif
+    if (window.swapchainExtent.width && window.swapchainExtent.height) {
+        auto rect=FitGameSceneToSurface(width,height,int(window.swapchainExtent.width),int(window.swapchainExtent.height));
+        auto [w,h]=window.resolution.Fit(rect.width,rect.height);
+        return {0,0,w,h};
+    }
     return {0, 0, width*kScenePixelScale, height*kScenePixelScale};
 }
 
 VkRect2D ScaleSceneScissor(VkRect2D rect, int width, int height, int pixelWidth, int pixelHeight)
 {
-#if defined(__ANDROID__)
     const auto scale = [](int64_t edge, int pixels, int logical) {
         return int32_t(edge*pixels/logical);
     };
@@ -82,13 +79,7 @@ VkRect2D ScaleSceneScissor(VkRect2D rect, int width, int height, int pixelWidth,
     const auto right = scale(int64_t(rect.offset.x)+rect.extent.width,pixelWidth,width);
     const auto bottom = scale(int64_t(rect.offset.y)+rect.extent.height,pixelHeight,height);
     return {{left,top},{uint32_t(right-left),uint32_t(bottom-top)}};
-#else
-    const int scale = pixelWidth == width ? 1 : kScenePixelScale;
-    (void)height;
-    (void)pixelHeight;
-    return {{rect.offset.x*scale,rect.offset.y*scale},
-        {rect.extent.width*scale,rect.extent.height*scale}};
-#endif
+
 }
 
 constexpr VkDeviceSize kFrameVertexBytes = VkDeviceSize{kFrameVertexCapacity} * sizeof(VulkanVertex);
@@ -393,6 +384,9 @@ struct VulkanRenderer::Impl {
     std::string poolShaderPath;
     std::optional<VulkanHdrParams> hdr;
     std::array<VkSampler, 4> samplers{};
+    VkSampler upscaleSampler{};
+    VkDescriptorSet upscaleSet{};
+    bool upscalePresentation = false;
 #if defined(PVZ_VULKAN_LEGACY)
     std::array<VkDescriptorSet,4> samplerSets{};
     std::vector<VkDescriptorSet> freeImageSets;
@@ -639,6 +633,7 @@ struct VulkanRenderer::Impl {
         if (mixedSpriteFragmentShader) vkDestroyShaderModule(device,mixedSpriteFragmentShader,nullptr);
         if (hdrFragmentShader) vkDestroyShaderModule(device, hdrFragmentShader, nullptr);
         for (auto pool : pools) vkDestroyDescriptorPool(device, pool, nullptr);
+        if (upscaleSampler) vkDestroySampler(device, upscaleSampler, nullptr);
         for (auto sampler : samplers) if (sampler) vkDestroySampler(device, sampler, nullptr);
 #if !defined(PVZ_VULKAN_LEGACY)
         if (textureArrayPool) vkDestroyDescriptorPool(device, textureArrayPool, nullptr);
@@ -1287,7 +1282,7 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
 #endif
     for (unsigned i = 0; i < 4; ++i) {
         VkSamplerCreateInfo sampler{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-        sampler.magFilter = sampler.minFilter = (i & 1) ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        sampler.magFilter = sampler.minFilter = VK_FILTER_NEAREST;
         sampler.addressModeU = sampler.addressModeV = sampler.addressModeW = (i & 2) ?
             VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         VK_REQUIRE(vkCreateSampler(device, &sampler, nullptr, &samplers[i]));
@@ -1313,6 +1308,19 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     }
     const VkPushConstantRange push{VkShaderStageFlags(hdr ? VK_SHADER_STAGE_VERTEX_BIT|VK_SHADER_STAGE_FRAGMENT_BIT : VK_SHADER_STAGE_VERTEX_BIT),
         0,hdr ? 32u : 8u};
+    VkSamplerCreateInfo upscaleInfo{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
+    upscaleInfo.magFilter = upscaleInfo.minFilter = VK_FILTER_LINEAR;
+    upscaleInfo.addressModeU = upscaleInfo.addressModeV = upscaleInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
+    VK_REQUIRE(vkCreateSampler(device, &upscaleInfo, nullptr, &upscaleSampler));
+    upscaleSet = AllocateSet(samplerLayout);
+    std::array<VkDescriptorImageInfo, 4> upscaleBindings{};
+    for (auto& image : upscaleBindings) image.sampler = upscaleSampler;
+    VkWriteDescriptorSet upscaleWrite{VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET};
+    upscaleWrite.dstSet = upscaleSet;
+    upscaleWrite.descriptorCount = binding.descriptorCount;
+    upscaleWrite.descriptorType = VK_DESCRIPTOR_TYPE_SAMPLER;
+    upscaleWrite.pImageInfo = upscaleBindings.data();
+    vkUpdateDescriptorSets(device, 1, &upscaleWrite, 0, nullptr);
     const VkDescriptorSetLayout layouts[] = {imageLayout, samplerLayout};
     VkPipelineLayoutCreateInfo pipelineInfo{VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO};
     pipelineInfo.setLayoutCount = 2;
@@ -1450,7 +1458,6 @@ void VulkanRenderer::Impl::InitImagePass() {
     if (imagePass) return;
     constexpr VkFormatFeatureFlags required = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
         VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BLEND_BIT | VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT |
-        VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT |
 #if !defined(PVZ_VULKAN_LEGACY)
         VK_FORMAT_FEATURE_TRANSFER_SRC_BIT | VK_FORMAT_FEATURE_TRANSFER_DST_BIT |
 #endif
@@ -1787,9 +1794,9 @@ VulkanTexture* VulkanRenderer::ConvertBenchmarkTexture(VulkanTexture* source,VkF
         throw std::logic_error("Benchmark conversion requires a completed source image");
     VkFormatProperties properties{};
     vkGetPhysicalDeviceFormatProperties(s.window.physicalDevice,format,&properties);
-    const auto required=VK_FORMAT_FEATURE_BLIT_DST_BIT|VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT;
+    const auto required=VK_FORMAT_FEATURE_BLIT_DST_BIT|VK_FORMAT_FEATURE_SAMPLED_IMAGE_BIT;
     if ((properties.optimalTilingFeatures&required)!=required)
-        throw std::runtime_error("Requested benchmark texture format lacks filtered blit support");
+        throw std::runtime_error("Requested benchmark texture format lacks blit destination or sampling support");
     s.FlushTextureUploads();s.CompleteTransfers();s.window.WaitForFrame();
     auto target=s.Image(source->width,source->height,VK_IMAGE_USAGE_TRANSFER_SRC_BIT|VK_IMAGE_USAGE_TRANSFER_DST_BIT,
         false,format);
@@ -2618,9 +2625,9 @@ void VulkanRenderer::Impl::AppendRun(DrawStream* stream, VkDeviceSize offset, ui
     // 对恒为 {纹理数组, 采样器数组}——首绘绑定一次，帧内不再变化；断点
     // 只剩 管线/剪刀/视口
 #if defined(PVZ_VULKAN_LEGACY)
-    const std::array sets{imageSet,selectedSampler};
+    const std::array sets{imageSet, pipeline == presentPipeline && upscalePresentation ? upscaleSet : selectedSampler};
 #else
-    const std::array sets{textureArray,samplerSet};
+    const std::array sets{textureArray, pipeline == presentPipeline && upscalePresentation ? upscaleSet : samplerSet};
 #endif
     const bool aVpChange = drawState.width!=vw || drawState.height!=vh;
     const bool aScChange = !drawState.hasScissor || drawState.scissor.offset.x!=scissor.offset.x ||
@@ -2978,6 +2985,7 @@ void VulkanRenderer::EndSceneAndPresent() try {
     // all state before presenting, including when surface == logical canvas.
     s.drawState = {};
     const auto rect = PresentRect(int(s.frame.extent.width),int(s.frame.extent.height));
+    s.upscalePresentation = rect.width > presentImage->width || rect.height > presentImage->height;
     std::array<VkClearRect,4> borders{};
     unsigned int borderCount=0;
     for(const auto& border:PresentBorderRects(rect,int(s.frame.extent.width),int(s.frame.extent.height)))

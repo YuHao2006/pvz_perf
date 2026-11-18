@@ -80,7 +80,6 @@ def package(args):
                  'pvz_perf.png', 'pvz_perf.desktop'):
         include(release / name, name)
     include(release / 'data/pvz_dat64_converter', 'data/pvz_dat64_converter')
-    include(root / 'scale.json', 'scale.json')
     include(root / 'LICENSE', 'LICENSE')
     include(root / 'pvzPerf/SexyAppFramework/PopCap Framework License.txt',
             'licenses/PopCap-Framework.txt')
@@ -106,6 +105,7 @@ def package(args):
                  Path(name).name.lower() in {'users.dat', 'settings.json'}]
     if forbidden:
         raise ValueError(f'Unexpected private, debug or test files: {forbidden}')
+    include(root / "config/default-settings.json", "settings.json")
     saves = read_test_saves(args.test_saves)
     requirements = {}
     for name, path in files.items():
@@ -176,7 +176,7 @@ Install a working Vulkan ICD for your GPU. Audio uses OpenAL Soft and a host aud
 Wayland additionally needs its compositor, libdecor plugin and XKB data.
 Error dialogs use host zenity or kdialog; stderr and logs remain available without them.
 
-scale.json uses the included Anime4K and SSimDownscaler effects.
+Display settings are in settings.json.
 Third-party sources/terms and the PopCap Framework notice are in licenses/.
 release-manifest.json records source revision, hashes and ELF dependencies.
 '''

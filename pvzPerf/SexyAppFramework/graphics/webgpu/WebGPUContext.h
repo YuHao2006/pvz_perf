@@ -1,5 +1,6 @@
 #pragma once
 #include "platform/NativeHandles.h"
+#include "graphics/RenderResolution.h"
 #include <string>
 #include <webgpu/webgpu_cpp.h>
 namespace Sexy
@@ -8,6 +9,7 @@ class WebGPUContext final
 {
   public:
     NativeWindowHandle window;
+    RenderResolution resolution;
     unsigned int width = 0, height = 0;
     bool surfaceSuspended = false;
     bool dualSource = false;

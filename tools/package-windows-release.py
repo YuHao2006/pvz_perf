@@ -86,20 +86,6 @@ def package(args):
             include(release / name, name)
     include(release / "data/pvz_dat64_converter.exe", "data/pvz_dat64_converter.exe")
     include(release / "data/pvz_dfu.dll", "data/pvz_dfu.dll")
-    scale = root / "scale.json"
-    if not modern:
-        scale = root / f"pvzPerf/SexyAppFramework/graphics/{args.backend}/default-scale.json"
-        if args.backend == "d3d9" and not scale.is_file():
-            scale = root / "pvzPerf/SexyAppFramework/graphics/opengl/default-scale.json"
-        config = json.loads(scale.read_text(encoding="utf-8"))
-        if (config["HDR"]["enable"] is not False
-                or config["window"].get("effects") != []
-                or config["fullScreen"].get("effects") != []
-                or config["window"].get("multiplier") != 1
-                or config["fullScreen"].get("output", {"width": 0, "height": 0})
-                != {"width": 0, "height": 0}):
-            raise ValueError("Win7 defaults must disable HDR, effects and custom scaling")
-    include(scale, "scale.json")
     include(root / "LICENSE", "LICENSE")
     include(root / "pvzPerf/SexyAppFramework/PopCap Framework License.txt",
             "licenses/PopCap-Framework.txt")
@@ -136,6 +122,9 @@ def package(args):
                                  Path(name).name.lower())]
     if forbidden:
         raise ValueError(f"Personal or debug files in package: {forbidden}")
+    settings = json.loads((root / "config/default-settings.json").read_text(encoding="utf-8"))
+    if args.render_height == 2400:
+        settings["resolution"].update(maxWidth=5600, maxHeight=2400)
     saves = read_test_saves(args.test_saves)
     source_commit = args.source_commit or subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()
@@ -178,6 +167,7 @@ def package(args):
     with zipfile.ZipFile(args.output, "x", compression=zipfile.ZIP_DEFLATED, compresslevel=6) as archive:
         for name, path in sorted(files.items()):
             archive.write(path, name)
+        archive.writestr("settings.json", json.dumps(settings, indent=2) + "\n")
         for name, data in sorted(saves.items()):
             archive.writestr(name, data)
         archive.writestr("README.txt", readme)
@@ -188,7 +178,7 @@ def package(args):
     print(json.dumps({"archive": str(args.output.resolve()),
                       "bytes": args.output.stat().st_size,
                       "sha256": hashlib.sha256(args.output.read_bytes()).hexdigest(),
-                      "files": len(files) + len(saves) + 1, "personal_saves": False,
+                      "files": len(files) + len(saves) + 2, "personal_saves": False,
                       "generated_test_saves": True}, indent=2))
 
 
@@ -202,6 +192,7 @@ if __name__ == "__main__":
                         help="Generated package-test-saves.py ZIP; both data/ and retail/ are required")
     parser.add_argument("--effects-directory", type=Path, required=True,
                         help="Staged Magpie effects, README, SOURCES and licenses")
+    parser.add_argument("--render-height", type=int, choices=(1200, 2400), default=1200)
     parser.add_argument("--source-commit", help="Source revision; defaults to git HEAD at packaging time")
     parser.add_argument("--cpu-baseline", default="unspecified",
                         help="Build's CPU baseline, recorded without inferring build flags")

@@ -6,12 +6,42 @@ export function openLocalSaveDatabase(){return new Promise((resolve,reject)=>{
  request.onupgradeneeded=()=>{request.result.createObjectStore('files');request.result.createObjectStore('meta')};
  request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);
 })}
-function transaction(db,stores){try{return db.transaction(stores,'readwrite',{durability:'strict'})}catch(error){if(!(error instanceof TypeError))throw error;return db.transaction(stores,'readwrite')}}
+function transaction(db,stores,mode){
+ if(mode==='readonly')return db.transaction(stores,mode);
+ try{return db.transaction(stores,mode,{durability:'strict'})}
+ catch(error){if(!(error instanceof TypeError))throw error;return db.transaction(stores,mode)}
+}
 function completed(tx){return new Promise((resolve,reject)=>{tx.oncomplete=resolve;tx.onabort=tx.onerror=()=>reject(tx.error||Error('本地存档事务失败'))})}
 function requested(request){return new Promise((resolve,reject)=>{request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error)})}
 export class LocalSaveStorage {
  constructor(fs,{openDatabase=openLocalSaveDatabase,legacyFileSystem=fs.filesystems?.IDBFS,report=()=>{}}={}){this.fs=fs;this.legacyFileSystem=legacyFileSystem;this.openDatabase=openDatabase;this.report=report;this.pending=new Map();this.known=new Set();this.active=null;this.persistent=null}
- get database(){return this.connection??=this.openDatabase().then(db=>{db.onversionchange=()=>{db.close();this.connection=null};return db}).catch(error=>{this.connection=null;throw error})}
+ get database(){
+  if(this.connection)return this.connection;
+  const invalidate=()=>{if(this.connection===connection)this.connection=null};
+  const connection=this.openDatabase().then(db=>{
+   db.onclose=invalidate;
+   db.onversionchange=()=>{invalidate();db.close()};
+   return db;
+  }).catch(error=>{invalidate();throw error});
+  return this.connection=connection;
+ }
+ async withTransaction(stores,mode,use){
+  for(let attempt=0;;attempt++){
+   const connection=this.database,db=await connection;
+   let tx;
+   try{tx=transaction(db,stores,mode)}
+   catch(error){
+    // A closing connection can reject new work before it emits a close event.
+    if(error.name!=='InvalidStateError')throw error;
+    if(this.connection===connection)this.connection=null;
+    db.close();
+    if(attempt>0)throw error;
+    continue;
+   }
+   // Queue requests in the same task in which the transaction was created.
+   return use(tx);
+  }
+ }
  valid(path){return typeof path==='string'&&path.startsWith('/persist/')&&!path.split('/').some(part=>part==='.'||part==='..')}
  snapshot(){
   const rows=new Map(),fs=this.fs;
@@ -19,25 +49,27 @@ export class LocalSaveStorage {
   visit('/persist');return rows;
  }
  async prepare(){
-  const db=await this.database;
-  const migrated=await requested(db.transaction('meta','readonly').objectStore('meta').get('idbfsImported'));
+  const migrated=await this.withTransaction('meta','readonly',tx=>requested(tx.objectStore('meta').get('idbfsImported')));
   if(!migrated){
    // Do not mark migration complete until the entire import transaction commits.
    this.fs.mount(this.legacyFileSystem,{autoPersist:false},'/persist');
    let rows;
    try{await new Promise((resolve,reject)=>this.fs.syncfs(true,error=>error?reject(error):resolve()));rows=this.snapshot()}
    finally{this.fs.unmount('/persist')}
-   const tx=transaction(db,['files','meta']);const done=completed(tx);
-   const marker=tx.objectStore('meta').get('idbfsImported');
-   marker.onsuccess=()=>{if(!marker.result){for(const [path,value] of rows)tx.objectStore('files').put(value,path);tx.objectStore('meta').put(true,'idbfsImported')}};
-   await done;
+   await this.withTransaction(['files','meta'],'readwrite',tx=>{
+    const done=completed(tx),marker=tx.objectStore('meta').get('idbfsImported');
+    marker.onsuccess=()=>{if(!marker.result){for(const [path,value] of rows)tx.objectStore('files').put(value,path);tx.objectStore('meta').put(true,'idbfsImported')}};
+    return done;
+   });
   }
-  await this.readRows(db);
+  await this.readRows();
   this.watch();
  }
- async readRows(db){
-  const tx=db.transaction('files','readonly'),store=tx.objectStore('files');
-  const [keys,rows]=await Promise.all([requested(store.getAllKeys()),requested(store.getAll())]);
+ async readRows(){
+  const [keys,rows]=await this.withTransaction('files','readonly',tx=>{
+   const store=tx.objectStore('files');
+   return Promise.all([requested(store.getAllKeys()),requested(store.getAll())]);
+  });
   for(let i=0;i<keys.length;i++){
    const path=keys[i],row=rows[i];if(!this.valid(path))throw Error('本地存档路径无效');
    this.fs.mkdirTree(path.slice(0,path.lastIndexOf('/')));this.fs.writeFile(path,row.bytes);
@@ -54,14 +86,17 @@ export class LocalSaveStorage {
  schedule(){if(this.scheduled)return;this.scheduled=true;queueMicrotask(()=>{this.scheduled=false;this.flush().catch(error=>this.report('本地保存失败：'+error.message+'。请重试或导出存档，不要刷新。'))})}
  flush(){
   if(this.active)return this.active;
+  if(!this.pending.size)return Promise.resolve();
   this.active=(async()=>{
-   const db=await this.database;
    while(this.pending.size){
     const batch=this.pending;this.pending=new Map();
     try{
-     const tx=transaction(db,'files'),done=completed(tx),store=tx.objectStore('files');
-     for(const [path,row] of batch)row?store.put(row,path):store.delete(path);
-     await done;for(const [path,row] of batch)row?this.known.add(path):this.known.delete(path);
+     await this.withTransaction('files','readwrite',tx=>{
+      const done=completed(tx),store=tx.objectStore('files');
+      for(const [path,row] of batch)row?store.put(row,path):store.delete(path);
+      return done;
+     });
+     for(const [path,row] of batch)row?this.known.add(path):this.known.delete(path);
     }catch(error){for(const [path,row] of batch)if(!this.pending.has(path))this.pending.set(path,row);throw error}
    }
   })().finally(()=>{this.active=null});return this.active;

@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {LocalSaveStorage} from './game/local-save-storage.js';
 // Test dependency only; no npm dependencies are shipped in the game package.
-const {IDBFactory}=await import(process.env.PVZ_INDEXEDDB_TEST_MODULE||'../../out/verification/browser-storage-deps/node_modules/fake-indexeddb/build/esm/index.js');
+const {IDBFactory,forceCloseDatabase}=await import(process.env.PVZ_INDEXEDDB_TEST_MODULE||'../../out/verification/browser-storage-deps/node_modules/fake-indexeddb/build/esm/index.js');
 globalThis.indexedDB=new IDBFactory();
 const path='/persist/development-v331/game1_58.dat64',profile='/persist/development-v331/users.dat';
 const bytes=text=>new TextEncoder().encode(text),text=value=>new TextDecoder().decode(value);
@@ -44,6 +44,31 @@ let requests=0;assert.equal(await storage4.requestPersistence({persisted:async()
 assert.equal(await storage4.requestPersistence({persisted:async()=>false,persist:async()=>false}),false);
 assert.equal(await storage4.requestPersistence({persisted:async()=>{throw Error('denied')},persist:async()=>false}),null);
 console.log('Direct IndexedDB saves: atomic legacy migration, close-to-commit, reload, reads, deletion, rename, retry and persistent-storage denial passed');
+
+// Closing connections must not strand pending edits or overwrite newer queues.
+const retryFS=fileSystem(),retryStorage=new LocalSaveStorage(retryFS);
+await retryStorage.prepare();
+const stale=await retryStorage.database;
+stale.close(); // An explicit close does not emit a close event.
+retryFS.writeFile(path,bytes('checkpoint queued before reconnect'));
+const saving=retryStorage.flush();
+retryFS.writeFile(path,bytes('checkpoint updated during reconnect'));
+await saving;
+const replacement=await retryStorage.database;
+assert.notEqual(replacement,stale);
+stale.onclose(); // Simulate delivery of an older connection's queued event.
+assert.equal(await retryStorage.database,replacement,'A late close event cannot invalidate the replacement');
+const closed=new Promise(resolve=>replacement.addEventListener('close',resolve,{once:true}));
+forceCloseDatabase(replacement);
+await closed;
+assert.notEqual(await retryStorage.database,replacement,'A forced close invalidates the cached connection');
+retryFS.unlink(profile);
+await retryStorage.flush();
+const afterReconnect=fileSystem(),afterReconnectStorage=new LocalSaveStorage(afterReconnect);
+await afterReconnectStorage.prepare();
+assert.equal(text(afterReconnect.readFile(path)),'checkpoint updated during reconnect');
+assert.ok(!afterReconnect.nodes.has(profile),'Deletions still persist on the replacement connection');
+console.log('PASS closing IndexedDB connection: retry, latest write, deletion and late close event');
 
 // Exercise the actual bundled editor mutation plan through durable storage.
 const {ProfileStore,encodeSummary,newProfile}=await import('../bin/web/save-codec.js');

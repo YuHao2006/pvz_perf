@@ -2,7 +2,7 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**当前版本：[v4.0.5](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.5)。**
+**当前版本：[v4.0.6](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.6)。**
 
 ## 图片素材与版权说明
 
@@ -10,7 +10,7 @@
 
 资源定义、图集布局缓存，以及资源编译器生成的 C++／头文件继续保留。重新编译资源时，需要自行提供有权使用的本地素材；直接克隆仓库并不包含完整游戏图片。详细规则见[仓库素材管理规则](docs/repository-artwork-policy.md)。
 
-这项清理针对 Git 源码仓库及其历史。Release 中的完整运行包仍包含游戏运行所需资源；源码归档不含图片。
+这项清理针对 Git 源码仓库及其历史。GitHub Release 提供程序、调试符号、完美存档和无资源网页包。网盘完整运行包包含游戏资源。
 
 上述清理用于减少素材分发风险，不表示已取得游戏素材授权，也不保证排除所有版权争议；游戏名称、角色及素材的权利仍归各自权利人。
 
@@ -24,13 +24,13 @@
 | `x64-win7-openGL3.3` | Windows 7 x64、OpenGL 3.3 |
 | `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
 | `arm64-android7-vulkan1.0` | Android 7、Armv8-A、Vulkan 1.0；传统纹理绑定 |
-| `wasm-web` | 包含 wasm32／wasm64 与 WebGPU／WebGL 2 四个运行时；支持 Memory64 时自动选 wasm64，否则 wasm32；优先 WebGPU，可在高级设置切换 |
+| `wasm-web` | 包含 wasm64 WebGPU、wasm64 WebGL 2 和 wasm32 WebGL 2 三个运行时，按浏览器能力选择 |
 
-下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`；需要兼容的 VC++ x64 运行库。Android APK 已包含资源，不需要另拷数据包或在手机安装 Java。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
+下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。网盘 Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`，需要兼容的 VC++ x64 运行库。GitHub Windows ZIP 需在 EXE 旁放入同版本的 `main.pak64`。Android 请使用网盘的完整 APK 直接安装。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
 
-发行附件同时提供完美用户档、统一无尽基准、图集布局缓存和校验清单。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
+GitHub 附件另提供完美用户档、无尽基准和两种 Windows 构建的 PDB。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
 
-**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.5.md)。
+**v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.6.md)。
 
 ## 设置与存档
 

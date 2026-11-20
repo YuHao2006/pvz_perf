@@ -177,7 +177,6 @@ public:
     double mNativeWheelRemainder = 0;
     bool mNativeTouchOwnsCursor = false;
     bool mNativeMouseMotionPending = false;
-    POINT mNativeMouseClientPosition{};
     void QueueNativeTouch(unsigned int id, unsigned int flags, double x, double y);
     void PumpWindowEvents();
     void RequestNativeClose();
@@ -568,13 +567,13 @@ public:
 	void					EnableCustomCursors(bool enabled);	
 	[[nodiscard("caller owns the returned Image")]]
 	virtual Image*		GetImage(const std::string& theFileName, bool commitBits = true,
-		bool lookForAlphaImage = true);
+		bool lookForAlphaImage = false);
 	virtual SharedImageRef	SetSharedImage(const std::string& theFileName, unsigned theVariant, Image* theImage, bool* isNew);
 	virtual SharedImageRef	GetSharedImage(const std::string& theFileName, unsigned theVariant = 0, bool* isNew = NULL);
 	// The initializer runs only for a new image, before it becomes visible to
 	// cache hits. Existing callers retain their serial hit/reconfiguration rules.
 	SharedImageRef GetPreparedSharedImage(const std::string& file, unsigned variant,
-		bool* isNew, const std::function<void(Image*)>& prepare, bool lookForAlphaImage = true);
+		bool* isNew, const std::function<void(Image*)>& prepare, bool lookForAlphaImage = false);
 	SharedImageRef LoadSharedImage(const std::string& file, unsigned variant,
 		bool* isNew, const std::function<Image*()>& load);
 

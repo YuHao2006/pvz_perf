@@ -627,7 +627,7 @@ bool FontData::HandleCommand(const ListDataElement& theParams)
 				std::string aFileName = GetPathFrom(aFileNameString, GetFileDir(mSourceFile));
 
 				SharedImageRef anImage = mApp->GetPreparedSharedImage(aFileName, 0, nullptr,
-					[](Image* image) { image->Palletize(); });
+					[](Image* image) { image->Palletize(); }, true);
 
 				if ((Image*)anImage != NULL)
 				{
@@ -1343,7 +1343,8 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 	for (auto& layer : layers)
 	{
 		const auto& imagePath = imagePaths[index];
-		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr, {});
+		// Retail font descriptors can name a glyph page stored only as _name.png.
+		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr, {}, true);
 		if (static_cast<Image*>(layer.mImage) == nullptr ||
 			layer.mImage->mWidth<=0 || layer.mImage->mHeight<=0) return false;
 		for (int ch=0;ch<FontLayer::kCharSlots;++ch)

@@ -245,10 +245,7 @@ def main():
         for name in files:
             archive.write(args.output / name, name)
     print(json.dumps({'files': sizes, 'total_bytes': sum(sizes.values()),
-                      'zip_bytes': archive_path.stat().st_size,
-                      'under_50MB': sum(sizes.values()) < 50_000_000,
-                      'under_50MiB': sum(sizes.values()) < 50 * 1024 * 1024,
-                      'zip_under_50MB': archive_path.stat().st_size < 50_000_000}, indent=2))
+                      'zip_bytes': archive_path.stat().st_size}, indent=2))
 
 
 if __name__ == '__main__':

@@ -214,9 +214,12 @@ void SexyAppBase::RegisterWindowClasses() {
 
 void SexyAppBase::PumpWindowEvents() {
     MSG message{};
-    // Always drain the OS queue, including mouse movement. Hover is sampled
-    // separately, but queued input must not remain pending on the window thread.
-    while(PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) {
+    // The first peek also services the window during loading and idle periods.
+    // Leave time for game updates even if input arrives continuously.
+    constexpr int maxMessagesPerPump = 32;
+    constexpr DWORD nonMotion = (QS_ALLINPUT | QS_ALLPOSTMESSAGE) & ~QS_MOUSEMOVE;
+    for (int count = 0; count < maxMessagesPerPump; ++count) {
+        if (!PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) break;
         if(message.message==WM_QUIT) {
             Shutdown();
             break;
@@ -224,9 +227,9 @@ void SexyAppBase::PumpWindowEvents() {
         if(message.hwnd==mHWnd &&
             (message.message==WM_MOUSEMOVE || message.message==WM_MOUSELEAVE)) {
             if (message.message == WM_MOUSEMOVE && !TouchPromotedMouse()) {
-                mNativeMouseClientPosition = {GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam)};
                 mNativeMouseMotionPending = true;
             }
+            if (message.message == WM_MOUSEMOVE && !HIWORD(GetQueueStatus(nonMotion))) break;
             continue;
         }
         TranslateMessage(&message);
@@ -411,7 +414,7 @@ void SexyAppBase::SampleNativeMousePosition() {
     if(mPlayingDemoBuffer || !mActive || mPhysMinimized || mSwitchingScreenMode) return;
     if(!mNativeWindowShown) return;
     if (mNativeTouchOwnsCursor && !mNativeMouseMotionPending) return;
-    const auto position = mNativeMouseMotionPending ? mNativeMouseClientPosition : ReadNativeMousePosition();
+    const auto position = ReadNativeMousePosition();
     mNativeMouseMotionPending = false;
     if(mRecordingDemoBuffer && !mShutdown) {
         const int dx=position.x-mLastDemoMouseX,dy=position.y-mLastDemoMouseY;

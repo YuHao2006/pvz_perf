@@ -38,6 +38,8 @@ def plot_game_timeline(rows, summary, label, destination, stem):
     for field,color,title in [("draw_fps","#176b92","绘制FPS"),
                                ("cpu_percent","#dc7b18","CPU占用（单核100%）")]:
         axes[0].plot(times,values[field],color=color,linewidth=1.2,label=title)
+    axes[0].axhline(summary["fps"], color="#155677", linestyle="--", linewidth=1.5,
+                    label=f"平均 {summary['fps']:.2f} FPS")
     axes[0].set_ylabel("绘制FPS／CPU占用（%）",fontproperties=font)
     axes[0].set_ylim(0,max(110,summary["fps_max"]*1.05,max(float(r["cpu_percent"])for r in selected)*1.08))
     axes[0].legend(prop=font,loc="lower left",ncol=2)

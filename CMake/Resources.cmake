@@ -50,6 +50,7 @@ add_custom_command(
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/DefinitionImageBindings.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ZombatarImage.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasData.h"
+        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/AlmanacTitleLayers.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasBindings.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitions.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitionStorage.h"
@@ -67,7 +68,11 @@ add_custom_command(
     COMMAND "$<TARGET_FILE:pvz_resource_builder>" build --root "${CMAKE_SOURCE_DIR}"
         --compiler "$<TARGET_FILE:reanimc>" --cache "${PVZ_RESOURCE_CACHE}"
         --config "${CMAKE_SOURCE_DIR}/assets/definitions/ResourceBuild.pvzbuild"
+    COMMAND "${CMAKE_COMMAND}" "-DMANIFEST=${PVZ_RESOURCE_CACHE}/manifest.json"
+        "-DHEADER=${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/AlmanacTitleLayers.h"
+        -P "${CMAKE_SOURCE_DIR}/CMake/AlmanacTitleLayers.cmake"
     DEPENDS reanimc pvz_resource_builder ${PVZ_RESOURCE_INPUTS} ${PVZ_DEVTOOLS_BINARY_INPUTS}
+        "${CMAKE_SOURCE_DIR}/CMake/AlmanacTitleLayers.cmake"
     COMMENT "Compiling definitions, generated C++ and runtime PAK64"
     VERBATIM)
 add_custom_target(pvz_resources

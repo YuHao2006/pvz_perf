@@ -1,4 +1,8 @@
-# Challenge And Almanac Shared Paper
+# Standard-edition challenge screens
+
+The v4.0.6 Minigames, Puzzle and Survival screens use the same Replanted three-slice background as the HD edition. The offline preparation script derives a 1400 × 600 RGB image from the lossless 4× master. At runtime the left 391 and right 359 pixels keep their size and the center fills the available width. The trophy and counter follow the right margin so the lower-right stone fragments stay visible. The level buttons retain their original hit regions. The achievements award screen also uses this background.
+
+## Earlier shared-paper artwork
 
 `runtime/images/Challenge_Background.png` is a 1400 x 600 opaque RGB PNG,
 covering Survival, Puzzle and Minigames. The three Almanac page backgrounds

@@ -52,7 +52,7 @@ public:
 
 
 [[nodiscard("delete the returned decoded image or transfer it to an upload")]]
-Image* GetImage(const std::string& theFileName, bool lookForAlphaImage = true);
+Image* GetImage(const std::string& theFileName, bool lookForAlphaImage = false);
 
 //void InitJPEG2000();
 //void CloseJPEG2000();

@@ -1,4 +1,10 @@
-# Flat shared-paper Almanac
+# Standard-edition Almanac
+
+The v4.0.6 build uses the HD edition's Replanted artwork at one texel per logical pixel. Derive the local build inputs with `python tools/prepare_standard_menu_art.py <hd-checkout>`. The game stretches the paper to the viewport, anchors the index panels to the page and the plant and zombie decorations to the left edge, and draws each frame from eight strips. The title and card content stay in the original 800 × 600 coordinate system.
+
+The three `Almanac_*Back.png` inputs are transparent 800 × 100 title canvases. Their alpha includes the plaque's soft cast shadow. The current pack stores the visible pixels in the cropped page-specific layers, so each plaque and its shadow draw together. The build checks the packer's decoded RGBA hash and keeps the shared draw for other contents. The title text is drawn separately.
+
+## Earlier flat-paper artwork
 
 The Almanac uses the same complete neutral paper and outer stone frame as
 Survival, Puzzle and Minigames. This replaces the earlier composition that

@@ -676,6 +676,9 @@ elseif(NOT PVZ_RENDER_BACKEND MATCHES "^(OPENGL|D3D9)$")
 endif()
 target_link_libraries(${PROJECT_NAME} PRIVATE nlohmann_json::nlohmann_json)
 
+set_property(SOURCE "${PVZ_GAME_SOURCE_DIR}/Lawn/Widget/Almanac.cpp" APPEND PROPERTY
+    OBJECT_DEPENDS "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/AlmanacTitleLayers.h")
+
 # A regenerated resource contract must invalidate consumers in the same build,
 # before a new PAK64 is paired with the executable. Use the producer's exact
 # path spelling rather than relying solely on compiler-discovered aliases.

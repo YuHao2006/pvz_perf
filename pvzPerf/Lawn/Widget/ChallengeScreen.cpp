@@ -590,6 +590,7 @@ void ChallengeScreen::Draw(Graphics* g)
 	TodDrawString(g, aTitleString, 400, 58, Sexy::FONT_HOUSEOFTERROR28, Color(220, 220, 220), DS_ALIGN_CENTER);
 
 	int aTrophiesGot = mApp->GetNumTrophies(mPageIndex);
+	const int aRight = mApp->mScreenBounds.mX + mApp->mScreenBounds.mWidth;
 	int aTrophiesTotal = mPageIndex == CHALLENGE_PAGE_SURVIVAL ? 10 : mPageIndex == CHALLENGE_PAGE_CHALLENGE ? 20 : mPageIndex == CHALLENGE_PAGE_PUZZLE ? 18 : 0;
 	if (aTrophiesTotal > 0)
 	{
@@ -598,10 +599,10 @@ void ChallengeScreen::Draw(Graphics* g)
 		SexyString aTrophyString(FormatInt(aGotBuf, aTrophiesGot));
 		aTrophyString += ('/');
 		aTrophyString += FormatInt(aTotalBuf, aTrophiesTotal);
-		TodDrawString(g, aTrophyString, 739, 73, Sexy::FONT_DWARVENTODCRAFT15, Color(255, 240, 0), DS_ALIGN_CENTER);
+		TodDrawString(g, aTrophyString, aRight - 61, 73, Sexy::FONT_DWARVENTODCRAFT15, Color(255, 240, 0), DS_ALIGN_CENTER);
 	}
 	// Share the award trophy texture; no second low-resolution trophy image.
-	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY_HI_RES, 718, 26, 0.25f, 0.25f);
+	TodDrawImageScaledF(g, Sexy::IMAGE_TROPHY_HI_RES, aRight - 82, 26, 0.25f, 0.25f);
 
 	for (int aChallengeMode = 0; aChallengeMode < NUM_CHALLENGE_MODES; aChallengeMode++)
 		DrawButton(g, aChallengeMode);

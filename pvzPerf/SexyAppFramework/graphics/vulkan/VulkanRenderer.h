@@ -187,6 +187,7 @@ public:
     void WarmScale(bool fullscreen);
     void SetScaleMode(bool enabled, bool fullscreen);
     VulkanScaleImage ScaleOutput(bool fullscreen) const;
+    VkExtent2D SceneTargetExtent() const;
     VulkanClip PresentRect(int framebufferWidth, int framebufferHeight) const;
     struct ScaleCounts { size_t programs, lookups, writableImages; };
     ScaleCounts GetScaleCounts() const;

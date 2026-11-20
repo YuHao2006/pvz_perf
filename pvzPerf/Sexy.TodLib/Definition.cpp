@@ -4,13 +4,13 @@
 #include <stdexcept>
 #include "Definition.h"
 #include "DefinitionImageRegion.h"
-#include "AtlasSourceExtent.h"
 #include "generated/GeneratedDefinitions.h"
 #include "Lawn/Widget/ZombatarResources.h"
 #include "graphics/DDInterface.h"
 #include "graphics/RenderInterface.h"
 #include "imagelib/ImageLib.h"
 #include "SexyAppBase.h"
+#include <memory>
 #include <mutex>
 #include <atomic>
 #include <unordered_map>
@@ -27,7 +27,6 @@ struct AtlasResource
 {
     Sexy::GpuTexture* texture;
     ImageLib::Image* decoded;
-    int width,height; // Authored extent; upload uses decoded's actual page size.
 };
 std::unordered_map<std::string,AtlasResource> gDefinitionAtlasImages;
 struct PendingAtlasBinding
@@ -40,40 +39,21 @@ std::vector<PendingAtlasBinding> gPendingAtlasBindings;
 struct PendingImageBinding {Sexy::GpuTexture** destination;Sexy::Image** image;};
 std::vector<PendingImageBinding> gPendingImageBindings;
 
-AtlasResource& LoadSharedDefinitionAtlas(const std::string& path,
-    unsigned width,unsigned height)
+AtlasResource& LoadSharedDefinitionAtlas(const std::string& path)
 {
     // Caller holds the registry lock. Publish only a fully decoded image,
     // once per live path, including atlases shared across definition kinds.
     const auto found=gDefinitionAtlasImages.find(path);
     if (found!=gDefinitionAtlasImages.end())
-    {
-        auto& image=found->second;
-        if (image.width!=int(width) || image.height!=int(height))
-            throw std::runtime_error("shared definition atlas dimensions disagree: "+path);
-        return image;
-    }
-    if (!path.ends_with(".png"))
-        throw std::invalid_argument("Definition atlas requires a PNG path");
-    ImageLib::Image* decoded=ImageLib::GetImage(path,false);
-    try
-    {
-        if (!decoded || !decoded->mBits || decoded->HasComposition() ||
-            !DefinitionAtlasSourceExtentMatches(width, height,
-                unsigned(decoded->mWidth), unsigned(decoded->mHeight)))
-            throw std::runtime_error("definition atlas PNG dimensions mismatch: "+path);
-        const auto [entry,inserted]=gDefinitionAtlasImages.emplace(
-            path,AtlasResource{nullptr,decoded,int(width),int(height)});
-        if (!inserted)
-            throw std::runtime_error("duplicate definition atlas registration: "+path);
-        decoded=nullptr;
-        return entry->second;
-    }
-    catch (...)
-    {
-        delete decoded;
-        throw;
-    }
+        return found->second;
+
+    // Bindings use normalized UVs. Upload the decoded page at its own dimensions.
+    std::unique_ptr<ImageLib::Image> decoded(ImageLib::GetImage(path,false));
+    if (!decoded)
+        throw std::runtime_error("Cannot decode definition atlas: "+path);
+    auto entry=gDefinitionAtlasImages.emplace(path,AtlasResource{nullptr,decoded.get()}).first;
+    decoded.release();
+    return entry->second;
 }
 }
 
@@ -101,7 +81,7 @@ void DefinitionBindAtlasPath(Sexy::GpuTexture*& texture,int width,int height,
 {
     DefinitionBindAtlasRange(&texture,1,width,height,path);
 }
-void DefinitionBindAtlasRange(Sexy::GpuTexture** textures,unsigned count,int width,int height,const char* path)
+void DefinitionBindAtlasRange(Sexy::GpuTexture** textures,unsigned count,int width,int /*height*/,const char* path)
 {
     if(!count)return;
     auto& texture=*textures;
@@ -111,7 +91,7 @@ void DefinitionBindAtlasRange(Sexy::GpuTexture** textures,unsigned count,int wid
         return;
     }
     std::lock_guard lock(gDefinitionAtlasMutex);
-    auto& image=LoadSharedDefinitionAtlas(path,width,height);
+    auto& image=LoadSharedDefinitionAtlas(path);
     // Early loading-screen definitions are loaded on the primary thread.
     // Bind them before their first draw; worker-loaded definitions wait for
     // the loading barrier and never call the graphics API.

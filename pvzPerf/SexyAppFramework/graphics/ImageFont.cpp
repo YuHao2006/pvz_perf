@@ -12,6 +12,7 @@
 #include "Sexy.TodLib/TodCommon.h"
 #include <cassert>
 #include <array>
+#include <climits>
 #include <cmath>
 #include <memory>
 #include <utility>
@@ -1301,7 +1302,7 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 		const unsigned logicalWidth = version >= 2 ? reader.UInt() : 0;
 		const unsigned logicalHeight = version >= 2 ? reader.UInt() : 0;
 		if ((logicalWidth == 0) != (logicalHeight == 0)
-			|| logicalWidth > 4096 || logicalHeight > 4096) return false;
+			|| logicalWidth > INT_MAX || logicalHeight > INT_MAX) return false;
 		logicalImageExtents.push_back({logicalWidth, logicalHeight});
 		if (imagePaths.back().empty() || !reader.Tags(layer.mRequiredTags, tagCount)
 			|| !reader.Tags(layer.mExcludedTags, tagCount)) return false;
@@ -1352,34 +1353,24 @@ bool FontData::Load(SexyAppBase* theSexyApp, const std::string& theFontDescFileN
 	{
 		const auto& imagePath = imagePaths[index];
 		const auto extent = logicalImageExtents[index];
-		bool validExtent = true;
 		layer.mImage = theSexyApp->GetPreparedSharedImage(imagePath, 0, nullptr, [&](Image* image) {
 			if (!extent[0]) return;
-			const auto w = unsigned(image->mWidth), h = unsigned(image->mHeight);
-			validExtent = w >= extent[0] && h >= extent[1]
-				&& w % extent[0] == 0 && h % extent[1] == 0
-				&& w / extent[0] == h / extent[1];
-			if (!validExtent) return;
-			// Upload the physical pixels once, then expose the original logical
-			// dimensions. Glyph drawing keeps its existing UV and metric path.
 			image->CommitBits();
 			image->mWidth = int(extent[0]);
 			image->mHeight = int(extent[1]);
 		});
-		if (!validExtent || (extent[0] && static_cast<Image*>(layer.mImage)
-			&& (layer.mImage->mWidth != int(extent[0]) || layer.mImage->mHeight != int(extent[1])))) return false;
-		if (static_cast<Image*>(layer.mImage) == nullptr ||
-			layer.mImage->mWidth<=0 || layer.mImage->mHeight<=0) return false;
+		if (static_cast<Image*>(layer.mImage) == nullptr) return false;
+		// Glyph rectangles live on the declared logical page, even for shared images.
+		// Legacy font records without a logical extent use their image's coordinate space.
+		const int pageWidth = extent[0] ? int(extent[0]) : layer.mImage->mWidth;
+		const int pageHeight = extent[1] ? int(extent[1]) : layer.mImage->mHeight;
 		for (int ch=0;ch<FontLayer::kCharSlots;++ch)
 		{
 			const auto& rect = glyphPixelRectangles[index][ch];
-			if (rect.mX < 0 || rect.mY < 0 || rect.mWidth < 0 || rect.mHeight < 0
-				|| static_cast<long long>(rect.mX) + rect.mWidth > layer.mImage->mWidth
-				|| static_cast<long long>(rect.mY) + rect.mHeight > layer.mImage->mHeight) return false;
 			layer.mCharData[ch].mImageRect = {
-				float(rect.mX) / layer.mImage->mWidth, float(rect.mY) / layer.mImage->mHeight,
-				float(rect.mX + rect.mWidth) / layer.mImage->mWidth,
-				float(rect.mY + rect.mHeight) / layer.mImage->mHeight,
+				float(rect.mX) / pageWidth, float(rect.mY) / pageHeight,
+				(float(rect.mX) + rect.mWidth) / pageWidth,
+				(float(rect.mY) + rect.mHeight) / pageHeight,
 				rect.mWidth, rect.mHeight};
 		}
 		++index;

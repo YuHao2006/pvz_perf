@@ -252,9 +252,6 @@ void android_main(android_app* state) {
         // never replaced. Only the first launch creates these Android defaults.
         const auto defaultsPath = std::filesystem::path(state->activity->internalDataPath) / "bundled-settings.json";
         ExtractAsset(state->activity->assetManager, "settings.json", defaultsPath);
-        JsonDoc defaults;
-        defaults.LoadFile(defaultsPath.string());
-        setenv("PVZ_ANDROID_TEXTURE_PACK_SCALE", defaults.GetInt("texturePackScale", 2) == 4 ? "4" : "2", 1);
         std::filesystem::copy_file(defaultsPath, settingsPath, std::filesystem::copy_options::skip_existing);
         if (!std::filesystem::exists(userDirectory / "users.dat")) {
             for (const char* name : {"user1.dat64", "game1_58.dat64", "users.dat"}) {

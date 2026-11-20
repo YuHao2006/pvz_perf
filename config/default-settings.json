@@ -7,11 +7,5 @@
   "screenMode": "windowed",
   "hdr": false,
   "hdrStrength": 1,
-  "resolution": {
-    "minWidth": 800,
-    "minHeight": 600,
-    "maxWidth": 2800,
-    "maxHeight": 1200
-  },
   "unlockAllLevels": false
 }

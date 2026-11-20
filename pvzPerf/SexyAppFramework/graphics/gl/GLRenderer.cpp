@@ -11,7 +11,6 @@
 
 namespace Sexy {
 using namespace GL3;
-namespace { constexpr int ScenePixelScale=2; }
 
 GLTexture::~GLTexture()
 {
@@ -254,9 +253,15 @@ void GLRenderer::Impl::Flush()
             batch.texture->sampler=batch.sampler;
         }
         if(!previousBatch||batch.clip.x!=previousBatch->clip.x||batch.clip.y!=previousBatch->clip.y||
-            batch.clip.width!=previousBatch->clip.width||batch.clip.height!=previousBatch->clip.height)
-            glScissor(batch.clip.x*(selected?selected->pixelScale:ScenePixelScale),batch.clip.y*(selected?selected->pixelScale:ScenePixelScale),
-                batch.clip.width*(selected?selected->pixelScale:ScenePixelScale),batch.clip.height*(selected?selected->pixelScale:ScenePixelScale));
+            batch.clip.width!=previousBatch->clip.width||batch.clip.height!=previousBatch->clip.height) {
+            const int logicalWidth = selected ? selected->drawingWidth : width;
+            const int logicalHeight = selected ? selected->drawingHeight : height;
+            const auto x = [&](int edge) { return int(int64_t(edge) * target->width / logicalWidth); };
+            const auto y = [&](int edge) { return int(int64_t(edge) * target->height / logicalHeight); };
+            const int left = x(batch.clip.x), bottom = y(batch.clip.y);
+            glScissor(left, bottom, x(batch.clip.x + batch.clip.width) - left,
+                      y(batch.clip.y + batch.clip.height) - bottom);
+        }
         if(!previousBatch||batch.blend!=previousBatch->blend||batch.mixed!=previousBatch->mixed){
             if (batch.blend == GpuBlend::Opaque) glDisable(GL_BLEND);
             else {
@@ -414,7 +419,8 @@ GLRenderer::GLRenderer(GLContext& context, int w, int h,
     impl_->white = CreateTexture(1, 1, &white, 4);
     impl_->slots[impl_->white->slot] = nullptr;
     impl_->white->slot = 0; impl_->slots[0] = impl_->white;
-    impl_->scene = impl_->Allocate(w*ScenePixelScale, h*ScenePixelScale, GL_RGBA8, false);
+    const auto [sceneWidthPx, sceneHeightPx] = impl_->context.resolution.ScenePixels(w,h);
+    impl_->scene = impl_->Allocate(sceneWidthPx, sceneHeightPx, GL_RGBA8, false);
     impl_->BindTarget(); glDisable(GL_SCISSOR_TEST);
     glClearColor(0, 0, 0, 1); glClear(GL_COLOR_BUFFER_BIT);
 }
@@ -733,7 +739,8 @@ void GLRenderer::ResizeScene(int width, int height)
     if (s.open || s.selected)
         throw std::logic_error("Resize the main OpenGL canvas between scenes");
     if (s.width == width && s.height == height) return;
-    auto* next = s.Allocate(width*ScenePixelScale, height*ScenePixelScale, GL_RGBA8, false);
+    const auto [sceneWidthPx, sceneHeightPx] = s.context.resolution.ScenePixels(width,height);
+    auto* next = s.Allocate(sceneWidthPx, sceneHeightPx, GL_RGBA8, false);
     auto* previous = s.scene;
     s.scene = next;
     s.width = width;

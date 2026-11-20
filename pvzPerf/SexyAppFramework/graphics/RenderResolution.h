@@ -1,15 +1,20 @@
 #pragma once
-#include <algorithm>
-#include <cmath>
+#include <limits>
+#include <stdexcept>
 #include <utility>
+
 namespace Sexy {
 struct RenderResolution {
-    int minWidth=800, minHeight=600, maxWidth=2800, maxHeight=1200;
-    std::pair<int,int> Fit(int width,int height) const {
-        const double upper=std::min(double(maxWidth)/width,double(maxHeight)/height);
-        const double lower=std::max(double(minWidth)/width,double(minHeight)/height);
-        const double scale=std::min(upper,std::max(1.0,lower));
-        return {std::max(1,int(std::lround(width*scale))),std::max(1,int(std::lround(height*scale)))};
+    int height = 600;
+
+    constexpr std::pair<int, int> ScenePixels(int logicalWidth, int logicalHeight) const {
+        const auto pixels = [this](int dimension) {
+            const auto extent = (static_cast<long long>(dimension) * height + 300) / 600;
+            if (extent > (std::numeric_limits<int>::max)())
+                throw std::overflow_error("Scene extent exceeds the renderer's integer range");
+            return extent > 0 ? static_cast<int>(extent) : 1;
+        };
+        return {pixels(logicalWidth), pixels(logicalHeight)};
     }
 };
 }

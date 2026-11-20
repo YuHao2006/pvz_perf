@@ -11,3 +11,5 @@ current/ 是 images.json 与 fonts.json 当前绑定的已批准输入，当前�
 当前全局pixelScale为4，全部待审项已获通过，实际编译器的2274个活跃图像引用检查无缺口。已完成4×开发PAK（约721.93 MiB）及桌面程序构建，Vulkan启动检查通过。产物位于 out/x64-win32-vulkan/Release/；构建证书为 out/verification/hd4x-built-certificate.json。
 
 加载策略和显存说明仅属于高清分支，见 ../../docs/high-resolution/resource-loading.md；当前没有按场景动态加载／卸载机制。
+
+`main.pak64` 内的 `compiled/render-height.txt` 用 ASCII 十进制记录场景像素高度。4× 母包写入 `2400`，2× 派生包写入 `1200`，1× 实验包写入 `600`。程序在挂载包时读取一次。场景宽度取游戏逻辑宽度的相应倍数，呈现时将整幅画面双线性缩放到窗口。给旧版包补标记时，按该包的素材规格写入同名的 ZIP_STORED 条目。

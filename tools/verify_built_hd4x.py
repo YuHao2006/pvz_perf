@@ -13,6 +13,8 @@ def main():
     pages=[];data=[];errors=[]
     jpegExports={r["path"]:r for r in cert.get("jpegExports",{}).values()}
     with zipfile.ZipFile(args.pak) as z:
+        if z.namelist().count('compiled/render-height.txt') != 1 or z.read('compiled/render-height.txt').strip() != b'2400':
+            raise ValueError('Expected a 2400p render-height marker in the source PAK')
         for item in z.infolist():
             suffix=Path(item.filename).suffix.lower()
             if suffix not in ['.png','.jpg','.jpeg','.gif','.bmp','.webp','.tga','.dds']:continue

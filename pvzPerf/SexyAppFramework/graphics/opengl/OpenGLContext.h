@@ -1,4 +1,5 @@
 #pragma once
+#include "graphics/RenderResolution.h"
 #include "SexyAppFramework/platform/windows/NativeHandles.h"
 #include <memory>
 #include <string>
@@ -7,6 +8,7 @@ namespace Sexy {
 // The host owns the HWND. All GL calls use the creating/render thread.
 class OpenGLContext final {
 public:
+    RenderResolution resolution{1200};
     OpenGLContext(NativeWindowHandle hwnd, bool validation, bool hdr = false);
     ~OpenGLContext();
     OpenGLContext(const OpenGLContext&) = delete;

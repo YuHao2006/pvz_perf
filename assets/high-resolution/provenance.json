@@ -46722,6 +46722,12 @@
           564,
           468
         ]
+      },
+      "wordmarkMatteCorrection": {
+        "tool": "tools/restore_hd_wordmark_mattes.py",
+        "reference": "assets/runtime/reanim/ZombiesWon_.png",
+        "previous4xSha256": "5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273",
+        "result4xSha256": "10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45"
       }
     },
     {
@@ -74687,7 +74693,13 @@
       "reviewFile": "assets/source-art/archive/2026-11-16-pre-library/replanted/reviews/2026-11-16/missing4x-six-approved/integration.json",
       "resourceBindingActive": true,
       "releaseRebuilt": false,
-      "method": "User-approved mask-first two Anime4K passes + AI repair; full 4x master and original alpha contract retained. Derived states/compositions baked offline."
+      "method": "User-approved mask-first two Anime4K passes + AI repair; full 4x master and original alpha contract retained. Derived states/compositions baked offline.",
+      "wordmarkMatteCorrection": {
+        "tool": "tools/restore_hd_wordmark_mattes.py",
+        "reference": "assets/runtime/images/PvZ_Logo.png",
+        "previous4xSha256": "720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d",
+        "result4xSha256": "d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f"
+      }
     },
     {
       "original": "assets/runtime/images/background4_gameover_mask.png",

@@ -155,8 +155,7 @@ struct WebGPURenderer::Impl
     }
     std::pair<int,int> ScenePixels(int w, int h) const
     {
-        const auto rect = SceneRect(w,h,context.width,context.height);
-        return context.resolution.Fit(rect.width,rect.height);
+        return context.resolution.ScenePixels(w, h);
     }
     WebGPUTexture *AllocateScene(int logicalWidth, int logicalHeight)
     {
@@ -530,7 +529,7 @@ struct WebGPURenderer::Impl
         if (!pendingEncoder) pendingEncoder = context.device.CreateCommandEncoder();
         auto pass = Pass(pendingEncoder, surface.texture.CreateView(), true);
         pass.SetPipeline(presentPipeline);
-        pass.SetBindGroup(0, SourceGroup(scene, rect.width > scene->width || rect.height > scene->height ? 1U : 0U));
+        pass.SetBindGroup(0, SourceGroup(scene, 1U)); // Linear clamp for the completed scene at either scale.
         pass.SetViewport(rect.x, rect.y, rect.width, rect.height, 0, 1);
         pass.Draw(3);
         pass.End();

@@ -104,13 +104,7 @@ function normalizePreferences(value){
   fullscreen:typeof value.screenMode==='string'?value.screenMode==='fullscreen':value.fullscreen===true,
   aspect:['auto','4:3','16:9','21:9'].includes(value.aspect)?value.aspect:'auto'};
 }
-let resolution={minWidth:800,minHeight:600,maxWidth:2800,maxHeight:1200};
-function readResolution(settings={}){
- const bound=(key,fallback,min,max)=>Number.isInteger(settings?.[key])?Math.max(min,Math.min(max,settings[key])):fallback;
- const minWidth=bound('minWidth',800,800,5600),minHeight=bound('minHeight',600,600,2400);
- return {minWidth,minHeight,maxWidth:bound('maxWidth',Math.max(2800,minWidth),minWidth,5600),maxHeight:bound('maxHeight',Math.max(1200,minHeight),minHeight,2400)};
-}
-function fillPreferences(value){if(value.resolution)resolution=readResolution(value.resolution);const p=normalizePreferences(value);fps.value=p.targetFps;autoFps.checked=p.autoDetectFrameRate;showFps.checked=p.showFps;unlockAll.checked=p.unlockAllLevels;landscape.checked=p.landscapeUI;volume.value=p.sfxVolume;musicVolume.value=p.musicVolume;launchFullscreen.checked=p.fullscreen;aspect.value=p.aspect;updateControls()}
+function fillPreferences(value){const p=normalizePreferences(value);fps.value=p.targetFps;autoFps.checked=p.autoDetectFrameRate;showFps.checked=p.showFps;unlockAll.checked=p.unlockAllLevels;landscape.checked=p.landscapeUI;volume.value=p.sfxVolume;musicVolume.value=p.musicVolume;launchFullscreen.checked=p.fullscreen;aspect.value=p.aspect;updateControls()}
 function preferences(){return normalizePreferences({targetFps:fps.value,autoDetectFrameRate:autoFps.checked,showFps:showFps.checked,unlockAllLevels:unlockAll.checked,landscapeUI:landscape.checked,sfxVolume:volume.value,musicVolume:musicVolume.value,fullscreen:launchFullscreen.checked,aspect:aspect.value})}
 function showError(message){
  // Safari stacks can contain only frames, omitting the exception name/message.
@@ -252,9 +246,11 @@ function loadNativeSettings(){try{return JSON.parse(Module.FS.readFile(saveRoot+
 async function saveSettings(p){
  const previous=loadNativeSettings();
  delete previous.customScale;
- const settings={landscapeUI:false,autoDetectFrameRate:true,targetFps:60,musicVolume:85,sfxVolume:100,screenMode:"windowed",hdr:false,resolution,...previous,targetFps:p.autoDetectFrameRate?refreshRate:p.targetFps,
+ delete previous.resolution;
+ delete previous.texturePackScale;
+ const settings={landscapeUI:false,autoDetectFrameRate:true,targetFps:60,musicVolume:85,sfxVolume:100,screenMode:"windowed",hdr:false,...previous,targetFps:p.autoDetectFrameRate?refreshRate:p.targetFps,
   autoDetectFrameRate:p.autoDetectFrameRate,landscapeUI:p.landscapeUI&&Module.pvzViewport.width>=890,
-  unlockAllLevels:p.unlockAllLevels,sfxVolume:p.sfxVolume,musicVolume:p.musicVolume,screenMode:p.fullscreen?'fullscreen':'windowed',resolution,hdr:false};
+  unlockAllLevels:p.unlockAllLevels,sfxVolume:p.sfxVolume,musicVolume:p.musicVolume,screenMode:p.fullscreen?'fullscreen':'windowed',hdr:false};
  Module.pvzLandscapeActive=settings.landscapeUI;
  Module.FS.writeFile(saveRoot+'/settings.json',JSON.stringify(settings,null,2)+'\n');
  try{localStorage.setItem(storageKey,JSON.stringify(p))}catch{}

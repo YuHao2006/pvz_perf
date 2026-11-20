@@ -176,7 +176,6 @@ public:
     double mNativeWheelRemainder = 0;
     bool mNativeTouchOwnsCursor = false;
     bool mNativeMouseMotionPending = false;
-    POINT mNativeMouseClientPosition{};
     void QueueNativeTouch(unsigned int id, unsigned int flags, double x, double y);
     void PumpWindowEvents();
     void RequestNativeClose();
@@ -406,7 +405,6 @@ public:
 	// 渲染为 AutoHDR 复刻（dxgi.dll Sdr2HdrData 反汇编重建）；无饱和度
 	// 参数（Windows 校准色度矩阵已作用于全部内容）。
 	RenderResolution mResolution;
-    int mTexturePackScale=2;
     bool mHdrRequested = false;
     bool								mScaleHDREnabled = false;
 	float								mScaleHDRPaperWhite = 80.0f;   // nits ↔ PaperWhiteNits

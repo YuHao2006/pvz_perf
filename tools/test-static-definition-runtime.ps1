@@ -45,7 +45,7 @@ assert target and target == reanimation["atlas_path"]
 png = io.BytesIO()
 Image.new("RGBA", (1, 1), (255, 0, 255, 255)).save(png, format="PNG")
 cases = {"missing": None, "corrupt": b"intentionally invalid PNG fixture",
-         "wrong-dimension": png.getvalue()}
+         "resized-page": png.getvalue()}
 with zipfile.ZipFile(pak) as source:
     names = source.namelist()
     assert target in names
@@ -67,7 +67,7 @@ try {
     $taskFixtureMetadata=& $Python -c $taskFixtureScript $taskPak $taskManifest $taskFixtures
     if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated static-definition PNG fixtures' }
     $taskMetadata=$taskFixtureMetadata | ConvertFrom-Json
-    $taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
+    $taskNinja=(Get-Command ninja -CommandType Application -ErrorAction Stop).Source
     $taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
     $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing runtime build graph' }
@@ -135,7 +135,7 @@ try {
     if ((Test-Path -LiteralPath $taskRuntimeShaders) -and !(Test-Path -LiteralPath $taskShaders)) {
         New-Item -ItemType Junction -Path $taskShaders -Target $taskRuntimeShaders | Out-Null
     }
-    foreach ($taskCase in @('lifecycle','missing','corrupt','wrong-dimension')) {
+    foreach ($taskCase in @('resized-page','lifecycle','missing','corrupt')) {
         $taskFixture=if($taskCase -eq 'lifecycle'){$taskPak}else{Join-Path $taskFixtures ($taskCase+'.zip')}
         $taskStart=[Diagnostics.ProcessStartInfo]::new($taskExecutable)
         $taskStart.WorkingDirectory=$taskOutput

@@ -2,6 +2,7 @@
 #include "platform/android/AndroidWindow.h"
 #endif
 #include "graphics/GpuBackend.h"
+#include <charconv>
 #include <stdexcept>
 #include "platform/ApplicationHost.h"
 #include "SexyAppBase.h"
@@ -1355,14 +1356,7 @@ void SexyAppBase::WriteToRegistry()
     aDoc.SetBool("hdr", mHdrRequested);
     aDoc.SetFloat("hdrStrength", mScaleHDRStrength);
 #endif
-    aDoc.SetInt("resolution/minWidth",mResolution.minWidth);
-    aDoc.SetInt("resolution/minHeight",mResolution.minHeight);
-    aDoc.SetInt("resolution/maxWidth",mResolution.maxWidth);
-    aDoc.SetInt("resolution/maxHeight",mResolution.maxHeight);
     aDoc.SetBool("unlockAllLevels",mUnlockAllLevels);
-#ifdef __ANDROID__
-    aDoc.SetInt("texturePackScale",mTexturePackScale);
-#endif
 #ifdef _WIN32
     aDoc.SetInt("windowWidth", mWindowClientWidth);
     aDoc.SetInt("windowHeight", mWindowClientHeight);
@@ -1727,22 +1721,6 @@ void SexyAppBase::ReadFromRegistry()
 	// XML 时代静默默认）；键缺失 → 成员保持构造默认，故逐键 Has 后再赋值。
 	JsonDoc aDoc;
     aDoc.LoadFile(SettingsPath());
-#ifdef __ANDROID__
-    const char* packScale = std::getenv("PVZ_ANDROID_TEXTURE_PACK_SCALE");
-    mTexturePackScale = packScale && std::string_view(packScale) == "4" ? 4 : 2;
-#endif
-    const int previousScale=int(std::clamp(aDoc.GetInt("texturePackScale",mTexturePackScale),2LL,4LL));
-    const auto readDimension=[&](const char* key,int fallback,int minimum,int maximum){
-        return int(std::clamp(aDoc.GetInt(key,fallback),(long long)minimum,(long long)maximum));
-    };
-    mResolution.minWidth=readDimension("resolution/minWidth",800,800,5600);
-    mResolution.minHeight=readDimension("resolution/minHeight",600,600,2400);
-    mResolution.maxWidth=readDimension("resolution/maxWidth",1400*mTexturePackScale,mResolution.minWidth,5600);
-    mResolution.maxHeight=readDimension("resolution/maxHeight",600*mTexturePackScale,mResolution.minHeight,2400);
-    if (previousScale!=mTexturePackScale && mResolution.maxWidth==1400*previousScale && mResolution.maxHeight==600*previousScale) {
-        mResolution.maxWidth=std::max(mResolution.minWidth,1400*mTexturePackScale);
-        mResolution.maxHeight=std::max(mResolution.minHeight,600*mTexturePackScale);
-    }
     if (aDoc.mStatus!=JsonDoc::LoadStatus::Loaded) return;
 	mAutoDetectFrameRate=aDoc.GetBool("autoDetectFrameRate",true);
     mLandscapeUI=aDoc.GetBool("landscapeUI",false);
@@ -3983,6 +3961,29 @@ void SexyAppBase::InitHook()
 {
 }
 
+namespace {
+RenderResolution ReadPackResolution()
+{
+    constexpr auto marker = "compiled/render-height.txt";
+    std::unique_ptr<PFILE, decltype(&p_fclose)> file(p_fopen(marker, "rb"), p_fclose);
+    if (!file)
+        throw std::runtime_error("main.pak64 is missing compiled/render-height.txt");
+    char bytes[32];
+    const auto count = p_fread(bytes, 1, sizeof(bytes), file.get());
+    std::string_view value(bytes, count);
+    const auto first = value.find_first_not_of(" \t\r\n");
+    if (first != std::string_view::npos && count < sizeof(bytes)) {
+        const auto last = value.find_last_not_of(" \t\r\n");
+        value = value.substr(first, last - first + 1);
+        int height = 0;
+        const char* end = value.data() + value.size();
+        const auto parsed = std::from_chars(value.data(), end, height);
+        if (parsed.ec == std::errc{} && parsed.ptr == end && height > 0)
+            return {height};
+    }
+    throw std::runtime_error("main.pak64: compiled/render-height.txt must contain a positive pixel height");
+}
+}
 void SexyAppBase::Init()
 {
 	mPrimaryThreadId = CurrentNativeThreadIdentity();
@@ -4090,6 +4091,7 @@ void SexyAppBase::Init()
 	{
 		throw std::runtime_error("missing or invalid plain x64 resource archive: main.pak64");
 	}
+    mResolution = ReadPackResolution();
 
 	// Create a message we can use to talk to ourselves inter-process
 #ifdef _WIN32

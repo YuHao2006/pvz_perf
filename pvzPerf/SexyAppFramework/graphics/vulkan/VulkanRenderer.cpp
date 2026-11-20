@@ -46,7 +46,6 @@ unsigned int VulkanRenderer::benchmarkTriangles = 0, VulkanRenderer::benchmarkSc
 namespace {
 // Each frame slot owns one fixed geometry allocation; capacity exhaustion is an error.
 constexpr unsigned int kFrameVertexCapacity = 65536;
-constexpr int kScenePixelScale = 2;
 
 VulkanClip FitGameSceneToSurface(int sceneWidth, int sceneHeight, int width, int height)
 {
@@ -61,12 +60,8 @@ VulkanClip FitGameSceneToSurface(int sceneWidth, int sceneHeight, int width, int
 
 VulkanClip ScenePixelExtent(const VulkanContext& window, int width, int height)
 {
-    if (window.swapchainExtent.width && window.swapchainExtent.height) {
-        auto rect=FitGameSceneToSurface(width,height,int(window.swapchainExtent.width),int(window.swapchainExtent.height));
-        auto [w,h]=window.resolution.Fit(rect.width,rect.height);
-        return {0,0,w,h};
-    }
-    return {0, 0, width*kScenePixelScale, height*kScenePixelScale};
+    const auto [w,h] = window.resolution.ScenePixels(width, height);
+    return {0, 0, w, h};
 }
 
 VkRect2D ScaleSceneScissor(VkRect2D rect, int width, int height, int pixelWidth, int pixelHeight)
@@ -1282,7 +1277,7 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
 #endif
     for (unsigned i = 0; i < 4; ++i) {
         VkSamplerCreateInfo sampler{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-        sampler.magFilter = sampler.minFilter = VK_FILTER_NEAREST;
+        sampler.magFilter = sampler.minFilter = (i & 1) ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
         sampler.addressModeU = sampler.addressModeV = sampler.addressModeW = (i & 2) ?
             VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         VK_REQUIRE(vkCreateSampler(device, &sampler, nullptr, &samplers[i]));
@@ -3156,6 +3151,9 @@ void VulkanRenderer::SetScaleMode(bool enabled,bool fullscreen) {
 VulkanScaleImage VulkanRenderer::ScaleOutput(bool fullscreen) const {
     const auto* mode=impl_->scaleModes[unsigned(fullscreen)].get();
     return mode?mode->pipeline->output:VulkanScaleImage{};
+}
+VkExtent2D VulkanRenderer::SceneTargetExtent() const {
+    return {static_cast<uint32_t>(impl_->scene->width), static_cast<uint32_t>(impl_->scene->height)};
 }
 VulkanClip VulkanRenderer::PresentRect(int fw,int fh) const {
     if (fw<=0 || fh<=0) throw std::invalid_argument("Invalid scale surface dimensions");

@@ -21,9 +21,14 @@ def plot_samples(directory, label):
 
     with (directory / "samples.csv").open(newline="", encoding="utf-8") as stream:
         rows = list(csv.DictReader(stream))
-    if not any(row["segment"] == "game" for row in rows):
+    game_rows = [row for row in rows if row["segment"] == "game"]
+    if not game_rows:
         print("No active foreground gameplay samples; no chart produced.", flush=True)
         return None
+    seconds = sum(float(row["interval_s"]) for row in game_rows)
+    frames = sum(float(row["draw_fps"]) * float(row["interval_s"]) for row in game_rows)
+    cpu_ms = sum(float(row["cpu_percent"]) * float(row["interval_s"]) * 10 for row in game_rows)
+    mean_fps = frames / seconds
     times = [float(row["elapsed_s"]) for row in rows]
 
     def values(field):
@@ -35,6 +40,8 @@ def plot_samples(directory, label):
     fig, axes = plt.subplots(2, 1, figsize=(13, 7), sharex=True,
                              gridspec_kw={"height_ratios": [2, 1]})
     axes[0].plot(times, values("draw_fps"), color="#13834b", label="FPS")
+    axes[0].axhline(mean_fps, color="#105b37", linestyle="--", linewidth=1.5,
+                    label=f"Mean {mean_fps:.2f} FPS")
     core_fields = [field for field in rows[0] if field.startswith("cpu_lp") and field.endswith("_percent")]
     if core_fields:
         cpu_axis = axes[0].twinx()
@@ -59,6 +66,11 @@ def plot_samples(directory, label):
     core_label = json.loads(metadata_path.read_text(encoding="utf-8")).get("core", "LP14") if metadata_path.exists() else "LP14"
     axes[0].set_title(f"{label} | {core_label} | active gameplay only")
     axes[1].plot(times, values("cpu_ms_per_draw_frame"), color="#3259aa")
+    if frames > 0:
+        mean_cpu_ms = cpu_ms / frames
+        axes[1].axhline(mean_cpu_ms, color="#213a73", linestyle="--", linewidth=1.5,
+                        label=f"Mean {mean_cpu_ms:.3f} ms/frame")
+        axes[1].legend(loc="upper right")
     axes[1].set_ylim(bottom=0)
     axes[1].set_ylabel("CPU ms / draw frame")
     axes[1].set_xlabel("Elapsed time (seconds)")

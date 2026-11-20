@@ -1,4 +1,5 @@
 #include "SexyAppFramework/graphics/GameViewport.h"
+#include "SexyAppFramework/graphics/RenderResolution.h"
 #include "SexyAppFramework/graphics/vulkan/VulkanViewport.h"
 #include "Lawn/Widget/SelectorLayout.h"
 #include "Lawn/Widget/SeedChooserLayout.h"
@@ -176,6 +177,16 @@ static void CheckGardenHudLayout() {
 }
 
 int main() {
+    for (const int scale : {1, 2, 4}) {
+        const RenderResolution resolution{scale * 600};
+        for (const int clientHeight : {600, 900, 1200, 1800, 2400}) {
+            const auto view = GameViewport::Fit(clientHeight * 8 / 5, clientHeight);
+            Check(resolution.ScenePixels(view.width, view.height) == std::pair{960 * scale, 600 * scale});
+        }
+        const auto wide = GameViewport::Fit(1280, 720);
+        Check(resolution.ScenePixels(wide.width, wide.height) == std::pair{1067 * scale, 600 * scale});
+    }
+    static_assert(RenderResolution{900}.ScenePixels(1067, 600) == std::pair{1601, 900});
     for (const int height : {600, 900, 1200}) {
         const auto checkStartup = [height](int monitorWidth,int monitorHeight,int logicalWidth) {
             const auto size=WindowStartupSize::FromMonitor(monitorWidth,monitorHeight,height);

@@ -88,8 +88,12 @@ void SetStyle(HWND window,int index,LONG_PTR style) {
     const auto previous=SetWindowLongPtrW(window,index,style);
     if(!previous && GetLastError()!=ERROR_SUCCESS) WindowFailure("SetWindowLongPtr");
 }
-// The application owns one main native window; MakeWindow resets this state.
-GameViewport nativeStartupViewport;
+RECT WindowBounds(int width, int height, DWORD style, DWORD exStyle, HWND window) {
+    RECT bounds{0, 0, width, height};
+    if (!NativeWindowsWindowApi::AdjustClientRect(bounds, style, exStyle, window))
+        WindowFailure("AdjustClientRect");
+    return bounds;
+}
 
 
 }
@@ -108,19 +112,13 @@ void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
     mTitle="pvz_perf HD";
-    const DWORD style=WS_OVERLAPPED|WS_CAPTION|WS_SYSMENU|WS_MINIMIZEBOX|
-        WS_THICKFRAME;
+    const DWORD style=WS_OVERLAPPEDWINDOW;
     const DWORD exStyle=WS_EX_APPWINDOW;
-    const POINT preferred{mPreferredX < 0 ? 0 : mPreferredX,
-        mPreferredY < 0 ? 0 : mPreferredY};
-    const auto monitor = MonitorFromPoint(preferred, MONITOR_DEFAULTTOPRIMARY);
-    MONITORINFO monitorInfo{sizeof(monitorInfo)};
-    if(!monitor || !GetMonitorInfoW(monitor,&monitorInfo)) WindowFailure("GetMonitorInfo(startup)");
-    const auto& display = monitorInfo.rcMonitor;
-    nativeStartupViewport = GameViewport::Fit(display.right-display.left,display.bottom-display.top);
-    RECT bounds{0,0,nativeStartupViewport.width,nativeStartupViewport.height};
-    if(!NativeWindowsWindowApi::AdjustClientRect(bounds,style,exStyle,nullptr))
-        WindowFailure("AdjustClientRect");
+    if (mWindowClientWidth <= 0 || mWindowClientHeight <= 0) {
+        mWindowClientWidth = 1920;
+        mWindowClientHeight = 1200;
+    }
+    const auto bounds = WindowBounds(mWindowClientWidth, mWindowClientHeight, style, exStyle, nullptr);
     mHWnd=CreateWindowExA(exStyle,MainWindowClass,mTitle.c_str(),style,
         mPreferredX<0?CW_USEDEFAULT:mPreferredX,mPreferredY<0?CW_USEDEFAULT:mPreferredY,
         bounds.right-bounds.left,bounds.bottom-bounds.top,nullptr,nullptr,gHInstance,this);
@@ -143,6 +141,7 @@ void SexyAppBase::MakeWindow() {
     mScaleHDREnabled=false;
     mGpuContext=std::make_unique<GpuContext>(mHWnd,
         getenv("PVZ_OPENGL_VALIDATION")!=nullptr,false);
+    mGpuContext->resolution = mResolution;
 #elif defined(PVZ_GPU_D3D12)
     mGpuContext=std::make_unique<GpuContext>(mHWnd,
         getenv("PVZ_VULKAN_VALIDATION")!=nullptr,mScaleHDREnabled);
@@ -226,9 +225,12 @@ void SexyAppBase::RegisterWindowClasses() {
 
 void SexyAppBase::PumpWindowEvents() {
     MSG message{};
-    // Always drain the OS queue, including mouse movement. Hover is sampled
-    // separately, but queued input must not remain pending on the window thread.
-    while(PeekMessageW(&message,nullptr,0,0,PM_REMOVE)) {
+    // The first peek also services the window during loading and idle periods.
+    // Leave time for game updates even if input arrives continuously.
+    constexpr int maxMessagesPerPump = 32;
+    constexpr DWORD nonMotion = (QS_ALLINPUT | QS_ALLPOSTMESSAGE) & ~QS_MOUSEMOVE;
+    for (int count = 0; count < maxMessagesPerPump; ++count) {
+        if (!PeekMessageW(&message, nullptr, 0, 0, PM_REMOVE)) break;
         if(message.message==WM_QUIT) {
             Shutdown();
             break;
@@ -236,9 +238,9 @@ void SexyAppBase::PumpWindowEvents() {
         if(message.hwnd==mHWnd &&
             (message.message==WM_MOUSEMOVE || message.message==WM_MOUSELEAVE)) {
             if (message.message == WM_MOUSEMOVE && !TouchPromotedMouse()) {
-                mNativeMouseClientPosition = {GET_X_LPARAM(message.lParam), GET_Y_LPARAM(message.lParam)};
                 mNativeMouseMotionPending = true;
             }
+            if (message.message == WM_MOUSEMOVE && !HIWORD(GetQueueStatus(nonMotion))) break;
             continue;
         }
         TranslateMessage(&message);
@@ -280,14 +282,8 @@ DEVMODEW SexyAppBase::TargetVideoMode() const {
 void SexyAppBase::ResizeWindowClient(int width,int height) {
     if(width<=0 || height<=0) throw std::invalid_argument("Invalid window client size");
     if(mNativeFullscreen) throw std::logic_error("Cannot resize a fullscreen client as a window");
-    width=std::max(mWindowClientWidth>0 ? mWindowClientWidth :
-        WindowStartupSize::FromMonitor(nativeStartupViewport.width,nativeStartupViewport.height,1200).width, mResolution.minWidth);
-    height=std::max(mWindowClientHeight>0 ? mWindowClientHeight : 1200, mResolution.minHeight);
-    RECT rect{0,0,width,height};
-    const auto style=DWORD(GetWindowLongPtrW(mHWnd,GWL_STYLE));
-    const auto exStyle=DWORD(GetWindowLongPtrW(mHWnd,GWL_EXSTYLE));
-    if(!NativeWindowsWindowApi::AdjustClientRect(rect,style,exStyle,mHWnd))
-        WindowFailure("AdjustClientRect");
+    const auto rect = WindowBounds(mWindowClientWidth, mWindowClientHeight, DWORD(GetWindowLongPtrW(mHWnd,GWL_STYLE)),
+        DWORD(GetWindowLongPtrW(mHWnd,GWL_EXSTYLE)), mHWnd);
     if(!SetWindowPos(mHWnd,nullptr,0,0,rect.right-rect.left,rect.bottom-rect.top,
         SWP_NOMOVE|SWP_NOZORDER|SWP_NOACTIVATE)) WindowFailure("SetWindowPos");
     mNativeResizePending=true;
@@ -366,6 +362,14 @@ void SexyAppBase::UpdateWindowGeometry() {
     if(resized!=DDInterface::RESULT_OK)
         throw NativeDisplayError(NativeDisplayOperation::ResizePreparedPresent,resized);
     mNativeResizePending=false;
+#if defined(PVZ_GPU_VULKAN)
+    const auto surface = mGpuContext->swapchainExtent;
+    const auto scene = render.mRenderer->SceneTargetExtent();
+    const auto caption = "pvz_perf HD  |  " + std::to_string(scene.width) + "x" +
+        std::to_string(scene.height) + " -> " + std::to_string(surface.width) + "x" +
+        std::to_string(surface.height);
+    SetWindowTextA(mHWnd, caption.c_str());
+#endif
     mWidgetManager->Resize(mScreenBounds,mDDInterface->mVisibleGameRect);
     mWidgetManager->MarkAllDirty();
 }
@@ -403,7 +407,7 @@ void SexyAppBase::SampleNativeMousePosition() {
     if(mPlayingDemoBuffer || !mActive || mPhysMinimized || mSwitchingScreenMode) return;
     if(!mNativeWindowShown) return;
     if (mNativeTouchOwnsCursor && !mNativeMouseMotionPending) return;
-    const auto position = mNativeMouseMotionPending ? mNativeMouseClientPosition : ReadNativeMousePosition();
+    const auto position = ReadNativeMousePosition();
     mNativeMouseMotionPending = false;
     if(mRecordingDemoBuffer && !mShutdown) {
         const int dx=position.x-mLastDemoMouseX,dy=position.y-mLastDemoMouseY;
@@ -962,37 +966,6 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 
 	try
 	{
-	if ((uMsg == WM_GETMINMAXINFO || uMsg == WM_SIZING) &&
-		!aSexyApp->mNativeFullscreen &&
-		(GetWindowLongPtrW(hWnd, GWL_STYLE) & WS_THICKFRAME) &&
-		(hWnd == aSexyApp->mHWnd || !aSexyApp->mHWnd))
-	{
-		RECT border{};
-		if (!NativeWindowsWindowApi::AdjustClientRect(border,
-			DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
-			DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))
-			WindowFailure("AdjustClientRect");
-		const int borderWidth = border.right - border.left;
-		if (uMsg == WM_GETMINMAXINFO)
-		{
-			auto& info = *reinterpret_cast<MINMAXINFO*>(lParam);
-            info.ptMinTrackSize = {aSexyApp->mResolution.minWidth+borderWidth,aSexyApp->mResolution.minHeight+border.bottom-border.top};
-            return 0;
-        }
-        auto& rect = *reinterpret_cast<RECT*>(lParam);
-        const int borderHeight = border.bottom - border.top;
-        const int width = std::max(int(rect.right-rect.left)-borderWidth, aSexyApp->mResolution.minWidth)+borderWidth;
-        const int resizedWindowHeight = std::max(int(rect.bottom-rect.top)-borderHeight, aSexyApp->mResolution.minHeight)+borderHeight;
-		if (wParam == WMSZ_LEFT || wParam == WMSZ_TOPLEFT || wParam == WMSZ_BOTTOMLEFT)
-			rect.left = rect.right - width;
-		else
-			rect.right = rect.left + width;
-		if (wParam == WMSZ_TOP || wParam == WMSZ_TOPLEFT || wParam == WMSZ_TOPRIGHT)
-			rect.top = rect.bottom - resizedWindowHeight;
-		else
-			rect.bottom = rect.top + resizedWindowHeight;
-		return TRUE;
-	}
 	if (!aSexyApp->mNativeWindowReady)
 		return DefWindowProc(hWnd, uMsg, wParam, lParam);
 
@@ -1092,13 +1065,9 @@ LRESULT CALLBACK SexyAppBase::WindowProc(HWND hWnd, UINT uMsg, WPARAM wParam, LP
 		if (!aSexyApp->mNativeFullscreen)
 		{
 			const auto& rect = *reinterpret_cast<const RECT*>(lParam);
-			const auto client = ClientRect(hWnd);
-			RECT bounds{0, 0, std::max(int(client.right), aSexyApp->mResolution.minWidth),
-                std::max(int(client.bottom), aSexyApp->mResolution.minHeight)};
-			if (!NativeWindowsWindowApi::AdjustClientRect(bounds,
-				DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
-				DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd))
-				WindowFailure("AdjustClientRect");
+            const auto bounds = WindowBounds(aSexyApp->mWindowClientWidth, aSexyApp->mWindowClientHeight,
+                DWORD(GetWindowLongPtrW(hWnd, GWL_STYLE)),
+                DWORD(GetWindowLongPtrW(hWnd, GWL_EXSTYLE)), hWnd);
 			if (!SetWindowPos(hWnd, nullptr, rect.left, rect.top,
 				bounds.right - bounds.left, bounds.bottom - bounds.top,
 				SWP_NOZORDER | SWP_NOACTIVATE))

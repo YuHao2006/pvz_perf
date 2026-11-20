@@ -2,7 +2,7 @@
   "format": "pvz-hd-package4x-validation-v1",
   "imagesManifestSha256": "02f496211468549ddc1a586bb15a08e909b84ae13128793742948d0acf5a8660",
   "fontsManifestSha256": "11c3a3eb811425f75a66db6039ebe1a331cad3c91327f5c045a98b6ae3f1aab0",
-  "libraryCatalogSha256": "bca7581179c9d9d43e82add6d6ae97d59781367268428c5286f3f8b9ee5ea8ac",
+  "libraryCatalogSha256": "abdb77c80c5dcfbcb1ee0cf3effe25bd24094071b752d44dc37c6141e924e883",
   "pixelScale": 4,
   "atlasMaxSide": 8192,
   "solver": "maxrects",

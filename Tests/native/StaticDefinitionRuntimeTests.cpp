@@ -1233,6 +1233,17 @@ int main(int argc, char** argv)
         StaticSnapshot snapshot;
         if (std::string(argv[2]) == "lifecycle")
             Lifecycle(app, snapshot, reanimationIndex, particleIndex);
+        else if (std::string(argv[2]) == "resized-page")
+        {
+            Definitions::LoadReanimationImages(reanimationIndex);
+            auto* texture = Definitions::Reanimations[reanimationIndex].mTextures[0];
+            const TextureRegion region{0.25f, 0.25f, 0.75f, 0.75f, 24, 16};
+            const auto pixels = Sample(app, texture, region);
+            Require(std::any_of(pixels.begin(), pixels.end(), [](auto pixel) {
+                return (pixel & 0xFFFFFFu) == 0xFF00FFu;
+            }), "Normalized UVs did not sample the replacement atlas pixel");
+            snapshot.Check();
+        }
         else
             PngFailure(app, snapshot, argv[2], argv[3], argv[6], reanimationIndex, particleIndex);
     }

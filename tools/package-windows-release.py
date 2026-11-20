@@ -123,8 +123,9 @@ def package(args):
     if forbidden:
         raise ValueError(f"Personal or debug files in package: {forbidden}")
     settings = json.loads((root / "config/default-settings.json").read_text(encoding="utf-8"))
-    if args.render_height == 2400:
-        settings["resolution"].update(maxWidth=5600, maxHeight=2400)
+    with zipfile.ZipFile(files["main.pak64"]) as pak:
+        if int(pak.read("compiled/render-height.txt")) != args.render_height:
+            raise ValueError("The packaged render height must match main.pak64")
     saves = read_test_saves(args.test_saves)
     source_commit = args.source_commit or subprocess.check_output(
         ["git", "rev-parse", "HEAD"], cwd=root, text=True).strip()

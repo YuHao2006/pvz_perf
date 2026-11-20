@@ -20,6 +20,8 @@ def derive(source,output,certificate,png_compression=1):
         with zipfile.ZipFile(source)as src,zipfile.ZipFile(temporary,'w',allowZip64=True)as dst:
             for entry in src.infolist():
                 data=src.read(entry)
+                if entry.filename == 'compiled/render-height.txt':
+                    continue
                 if entry.filename in dataTextures:
                     item=dataTextures[entry.filename]
                     if item.get('classification')!='fixed-size-caustics-compute-input-not-displayed-art' or item.get('size')!=[256,256] or hashlib.sha256(data).hexdigest()!=item.get('sha256'):raise ValueError('Compute input certificate mismatch: '+entry.filename)
@@ -46,12 +48,13 @@ def derive(source,output,certificate,png_compression=1):
                         # transparent borders. Logical metrics and UV data stay.
                         image=image.convert('RGBA').convert('RGBa').resize((w//2,h//2),Image.Resampling.LANCZOS).convert('RGBA');buf=BytesIO();image.save(buf,format='PNG',compress_level=png_compression);data=buf.getvalue();pages.append({'path':entry.filename,'4x':[w,h],'2x':[w//2,h//2]})
                 dst.writestr(copy.copy(entry),data)
+            dst.writestr(zipfile.ZipInfo('compiled/render-height.txt'), b'1200\n', compress_type=zipfile.ZIP_STORED)
         if set(preserved)!=set(dataTextures):raise ValueError('Certified compute input missing from source PAK')
         temporary.replace(output)
     except BaseException:
         temporary.unlink(missing_ok=True);raise
-    report={'sourcePakSha256':cert['pakSha256'],'derivedPakSha256':hashlib.sha256(output.read_bytes()).hexdigest(),'pixelScale':2,'repacked':False,'nonImageEntriesUnchanged':True,'pngCompressionLevel':png_compression,'dataTexturesPreservedByteIdentically':preserved,'pages':pages};output.with_suffix(output.suffix+'.derivation.json').write_text(json.dumps(report,indent=2),encoding='utf-8');return report
+    report={'sourcePakSha256':cert['pakSha256'],'derivedPakSha256':hashlib.sha256(output.read_bytes()).hexdigest(),'pixelScale':2,'repacked':False,'renderHeight':1200,'nonImageEntriesUnchangedExceptRenderHeight':True,'pngCompressionLevel':png_compression,'dataTexturesPreservedByteIdentically':preserved,'pages':pages};output.with_suffix(output.suffix+'.derivation.json').write_text(json.dumps(report,indent=2),encoding='utf-8');return report
 
 def main():
-    ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--input',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--certificate',type=Path,required=True);ap.add_argument('--png-compression',type=int,default=1);args=ap.parse_args();report=derive(args.input,args.output,args.certificate,args.png_compression);print(f"Derived {len(report['pages'])} whole pages; all non-image data and normalized UVs unchanged.")
+    ap=argparse.ArgumentParser(description=__doc__);ap.add_argument('--input',type=Path,required=True);ap.add_argument('--output',type=Path,required=True);ap.add_argument('--certificate',type=Path,required=True);ap.add_argument('--png-compression',type=int,default=1);args=ap.parse_args();report=derive(args.input,args.output,args.certificate,args.png_compression);print(f"Derived {len(report['pages'])} whole pages; 1200p marker written, normalized UVs unchanged.")
 if __name__=='__main__':main()

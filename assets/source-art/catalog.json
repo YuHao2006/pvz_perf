@@ -117408,7 +117408,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/reanim/zombieswon.png",
-        "sha256": "5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273",
+        "sha256": "10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45",
         "physicalSize": [
           2256,
           1872
@@ -117417,7 +117417,7 @@
           564,
           468
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45.webp"
       },
       "status": "ready",
       "history": {
@@ -117509,8 +117509,8 @@
           564,
           468
         ],
-        "sha256": "5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273",
-        "thumbnail": "out/media/hd-library-thumbnails/5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273.webp"
+        "sha256": "10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45",
+        "thumbnail": "out/media/hd-library-thumbnails/10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45.webp"
       },
       "sourceKinds": [
         "native",
@@ -117526,7 +117526,13 @@
             1067
           ]
         }
-      ]
+      ],
+      "wordmarkMatteCorrection": {
+        "tool": "tools/restore_hd_wordmark_mattes.py",
+        "reference": "assets/runtime/reanim/ZombiesWon_.png",
+        "previous4xSha256": "5690f00007329c82a19933cdf89c7d57f02de471951b50124d97cc7db2e70273",
+        "result4xSha256": "10fb4b923b4e80fe46dab2829edee296a10fd29493d7604cacc5839e6874fd45"
+      }
     },
     {
       "id": "reanim/zombie_flag1",
@@ -220552,7 +220558,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/pvz_logo.png",
-        "sha256": "720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d",
+        "sha256": "d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f",
         "physicalSize": [
           2800,
           464
@@ -220561,7 +220567,7 @@
           700,
           116
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f.webp"
       },
       "status": "ready",
       "history": {
@@ -220616,8 +220622,8 @@
           700,
           116
         ],
-        "sha256": "720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d",
-        "thumbnail": "out/media/hd-library-thumbnails/720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d.webp"
+        "sha256": "d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f",
+        "thumbnail": "out/media/hd-library-thumbnails/d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f.webp"
       },
       "sourceKinds": [
         "ai",
@@ -220642,7 +220648,13 @@
             724
           ]
         }
-      ]
+      ],
+      "wordmarkMatteCorrection": {
+        "tool": "tools/restore_hd_wordmark_mattes.py",
+        "reference": "assets/runtime/images/PvZ_Logo.png",
+        "previous4xSha256": "720cbc18ec01223b2f903618c58373ca9791e0ccbd035eb17a9246911ae0137d",
+        "result4xSha256": "d0a7b3ed8387dec4dc0837dfdcc46c2e57d9c5e90a15a1748942a71f16529b6f"
+      }
     },
     {
       "id": "images/zombatar_accessory_bg",

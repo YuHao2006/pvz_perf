@@ -1,4 +1,8 @@
 """Compile production zombie status deadline/age math against deterministic clocks."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '..').resolve()))
+from workspace_paths import workspace_path
 from pathlib import Path
 import os
 import subprocess
@@ -121,10 +125,10 @@ int main() {
         !ZombieAgeCrossedPoint(700'000'002,1,700'000'000), "face event crossing repeated or skipped");
 }
 '''
-        toolset = Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231")
+        toolset = workspace_path('vcToolset')
         vcvars = toolset.parents[2] / "Auxiliary/Build/vcvars64.bat"
         if not vcvars.exists():
-            vcvars=Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat")
+            vcvars=workspace_path('vs', 'VC/Auxiliary/Build/vcvars64.bat')
         if not vcvars.exists(): self.skipTest("MSVC is required")
         with tempfile.TemporaryDirectory(prefix="pvz-zombie-status-") as temp:
             src=Path(temp)/"status.cpp";exe=Path(temp)/"status.exe";src.write_text(source,encoding="utf-8")

@@ -58,7 +58,10 @@ void DrawAlmanacBackground(Graphics* g, const TextureSource& texture, const Rect
     const auto& paper = image(AlmanacSprite::ALMANAC_PAPER);
     DrawAtlasImage(&background, texture, paper, Rect(left, 0, bounds.mWidth, bounds.mHeight),
         Rect(0, 0, paper.mWidth, paper.mHeight));
-    DrawAtlasImage(&background, texture, image(decoration), decorationX, 0);
+    const auto& decor = image(decoration);
+    const bool watermark = decoration == AlmanacSprite::ALMANAC_PLANTDECOR ||
+                           decoration == AlmanacSprite::ALMANAC_ZOMBIEDECOR;
+    DrawAtlasImage(&background, texture, decor, decorationX, watermark ? BOARD_HEIGHT - decor.mHeight : 0);
 
     constexpr int corner = 64;
     const int right = left + bounds.mWidth - corner, bottom = bounds.mHeight - corner;
@@ -70,7 +73,16 @@ void DrawAlmanacBackground(Graphics* g, const TextureSource& texture, const Rect
     }};
     for (unsigned i = 0; i < edges.size(); ++i) {
         const auto& strip = AlmanacAtlas::Images[static_cast<unsigned>(frame) + i];
-        DrawAtlasImage(&background, texture, strip, edges[i], Rect(1, 1, strip.mWidth - 2, strip.mHeight - 2));
+        const Rect source(1, 1, strip.mWidth - 2, strip.mHeight - 2);
+        Rect destination = edges[i];
+        if (i == 1 || i == 6) {
+            if (i == 6) destination.mY += destination.mHeight - source.mHeight;
+            destination.mHeight = source.mHeight;
+        } else if (i == 3 || i == 4) {
+            if (i == 4) destination.mX += destination.mWidth - source.mWidth;
+            destination.mWidth = source.mWidth;
+        }
+        DrawAtlasImage(&background, texture, strip, destination, source);
     }
     const auto drawTitleLayer = [&](AlmanacSprite layer) {
         const auto& crop = AlmanacAtlas::Crops[static_cast<unsigned>(layer)];

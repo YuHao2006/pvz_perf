@@ -2,6 +2,7 @@
 """Verify that the independent 1073 reconstruction evidence is complete."""
 
 from __future__ import annotations
+from workspace_paths import workspace_path
 
 import csv
 import hashlib
@@ -10,7 +11,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 AUTHORITY_EXE = Path(
-    r"C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe"
+    str(workspace_path('retail1073', 'PlantsVsZombies.exe'))
 )
 AUTHORITY_SHA256 = "5f650f52d12751e08b63e590edb0d9b9f09d087cea900baa0eb39e4af8eda251"
 INVENTORY = ROOT / "reconstruction/1073/manifest/functions_1073.csv"

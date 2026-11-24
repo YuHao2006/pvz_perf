@@ -24,8 +24,8 @@ if (!@($taskBassCandidates | Where-Object {
 }).Count) {
     throw 'Image runtime tests require bass.dll for sound decoding. Configure PVZ_BASS_DLL to stage it beside the game, or set the PVZ_BASS_DLL environment variable to its absolute path.'
 }
-$taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
-$taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+$taskNinja=(& "$PSScriptRoot/workspace-path.ps1" 'ninja')
+$taskVcvars=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing runtime build graph' }
 $taskMain=Join-Path $taskRoot 'pvzPerf\main.cpp'

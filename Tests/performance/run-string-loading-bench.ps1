@@ -37,7 +37,7 @@ if ([Environment]::OSVersion.Platform -ne [PlatformID]::Win32NT -or [IntPtr]::Si
 }
 $root = [IO.Path]::GetFullPath((Split-Path -Parent (Split-Path -Parent $PSScriptRoot)))
 $runtimes = @{
-    A = 'C:\Users\Administrator\AppData\Local\Temp\pvz-strings-baseline-20261010'
+    A = (& "$PSScriptRoot/../../tools/workspace-path.ps1" 'temp' 'pvz-strings-baseline-20261010')
     B = Join-Path $root 'out\x64-win32-dx12\Release'
 }
 $SettingsFile = [IO.Path]::GetFullPath($SettingsFile)

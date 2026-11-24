@@ -19,8 +19,6 @@ protected:
 
 protected:
 	void				SyncState(DataSync& theSync);
-	void				DeleteOldestProfile();
-	inline void			DeleteOldProfiles() { while(mProfileMap.size() > 200) DeleteOldestProfile(); }
 
 public:
 	bool				DeleteProfile(const SexyString& theName);
@@ -34,7 +32,7 @@ public:
 
 	/*inline*/ void		Clear();
 	void				Load();
-	void				Save();
+	bool				Save();
 	inline int			GetNumProfiles() const { return mProfileMap.size(); }
 	PlayerInfo*			GetProfile(const SexyString& theName);
 	PlayerInfo*			AddProfile(const SexyString& theName);

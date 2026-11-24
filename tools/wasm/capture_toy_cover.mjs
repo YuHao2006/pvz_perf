@@ -1,6 +1,7 @@
+import {workspacePath} from '../workspace-path.mjs';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE||'playwright-core');
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge')});
 try{
  const page=await browser.newPage({viewport:{width:800,height:600},deviceScaleFactor:1});
  await page.goto('http://127.0.0.1:18088/');await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:90000});

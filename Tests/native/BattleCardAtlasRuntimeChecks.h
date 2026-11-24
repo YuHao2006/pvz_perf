@@ -26,7 +26,8 @@ inline void CheckBattleCardAtlas(LawnApp& app,void (*deletes)(LawnApp&)) {
             require(b.mLandscapeHud==landscape,"Card atlas fixture created wrong layout");
             constexpr SeedType seeds[]{SEED_PEASHOOTER,SEED_WINTERMELON,SEED_IMITATER,SEED_TALLNUT,SEED_COBCANNON,SEED_POTATOMINE,SEED_GIANT_WALLNUT,SEED_SUNFLOWER,SEED_CHERRYBOMB,SEED_GLOOMSHROOM};
             if(!conveyor)for(int i=0;i<b.mSeedBank->mNumPackets;++i)b.mSeedBank->mSeedPackets[i].SetPacketType(seeds[i],seeds[i]==SEED_IMITATER?SEED_MELONPULT:SEED_NONE);
-            app.StartPlaying();require(bool(app.mBattleCardAtlas),"Battle card atlas was not created");
+            app.StartPlaying();
+            require(bool(app.mBattleCardAtlas),"Battle card atlas was not created");
             const auto compare=[&](SeedPacket& p,float dark,int gray){
                 auto* expected=render.CreateRenderImage(90,80);auto* actual=render.CreateRenderImage(90,80);
                 struct Targets {Image* a;Image* b;~Targets(){delete a;delete b;}} cleanup{expected,actual};

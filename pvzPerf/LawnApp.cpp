@@ -4,6 +4,7 @@
 #include <time.h>
 #include <cstdlib>
 #include "LawnApp.h"
+#include "Lawn/System/PendingSaveRecovery.h"
 #include "Lawn/BattleCardAtlas.h"
 #include "Sexy.TodLib/generated/ReanimVariantOptions.h"
 #include "misc/StableTime.h"
@@ -462,10 +463,7 @@ void LawnApp::ReadFromRegistry()
 // GOTY @Patoke: 0x452800
 bool LawnApp::WriteCurrentUserConfig()
 {
-	if (mPlayerInfo)
-		mPlayerInfo->SaveDetails();
-
-	return true;
+	return !mPlayerInfo || mPlayerInfo->SaveDetails();
 }
 
 //0x44F560
@@ -522,6 +520,8 @@ bool LawnApp::SaveFileExists()
 bool LawnApp::TryLoadGame()
 {
 	std::string aSaveName = GetSavedGameName(mGameMode, mPlayerInfo->mId);
+    if (PendingSaves::Unavailable(aSaveName))
+        throw SaveGameLoadRejected("Cannot recover the saved game: " + aSaveName);
 	mMusic->StopAllMusic();
 
 	if (this->FileExists(aSaveName))
@@ -923,13 +923,22 @@ void LawnApp::FinishUserDialog(bool isYes)
 			PlayerInfo* aProfile = mProfileMgr->GetProfile(StringToSexyStringFast(aUserDialog->GetSelName()));
 			if (aProfile)
 			{
+				if (!mProfileMgr->Save()) return;
 				mPlayerInfo = aProfile;
+				RegistryWriteString("CurUser", SexyStringToStringFast(aProfile->mName));
 				mWidgetManager->MarkAllDirty();
 
 				if (mGameSelector)
 				{
 					mGameSelector->SyncProfile(true);
 				}
+			}
+			else
+			{
+				DoDialog(Dialogs::DIALOG_CREATEUSERERROR, true, "Cannot load player",
+					"This player's progress could not be read. Restore its save from a backup or select another player.",
+					"OK", Dialog::BUTTONS_FOOTER);
+				return;
 			}
 		}
 
@@ -988,6 +997,7 @@ void LawnApp::FinishCreateUserDialog(bool isYes)
 		PlayerInfo* aProfile = mProfileMgr->AddProfile(aName);
 		if (aProfile == nullptr)
 		{
+			if (!mProfileMgr->mProfileMap.contains(aName)) return;
 			DoDialog(
 				Dialogs::DIALOG_CREATEUSERERROR,
 				true,
@@ -999,8 +1009,8 @@ void LawnApp::FinishCreateUserDialog(bool isYes)
 		}
 		else
 		{
-			mProfileMgr->Save();
 			mPlayerInfo = aProfile;
+			RegistryWriteString("CurUser", SexyStringToStringFast(aProfile->mName));
 
 			KillDialog(Dialogs::DIALOG_USERDIALOG);
 			KillDialog(Dialogs::DIALOG_CREATEUSER);
@@ -1107,7 +1117,8 @@ void LawnApp::FinishRenameUserDialog(bool isYes)
 	if (aNewName.empty())
 		return;
 	
-	bool isCurrentUser = mProfileMgr->GetProfile(anOldName) == mPlayerInfo;
+	auto oldUser = mProfileMgr->mProfileMap.find(anOldName);
+	bool isCurrentUser = oldUser != mProfileMgr->mProfileMap.end() && &oldUser->second == mPlayerInfo;
 	if (!mProfileMgr->RenameProfile(anOldName, aNewName))
 	{
 		DoDialog(

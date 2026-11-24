@@ -58,7 +58,7 @@ def main():
             if target.suffix == ".h":
                 original = target.read_text(encoding="utf-8-sig")
                 dependencies = project / "Tests/reference/microbenchmarks/dependencies"
-                adjusted = original.replace('"C:/Users/Administrator/CLionProjects/codex/PlantsVsZombiesModern/', '"' + dependencies.as_posix() + '/')
+                adjusted = re.sub(r'(?m)(#include\s+")[A-Za-z]:/[^"\n]+?/PlantsVsZombiesModern/', lambda m: m[1] + dependencies.as_posix() + '/', original)
                 if adjusted != original:
                     target.write_text(adjusted, encoding="utf-8")
     env_file = work / "environment.cmd"

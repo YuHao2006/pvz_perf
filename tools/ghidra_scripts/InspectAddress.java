@@ -7,13 +7,20 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.symbol.Reference;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.io.PrintWriter;
 
 public class InspectAddress extends GhidraScript {
     @Override
     public void run() throws Exception {
         long[] addresses = {0x00726ec4L, 0x00726e98L, 0x00726760L};
-        File out = new File("C:/tmp/inspect-address.txt");
+        String[] args = getScriptArgs();
+        File scriptDir = new File(getSourceFile().getAbsolutePath()).getParentFile();
+        File outputRoot = args.length == 0
+            ? new File(scriptDir, "../../out/ghidra").getCanonicalFile()
+            : new File(args[0]);
+        Files.createDirectories(outputRoot.toPath());
+        File out = new File(outputRoot, "inspect-address.txt");
         try (PrintWriter writer = new PrintWriter(out, "UTF-8")) {
             Listing listing = currentProgram.getListing();
             DecompInterface decomp = new DecompInterface();

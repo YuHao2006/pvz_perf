@@ -124,7 +124,10 @@ class MusicEngine {
   return id;
  }
  loadStream(samples,channels,rate){
-  const id=this.next++,buffer=this.disabled?null:createPCMBuffer(this.context,samples,channels,rate),gainNode=this.disabled?null:this.context.createGain();if(gainNode){gainNode.gain.value=0;gainNode.connect(this.master)}
+  return this.registerStream(this.disabled?null:createPCMBuffer(this.context,samples,channels,rate),channels,rate);
+ }
+ registerStream(buffer,channels,rate){
+  const id=this.next++,gainNode=this.disabled?null:this.context.createGain();if(gainNode){gainNode.gain.value=0;gainNode.connect(this.master)}
   this.voices.set(id,{id,stream:true,playing:false,paused:false,position:0,revision:0,tempo:155,speed:3,gain:0,flags:0,offset:0,byteRate:rate*channels*2,buffer,gainNode});return id;
  }
  startStream(v){

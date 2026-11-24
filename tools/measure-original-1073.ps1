@@ -7,7 +7,7 @@
 )
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$executable = 'C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe'
+$executable = (& "$PSScriptRoot/workspace-path.ps1" 'retail1073' 'PlantsVsZombies.exe')
 if (!$ProcessId) {
     $candidates = @(Get-Process PlantsVsZombies -ErrorAction SilentlyContinue | Where-Object { $_.Path -eq $executable })
     if ($candidates.Count -ne 1) { throw 'Launch one retail 1073 instance with tools/run-endless-orig.cmd.' }

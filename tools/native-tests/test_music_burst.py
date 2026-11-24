@@ -1,4 +1,8 @@
 """Compile the real music controller against deterministic playback/board doubles."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '..').resolve()))
+from workspace_paths import workspace_path
 from pathlib import Path
 import ctypes
 import os
@@ -110,7 +114,7 @@ int main() {
 }
 '''
         compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
-        vcvars = Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat")
+        vcvars = workspace_path('vs', 'VC/Auxiliary/Build/vcvars64.bat')
         with tempfile.TemporaryDirectory(prefix="pvz-music-gain-") as temp:
             source_path = Path(temp) / "music_gain.cpp"
             executable = Path(temp) / ("music_gain.exe" if os.name == "nt" else "music_gain")
@@ -118,7 +122,7 @@ int main() {
             if compiler:
                 command = [compiler, "-std=c++20", str(source_path), "-o", str(executable)]
             elif vcvars.exists():
-                toolset = Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231')
+                toolset = workspace_path('vcToolset')
                 build = (f'call "{vcvars}" >nul && set "INCLUDE={toolset}/include;!INCLUDE!" && '
                          f'set "LIB={toolset}/lib/x64;!LIB!" && "{toolset}/bin/Hostx64/x64/cl.exe" '
                          f'/nologo /EHsc /std:c++20 "{source_path}" /Fo"{temp}/music_gain.obj" /Fe"{executable}"')
@@ -130,7 +134,7 @@ int main() {
 
     def test_production_controller(self):
         compiler = shutil.which("c++") or shutil.which("g++") or shutil.which("clang++")
-        vcvars = Path("C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat")
+        vcvars = workspace_path('vs', 'VC/Auxiliary/Build/vcvars64.bat')
         if not compiler and not vcvars.exists():
             self.skipTest("A C++20 compiler is required")
         production = (ROOT / "pvzPerf/Lawn/System/Music.cpp").read_text(encoding="utf-8")
@@ -299,7 +303,7 @@ int main()
                 command = [compiler, "-std=c++20", *[f"-I{path}" for path in includes],
                            str(source_path), "-o", str(executable)]
             else:
-                toolset = Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231')
+                toolset = workspace_path('vcToolset')
                 build = (f'call "{vcvars}" >nul && set "INCLUDE={toolset}/include;!INCLUDE!" && set "LIB={toolset}/lib/x64;!LIB!" && "{toolset}/bin/Hostx64/x64/cl.exe" /nologo /EHsc /std:c++20 '
                          + " ".join(f'/I"{path}"' for path in includes)
                          + f' "{source_path}" /Fo"{temp}/music_burst.obj" /Fe"{executable}"')

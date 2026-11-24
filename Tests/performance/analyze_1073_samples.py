@@ -35,7 +35,7 @@ def classify(offset, funcs):
     return None
 
 def main():
-    sample_path = sys.argv[1] if len(sys.argv) > 1 else r"C:\temp\pvz1073_sample.csv"
+    sample_path = sys.argv[1] if len(sys.argv) > 1 else "pvz1073_sample.csv"
     csv_path = sys.argv[2] if len(sys.argv) > 2 else \
         str(Path(__file__).resolve().parents[2] / "reconstruction/1073/raw_decomp/functions.csv")
     funcs = load_functions(csv_path)

@@ -1,4 +1,5 @@
 """Read-only retail 1073 magnet-coordinate evidence. Print disassembly to stdout."""
+from workspace_paths import workspace_path
 import argparse
 import hashlib
 import struct
@@ -10,7 +11,7 @@ import pefile
 parser = argparse.ArgumentParser(description=__doc__)
 parser.add_argument(
     "exe", nargs="?",
-    default=r"C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe",
+    default=str(workspace_path('retail1073', 'PlantsVsZombies.exe')),
 )
 args = parser.parse_args()
 exe = Path(args.exe)

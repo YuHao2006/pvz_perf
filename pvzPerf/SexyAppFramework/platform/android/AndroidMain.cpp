@@ -1,3 +1,4 @@
+#include "Lawn/System/PendingSaveRecovery.h"
 #include "../../LawnApp.h"
 #include "../../Resources.h"
 #include "../../Sexy.TodLib/TodStringFile.h"
@@ -95,6 +96,7 @@ void android_main(android_app* state) {
     std::string settingsPath;
     int requestedTargetFps=0;
     int resetEndless=0;
+    try {
     // Prefer the Activity's Android/media directory. Keep the former external
     // files directory as a migration source and a fallback when media is absent.
     {
@@ -207,6 +209,7 @@ void android_main(android_app* state) {
         // Import once, preferring the latest external files over old internal
         // copies. Without a marker, consumed level saves would resurrect on
         // the next launch. Never overwrite files already in the destination.
+        PendingSaves::RecoverDirectory(settingsDirectory);
         const auto migrationMarker = settingsDirectory / ".user-data-migrated";
         if (!std::filesystem::exists(migrationMarker)) {
             namespace fs2 = std::filesystem;
@@ -218,7 +221,7 @@ void android_main(android_app* state) {
                     if (entry.path().extension() != ".dat64" ||
                         (name.rfind("user", 0) != 0 && name.rfind("game", 0) != 0)) continue;
                     const auto to = settingsDirectory / name;
-                    if (!fs2::exists(to)) fs2::copy_file(entry.path(), to);
+                    if (!fs2::exists(to) && !PendingSaves::Unavailable(to)) fs2::copy_file(entry.path(), to);
                 }
                 // Publish the profile index only after its records are present.
                 for (const char* name : {"settings.json", "scale.json", "users.dat"}) {
@@ -239,7 +242,6 @@ void android_main(android_app* state) {
                 reinterpret_cast<void**>(&source)) >= 0 && source)
             source->process(state, source);
     }
-    try {
         gTodStringFormats = gLawnStringFormats;
         gTodStringFormatCount = gLawnStringFormatCount;
         gAppCloseRequest = LawnGetCloseRequest;
@@ -267,7 +269,9 @@ void android_main(android_app* state) {
         if (!std::filesystem::exists(userDirectory / "users.dat")) {
             for (const char* name : {"user1.dat64", "game1_58.dat64", "users.dat"}) {
                 const std::string asset = std::string("bundled-saves/") + name;
-                ExtractAsset(state->activity->assetManager, asset.c_str(), userDirectory / name);
+                const auto target = userDirectory / name;
+                if (!std::filesystem::exists(target) && !PendingSaves::Unavailable(target))
+                    ExtractAsset(state->activity->assetManager, asset.c_str(), target);
             }
         }
         const std::filesystem::path internalDirectory(state->activity->internalDataPath);

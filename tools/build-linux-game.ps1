@@ -1,7 +1,7 @@
 param(
     [ValidateSet('X11', 'WAYLAND')][string]$Window = 'X11',
     [string]$Distribution = 'Ubuntu-26.04',
-    [string]$VcpkgRoot = 'C:/UserProgram/vcpkg',
+    [string]$VcpkgRoot = (& "$PSScriptRoot/workspace-path.ps1" 'vcpkg'),
     [switch]$ConfigureOnly
 )
 $ErrorActionPreference = 'Stop'

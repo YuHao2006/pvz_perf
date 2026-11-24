@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+
 #include "SexyAppFramework/graphics/PoolMesh.h"
 #if defined(__ANDROID__)
 namespace {
@@ -423,6 +424,7 @@ struct VulkanRenderer::Impl {
     // 即可无等待覆写（单在途批约束下，环回时旧批必已完成）。
     std::vector<std::unique_ptr<Buffer>> stagingRing;
     size_t stagingIndex = 0;
+    bool uploadedSinceDisplayFrame = false;
     static constexpr size_t kStagingRingSize = 4;
     Buffer* Staging() { return stagingIndex < stagingRing.size() ? stagingRing[stagingIndex].get() : nullptr; }
     // 管线缓存：Adreno 单条几何/计算管线编译秒级（12 条 GS 管线曾冻结
@@ -965,6 +967,7 @@ struct VulkanRenderer::Impl {
     }
 
     void QueueTextureUpload(VulkanTexture* texture,const void* pixels,int pitch) {
+        uploadedSinceDisplayFrame = true;
         const auto imageWidth=texture->width,imageHeight=texture->height;
         const VkDeviceSize rowBytes=VkDeviceSize(imageWidth)*texture->texelBytes;
         const VkDeviceSize bytes=rowBytes*imageHeight;
@@ -1241,7 +1244,7 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
 #endif
     for (unsigned i = 0; i < 4; ++i) {
         VkSamplerCreateInfo sampler{VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO};
-        sampler.magFilter = sampler.minFilter = (i & 1) ? VK_FILTER_LINEAR : VK_FILTER_NEAREST;
+        sampler.magFilter = sampler.minFilter = VK_FILTER_LINEAR;
         sampler.addressModeU = sampler.addressModeV = sampler.addressModeW = (i & 2) ?
             VK_SAMPLER_ADDRESS_MODE_REPEAT : VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE;
         VK_REQUIRE(vkCreateSampler(device, &sampler, nullptr, &samplers[i]));
@@ -2346,6 +2349,15 @@ bool VulkanRenderer::BeginScene() try {
     // 队列提交序（传输批 → 帧批）。
     if (s.transferOpen) s.FinishTransfer();
     s.CompleteTransfers();  // 回收上批合成描述集；栅栏多半已 signaled，代价≈0
+    // The previous transfer fence has completed. Keep arenas across a burst of
+    // uploads, then release them after a display frame without any new uploads.
+    if (!s.renderImage && !s.stagingRing.empty()) {
+        if (!s.uploadedSinceDisplayFrame && s.pendingUploads.empty()) {
+            s.stagingRing.clear();
+            s.stagingIndex = 0;
+        }
+        s.uploadedSinceDisplayFrame = false;
+    }
     if (s.renderImage
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
         || true // This isolated executable always renders offscreen.

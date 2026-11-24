@@ -1,3 +1,31 @@
+# The checkout contains only a generated view of the selected library.
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+set(PVZ_ASSET_LIBRARY "" CACHE PATH "External PVZ asset library (default in config/workspace-paths.json)")
+set(_pvz_select_assets "${Python3_EXECUTABLE}" "${CMAKE_SOURCE_DIR}/tools/select-assets.py")
+if(PVZ_ASSET_LIBRARY)
+    list(APPEND _pvz_select_assets --library "${PVZ_ASSET_LIBRARY}")
+endif()
+execute_process(COMMAND ${_pvz_select_assets} RESULT_VARIABLE _select_result)
+if(NOT _select_result EQUAL 0)
+    message(FATAL_ERROR "Cannot prepare the external asset library; see the error above")
+endif()
+execute_process(COMMAND ${_pvz_select_assets} --print-layers OUTPUT_VARIABLE _pvz_layers
+    RESULT_VARIABLE _select_result OUTPUT_STRIP_TRAILING_WHITESPACE)
+if(NOT _select_result EQUAL 0)
+    message(FATAL_ERROR "Cannot read the selected asset library layers")
+endif()
+string(REPLACE "\n" ";" _pvz_layers "${_pvz_layers}")
+list(GET _pvz_layers 0 _pvz_common)
+get_filename_component(_pvz_library "${_pvz_common}" DIRECTORY)
+set(_pvz_external_inputs "")
+foreach(_layer IN LISTS _pvz_layers)
+    file(GLOB_RECURSE _files CONFIGURE_DEPENDS "${_layer}/*")
+    list(APPEND _pvz_external_inputs ${_files})
+endforeach()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${CMAKE_SOURCE_DIR}/config/workspace-paths.json" "${CMAKE_SOURCE_DIR}/tools/select-assets.py"
+    "${_pvz_library}/library.json")
+
 include("${CMAKE_SOURCE_DIR}/CMake/DevTools.cmake")
 pvz_import_dev_tool(reanimc reanimc PVZ_RESOURCE_COMPILER_HOST)
 pvz_import_dev_tool(pvz_resource_builder pvz-resource-build PVZ_RESOURCE_BUILDER_HOST)
@@ -65,13 +93,14 @@ add_custom_command(
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ReanimAttacherMasks.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackId.h"
         "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/ReanimTrackMphfGlobal.h"
+    COMMAND ${_pvz_select_assets}
     COMMAND "$<TARGET_FILE:pvz_resource_builder>" build --root "${CMAKE_SOURCE_DIR}"
         --compiler "$<TARGET_FILE:reanimc>" --cache "${PVZ_RESOURCE_CACHE}"
         --config "${CMAKE_SOURCE_DIR}/assets/definitions/ResourceBuild.pvzbuild"
     COMMAND "${CMAKE_COMMAND}" "-DMANIFEST=${PVZ_RESOURCE_CACHE}/manifest.json"
         "-DHEADER=${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/AlmanacTitleLayers.h"
         -P "${CMAKE_SOURCE_DIR}/CMake/AlmanacTitleLayers.cmake"
-    DEPENDS reanimc pvz_resource_builder ${PVZ_RESOURCE_INPUTS} ${PVZ_DEVTOOLS_BINARY_INPUTS}
+    DEPENDS reanimc pvz_resource_builder "${CMAKE_SOURCE_DIR}/out/selected-assets/state.json" "${_pvz_library}/library.json" ${_pvz_external_inputs} ${PVZ_RESOURCE_INPUTS} ${PVZ_DEVTOOLS_BINARY_INPUTS}
         "${CMAKE_SOURCE_DIR}/CMake/AlmanacTitleLayers.cmake"
     COMMENT "Compiling definitions, generated C++ and runtime PAK64"
     VERBATIM)

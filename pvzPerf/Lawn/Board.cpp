@@ -1579,17 +1579,8 @@ void Board::GetZenButtonRect(GameObjectType theObjectType, Rect& theRect)
 		theRect.mY += TodAnimateCurveNs(500'000'000, 0, mChallenge->mChallengeStateCounter.mNanoseconds, 0, -72, Curves::EaseInOut);
 	if (theObjectType == GameObjectType::OBJECT_TYPE_NEXT_GARDEN)
 	{
-		if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
-		{
-			// Keep both drawing and input beside Menu, clear of the tree height.
-			// The arrow image is drawn two pixels inside its button rectangle.
-			theRect.mWidth = Sexy::IMAGE_ZEN_NEXTGARDEN->mWidth + 2;
-			theRect.mX = GardenHudLayout::RightButtonX(628, frame) - theRect.mWidth;
-		}
-		else
-		{
-			theRect.mX = frame.left + 564;
-		}
+        theRect.mWidth = Sexy::IMAGE_ZEN_NEXTGARDEN->mWidth + 2;
+        theRect.mX = GardenHudLayout::NextGardenX(frame, theRect.mWidth);
 		return;
 	}
 	if (mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM)
@@ -8591,7 +8582,8 @@ void Board::DrawZenButtons(Graphics* g)
 		mChallenge->mChallengeState == ChallengeState::STATECHALLENGE_ZEN_FADING)
 		fadeOffset = TodAnimateCurveNs(500'000'000, 0, mChallenge->mChallengeStateCounter.mNanoseconds, 0, -72, Curves::EaseInOut);
 	const auto positions = GardenHudLayout::LayoutTools(
-		available, frame, mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM, fadeOffset);
+		available, frame, mApp->mGameMode == GameMode::GAMEMODE_TREE_OF_WISDOM, fadeOffset,
+        available.back() ? Sexy::IMAGE_ZEN_NEXTGARDEN->mWidth + 2 : 0);
 	Rect aButtonRect = GetShovelButtonRect();
 	aButtonRect.mY = positions.y;
 	for (GameObjectType aTool = GameObjectType::OBJECT_TYPE_WATERING_CAN; aTool <= GameObjectType::OBJECT_TYPE_NEXT_GARDEN; aTool = (GameObjectType)(aTool + 1))

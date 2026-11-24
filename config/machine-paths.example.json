@@ -1,0 +1,21 @@
+{
+  "vcpkg": "toolchains/vcpkg",
+  "vs": "toolchains/Community",
+  "vcToolset": "toolchains/14.51.36231",
+  "ninja": "toolchains/ninja.EXE",
+  "vulkanSdk": "toolchains/1.4.350.0",
+  "androidSdk": "toolchains/AndroidSdk",
+  "emsdk": "toolchains/emsdk",
+  "python": "toolchains/python.EXE",
+  "fonts": "toolchains/Fonts",
+  "edge": "toolchains/msedge.exe",
+  "jdkDirectory": "toolchains/Java",
+  "retail1073": "toolchains/Plants_Vs_Zombies_V1.2.0.1073_EN",
+  "retailSave": "toolchains/userdata",
+  "scratch": "toolchains/temp",
+  "temp": "toolchains/Temp",
+  "replantedBundles": "toolchains/StandaloneWindows64",
+  "legacyConverter": "_shared/reference-tools/legacy-pak64/pak64.exe",
+  "particleCorpus": "pvz-assets/reference/particle-emitter-baseline-v4",
+  "downloads": "toolchains/Downloads"
+}

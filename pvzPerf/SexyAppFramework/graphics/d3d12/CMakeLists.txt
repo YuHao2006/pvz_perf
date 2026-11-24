@@ -7,13 +7,15 @@ endif()
 if(NOT WIN32)
     message(FATAL_ERROR "D3D12 requires the Win32 native window backend")
 endif()
+include("${CMAKE_CURRENT_LIST_DIR}/../../../../CMake/WorkspacePaths.cmake")
+pvz_machine_path(vcpkg _pvz_vcpkg)
 find_program(PVZ_DXC NAMES dxc
     HINTS "$ENV{VULKAN_SDK}/Bin"
-          "C:/UserProgram/vcpkg/installed/x64-windows-static-md/tools/directx-dxc"
+          "${_pvz_vcpkg}/installed/x64-windows-static-md/tools/directx-dxc"
     REQUIRED)
 find_package(Vulkan REQUIRED)
 find_package(directx-dxc CONFIG REQUIRED GLOBAL
-    HINTS "C:/UserProgram/vcpkg/installed/x64-windows-static-md/share/directx-dxc")
+    HINTS "${_pvz_vcpkg}/installed/x64-windows-static-md/share/directx-dxc")
 set(shaderDirectory "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 function(d3d12_shader source entry profile output)
     set(binary "${shaderDirectory}/${output}.dxil")

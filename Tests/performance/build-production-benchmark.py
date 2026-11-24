@@ -1,4 +1,8 @@
 """Link a dedicated benchmark against the existing Release game objects; do not alter the game EXE."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '../../tools').resolve()))
+from workspace_paths import workspace_path
 import argparse
 import json
 import os
@@ -16,8 +20,8 @@ def main():
     parser.add_argument("--extra-source", type=Path, action="append", default=[],
                         help="Additional test translation unit linked with the same game flags")
     parser.add_argument("--output", type=Path, required=True)
-    parser.add_argument("--ninja", type=Path, default=Path("C:/UserProgram/DevTools/ninja/ninja.exe"))
-    parser.add_argument("--vs-root", type=Path, default=Path("C:/UserProgram/Visual Studuio/2026/Community"))
+    parser.add_argument("--ninja", type=Path, default=workspace_path('ninja'))
+    parser.add_argument("--vs-root", type=Path, default=workspace_path('vs'))
     parser.add_argument("--bass-dll", type=Path,
                         help="Explicit x64 BASS runtime when the paired Release has not staged it")
     args = parser.parse_args()

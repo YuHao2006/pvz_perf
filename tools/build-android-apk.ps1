@@ -1,4 +1,4 @@
-﻿param(
+param(
     [string]$BuildDirectory = (Join-Path $PSScriptRoot '..\out\android-arm64'),
     [string]$PakFile = "",
     [string]$BassLibrary = '',
@@ -34,7 +34,7 @@ $assetDir = Join-Path $staging 'assets'
 $jniDir = Join-Path $staging 'jniLibs\arm64-v8a'
 $bundledSource = Join-Path $project 'app\src\main\assets\bundled-saves'
 $bundledNames = @('users.dat','user1.dat64','game1_58.dat64')
-foreach ($name in $bundledNames) {
+foreach ($name in @('users.dat','user1.dat64')) {
     if (!(Test-Path -LiteralPath (Join-Path $bundledSource $name))) {
         throw "Bundled startup save is missing: $name"
     }
@@ -59,9 +59,11 @@ New-Item -ItemType Directory -Force -Path $jniDir | Out-Null
 Copy-Item -LiteralPath $BassLibrary -Destination (Join-Path $jniDir 'libbass.so') -Force
 $bundledAssets = Join-Path $assetDir 'bundled-saves'
 New-Item -ItemType Directory -Force -Path $bundledAssets | Out-Null
-foreach ($name in $bundledNames) {
+foreach ($name in @('users.dat','user1.dat64')) {
     Copy-Item -LiteralPath (Join-Path $bundledSource $name) -Destination (Join-Path $bundledAssets $name) -Force
 }
+& python (Join-Path $root 'tools/endless_checkpoint.py') (Join-Path $root 'tools/bin/windows-x64/pvz_dat64_converter.exe') (Join-Path $bundledAssets 'game1_58.dat64')
+if ($LASTEXITCODE) { throw 'Cannot generate the endless checkpoint from retail DAT' }
 $shaderAssets = Join-Path $assetDir 'shaders'
 New-Item -ItemType Directory -Force -Path $shaderAssets | Out-Null
 # Replace this build-owned SPIR-V set, including removal of retired shaders.
@@ -87,7 +89,7 @@ if (!$gradle) { throw 'Gradle is required. The cached Gradle distribution was no
 # 缓存分发命中的是 FileInfo（无 .Source）；Get-Command 命中的是 ApplicationInfo。
 $gradle = if ($gradle.Source) { $gradle.Source } else { $gradle.FullName }
 if (!$JavaHome) {
-    $jdk = Get-ChildItem 'C:\Program Files\Java' -Directory -ErrorAction SilentlyContinue |
+    $jdk = Get-ChildItem (& "$PSScriptRoot/workspace-path.ps1" 'jdkDirectory') -Directory -ErrorAction SilentlyContinue |
         Where-Object { Test-Path (Join-Path $_.FullName 'bin\java.exe') } |
         Sort-Object Name -Descending | Select-Object -First 1
     if ($jdk) { $JavaHome = $jdk.FullName }
@@ -126,7 +128,7 @@ try {
     New-Item -ItemType Directory -Force -Path $OutputDirectory | Out-Null
     $suffix = if ($apk.EndsWith('-unsigned.apk')) { '-unsigned' } else { '' }
     if ($suffix -and ($Sign -or $Install)) {
-        if (!$AndroidSdk) { $AndroidSdk = 'C:\UserProgram\DevTools\AndroidSdk' }
+        if (!$AndroidSdk) { $AndroidSdk = (& "$PSScriptRoot/workspace-path.ps1" 'androidSdk') }
         $buildTools = Get-ChildItem -LiteralPath (Join-Path $AndroidSdk 'build-tools') -Directory |
             Where-Object { Test-Path -LiteralPath (Join-Path $_.FullName 'apksigner.bat') } |
             Sort-Object Name -Descending | Select-Object -First 1

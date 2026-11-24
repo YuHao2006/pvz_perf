@@ -8,6 +8,7 @@ import ghidra.program.model.listing.Listing;
 import ghidra.program.model.symbol.Reference;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -15,8 +16,13 @@ import java.util.Map;
 public class ZombatarDeep extends GhidraScript {
 	@Override
 	public void run() throws Exception {
-		File outDir = new File("/tmp/zombatar_deep");
-		outDir.mkdirs();
+		String[] args = getScriptArgs();
+		File scriptDir = new File(getSourceFile().getAbsolutePath()).getParentFile();
+		File outputRoot = args.length == 0
+		    ? new File(scriptDir, "../../out/ghidra").getCanonicalFile()
+		    : new File(args[0]);
+		File outDir = new File(outputRoot, "zombatar_deep");
+		Files.createDirectories(outDir.toPath());
 		DecompInterface decomp = new DecompInterface();
 		decomp.openProgram(currentProgram);
 		Listing listing = currentProgram.getListing();

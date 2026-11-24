@@ -1,7 +1,8 @@
+import {workspacePath} from '../workspace-path.mjs';
 import fs from 'node:fs';
 import assert from 'node:assert/strict';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--autoplay-policy=no-user-gesture-required']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--autoplay-policy=no-user-gesture-required']});
 try{
  const page=await browser.newPage();page.on('console',m=>{if(m.type()==='error'||m.text().includes('save tool:'))console.log(m.text())});page.on('pageerror',e=>console.log('PAGE ERROR',String(e)));
  await page.goto(process.env.PVZ_SAVE_TEST_URL||'http://127.0.0.1:18088/');await page.waitForFunction(()=>!document.getElementById('start').disabled,null,{timeout:90000});

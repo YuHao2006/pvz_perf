@@ -1,4 +1,5 @@
 #include "WebGLPlatform.h"
+#include "graphics/WebTextureUpload.h"
 #include "WebGLApi.h"
 #include "graphics/gl/GLShaders.h"
 #include <stdexcept>
@@ -7,18 +8,14 @@ namespace Sexy {
 bool WebGLPlatform::SupportsFrameSync() { return true; }
 void WebGLPlatform::InitializeColorState() {}
 void WebGLPlatform::UploadPixels(int width, int height, const void* pixels, int pitch, unsigned int format) {
-    std::vector<unsigned char> rgba;
-    if (format == GL_BGRA) {
-        rgba.resize(size_t(width) * height * 4);
-        for (int y = 0; y < height; ++y)
-            for (int x = 0; x < width; ++x) {
-                const auto* source = static_cast<const unsigned char*>(pixels) + size_t(y) * pitch + x * 4;
-                auto* target = rgba.data() + (size_t(y) * width + x) * 4;
-                target[0] = source[2]; target[1] = source[1]; target[2] = source[0]; target[3] = source[3];
-            }
-        pixels = rgba.data(); pitch = width * 4; format = GL_RGBA;
-    }
     glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
+    if (format == GL_BGRA) {
+        glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);
+        UploadWebBgraRows(width, height, pixels, pitch, [&](int y, int rows, const unsigned char* rgba) {
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, y, width, rows, GL_RGBA, GL_UNSIGNED_BYTE, rgba);
+        });
+        return;
+    }
     glPixelStorei(GL_UNPACK_ROW_LENGTH, pitch / (format == GL_RED ? 1 : 4));
     glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, width, height, format, GL_UNSIGNED_BYTE, pixels);
     glPixelStorei(GL_UNPACK_ROW_LENGTH, 0);

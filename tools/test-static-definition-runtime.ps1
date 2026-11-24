@@ -67,8 +67,8 @@ try {
     $taskFixtureMetadata=& $Python -c $taskFixtureScript $taskPak $taskManifest $taskFixtures
     if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated static-definition PNG fixtures' }
     $taskMetadata=$taskFixtureMetadata | ConvertFrom-Json
-    $taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
-    $taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+    $taskNinja=(& "$PSScriptRoot/workspace-path.ps1" 'ninja')
+    $taskVcvars=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
     $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing runtime build graph' }
     $taskMain=Join-Path $taskRoot 'pvzPerf\main.cpp'

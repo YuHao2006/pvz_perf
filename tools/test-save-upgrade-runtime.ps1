@@ -20,8 +20,8 @@ if (!$PakFile -and $taskInputHeader.Length -ge 12 -and
 }
 $taskRuntime=Join-Path $taskBuild 'Release'
 $taskOutput=if($OutputDirectory){[IO.Path]::GetFullPath($OutputDirectory)}else{Join-Path ([IO.Path]::GetTempPath()) ('pvz-save-upgrade-'+[Guid]::NewGuid().ToString('N'))}
-$taskNinja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
-$taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+$taskNinja=(& "$PSScriptRoot/workspace-path.ps1" 'ninja')
+$taskVcvars=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
 if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing runtime build graph' }
 $taskMain=Join-Path $taskRoot 'pvzPerf\main.cpp'

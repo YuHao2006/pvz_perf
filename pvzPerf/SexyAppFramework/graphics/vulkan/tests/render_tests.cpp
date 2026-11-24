@@ -335,7 +335,6 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
         "Padded source snapshot batch was not completed");
 
     Require(renderer.BeginScene(),"Cannot test upload arena overflow");
-    const auto baseline=renderer.GetTextureUploadState();
     std::array<uint32_t,5> colors{};
     for (int i=0;i<5;++i) {
         colors[i]=0xff000000u|uint32_t((i+1)*0x203040);
@@ -350,8 +349,7 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
     pixels=renderer.ReadScenePixels();
     for (int i=0;i<5;++i) Pixel(pixels,150+3*i,80,colors[i]);
     after=renderer.GetTextureUploadState();
-    Require(!after.pending && after.stagingCapacity==4*1024*1024 &&
-        after.stagingCapacity==baseline.stagingCapacity,"Arena overflow left uploads queued or grew the reusable buffer");
+    Require(!after.pending && after.stagingCapacity==4*1024*1024,"Arena overflow left uploads queued or grew the reusable buffer");
 
     Require(renderer.BeginScene(),"Cannot test larger-than-arena upload");
     constexpr int w=1031,h=1024;
@@ -381,6 +379,10 @@ void UploadEdges(Sexy::VulkanRenderer& renderer,VulkanContext& window) {
         "Restore did not complete uploads before retiring images");
     renderer.EndSceneAndPresent();
     Require(renderer.ReadScenePixels()==pixels,"Upload/retirement changed the retained canvas");
+    Require(renderer.BeginScene(),"Cannot begin idle frame after texture uploads");
+    Require(renderer.GetTextureUploadState().stagingCapacity==0,
+        "Completed upload burst retained its staging buffers");
+    renderer.EndSceneAndPresent();
     auto* unused=renderer.CreateTexture(1,1,&cyan,4);
     renderer.DestroyTexture(unused); // Leave an unsubmitted host snapshot for renderer teardown.
     Require(renderer.GetTextureUploadState().pending==1,"Unused upload was unexpectedly submitted");
@@ -939,7 +941,7 @@ void Run() {
         Require(renderer.GetResourceCounts().descriptorPools <= 2, "Descriptor pools grow across allocation cycles");
         Require(renderer.GetResourceCounts().textures == 1, "Destroyed user texture is still registered");
         const auto uploadsAfter=renderer.GetTextureUploadState();
-        Require(!uploadsAfter.pending && uploadsAfter.stagingCapacity==uploadsBefore.stagingCapacity,
+        Require(!uploadsAfter.pending && uploadsAfter.stagingCapacity==std::max<uint64_t>(uploadsBefore.stagingCapacity,4*1024*1024),
             "Texture lifetime cycle left uploads queued or grew the staging buffer");
     }
     std::cout << "PASS: repeated texture/descriptor allocation and deferred destruction\n";

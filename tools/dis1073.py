@@ -1,7 +1,8 @@
+from workspace_paths import workspace_path
 import capstone
 import pefile
 
-EXE = r"C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe"
+EXE = str(workspace_path('retail1073', 'PlantsVsZombies.exe'))
 pe = pefile.PE(EXE)
 base = pe.OPTIONAL_HEADER.ImageBase
 img = pe.get_memory_mapped_image()

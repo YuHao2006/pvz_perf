@@ -1,7 +1,7 @@
 // pvz1073_sampler.c —— 原版 1073 性能采样 DLL（32 位，注入目标进程）
 // poor-man's 采样剖析器：每 ~1ms 挂起各线程取 EIP；exe 内按偏移精确直方图，
-// 其余按模块聚合。心跳文件 C:\temp\pvz1073_hb.txt 记录进度（attach/sweeps/
-// dump 状态），快照写 C:\temp\pvz1073_sample.csv（每 5s 覆盖）。
+// 其余按模块聚合。心跳文件 pvz1073_hb.txt 记录进度（attach/sweeps/
+// dump 状态），快照写 pvz1073_sample.csv（每 5s 覆盖）。
 // exe 偏移离线经 reconstruction/1073/raw_decomp/functions.csv 翻译函数名。
 #include <windows.h>
 #include <tlhelp32.h>
@@ -22,7 +22,7 @@ static volatile LONG gRun = 1;
 
 static void Hb(const char* fmt, unsigned a, unsigned b)
 {
-    FILE* f = fopen("C:\\temp\\pvz1073_hb.txt", "a");
+    FILE* f = fopen("pvz1073_hb.txt", "a");
     if (f) { fprintf(f, fmt, a, b); fclose(f); }
 }
 
@@ -113,7 +113,7 @@ BOOL APIENTRY DllMain(HINSTANCE h, DWORD reason, LPVOID)
 {
     if (reason == DLL_PROCESS_ATTACH) {
         DisableThreadLibraryCalls(h);
-        lstrcpyA(gDumpPath, "C:\\temp\\pvz1073_sample.csv");
+        lstrcpyA(gDumpPath, "pvz1073_sample.csv");
         InitModules();
         Hb("attach modules=%d base=%x\n", (unsigned)gModCount, gMods[0].lo);
         CreateThread(NULL, 0, SamplerThread, NULL, 0, NULL);

@@ -8,6 +8,7 @@ game-object ownership or layer order.
 """
 
 from __future__ import annotations
+from workspace_paths import workspace_path
 
 import csv
 import hashlib
@@ -18,7 +19,7 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REFERENCE_EXE = Path(r"C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\PlantsVsZombies.exe")
+REFERENCE_EXE = workspace_path('retail1073', 'PlantsVsZombies.exe')
 REFERENCE_EXE_SHA256 = "5F650F52D12751E08B63E590EDB0D9B9F09D087CEA900BAA0EB39E4AF8EDA251"
 BASELINE_ARCHIVE = ROOT / "Tests/reference/render-groups/source-baseline.tar.gz"
 BASELINE_ARCHIVE_SHA256 = "54CAEFBDCEBDB18678B1DDB722FE4268893F800DCE8A314F12C90FE9565B4DBA"

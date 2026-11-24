@@ -1,6 +1,7 @@
+import {workspacePath} from '../workspace-path.mjs';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 try {
  const page=await browser.newPage();await page.goto('http://127.0.0.1:18088/');
  const shaders=[...fs.readFileSync('pvzPerf/SexyAppFramework/graphics/webgpu/WebGPUShaders.cpp','utf8').matchAll(/R"WGSL\(([\s\S]*?)\)WGSL"/g)].map(m=>m[1]);

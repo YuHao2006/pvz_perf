@@ -1,4 +1,5 @@
 """Bake native setup-pose meshes once; no mesh deformation is added at runtime."""
+from workspace_paths import workspace_path
 from pathlib import Path
 from PIL import Image
 import numpy as np,json,hashlib,html
@@ -9,7 +10,7 @@ def main():
     if (WORK/'chat-approval.json').exists():
         raise SystemExit('Approved batch is immutable; create a new review batch to revise artwork.')
     poses=json.loads((WORK/'poses.json').read_text())
-    source=Path('C:/Program Files (x86)/Steam/steamapps/common/PVZ Replanted/Replanted_Data/StreamingAssets/aa/StandaloneWindows64/vfx_assets_all_9b7df9192977769564291c8e48484d1c.bundle')
+    source=workspace_path('replantedBundles', 'vfx_assets_all_9b7df9192977769564291c8e48484d1c.bundle')
     textures=[o.read() for o in UnityPy.load(str(source)).objects if o.type.name=='Texture2D']
     coverage=json.loads((ROOT/'assets/source-art/work/live-build-coverage/recovery.json').read_text())['unresolved']
     rows=[]

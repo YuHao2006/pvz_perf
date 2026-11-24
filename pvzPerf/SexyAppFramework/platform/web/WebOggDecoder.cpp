@@ -6,7 +6,9 @@
 #include <string>
 
 namespace Sexy {
-WebAudioPcm DecodeWebOgg(std::span<const unsigned char> bytes)
+void DecodeWebOggFrames(std::span<const unsigned char> bytes,
+    const std::function<void(int, int, int)>& begin,
+    const std::function<void(int, int, std::span<const float>)>& write)
 {
     if (bytes.size() > std::numeric_limits<int>::max())
         throw std::runtime_error("OGG file is too large");
@@ -19,20 +21,34 @@ WebAudioPcm DecodeWebOgg(std::span<const unsigned char> bytes)
         if (info.channels < 1 || info.channels > 2 || !info.sample_rate || !length ||
             length > std::numeric_limits<int>::max() / info.channels)
             throw std::runtime_error("Invalid OGG channel count, rate or sample length");
-        WebAudioPcm result;
-        result.channels = info.channels;
-        result.sampleRate = static_cast<int>(info.sample_rate);
-        result.samples.resize(static_cast<size_t>(length) * info.channels);
-        size_t written = 0;
-        while (written < result.samples.size()) {
-            const auto frames = stb_vorbis_get_samples_float_interleaved(decoder, info.channels,
-                result.samples.data() + written, static_cast<int>(result.samples.size() - written));
-            if (!frames) break;
-            written += static_cast<size_t>(frames) * info.channels;
+        begin(info.channels, static_cast<int>(info.sample_rate), static_cast<int>(length));
+        unsigned offset = 0;
+        while (offset < length) {
+            float** planes = nullptr;
+            const int frames = stb_vorbis_get_frame_float(decoder, nullptr, &planes);
+            if (frames <= 0 || static_cast<unsigned>(frames) > length - offset)
+                throw std::runtime_error("Incomplete OGG sample data");
+            for (int channel = 0; channel < info.channels; ++channel)
+                write(channel, static_cast<int>(offset), {planes[channel], static_cast<size_t>(frames)});
+            offset += frames;
         }
-        if (written != result.samples.size()) throw std::runtime_error("Incomplete OGG sample data");
         stb_vorbis_close(decoder);
-        return result;
     } catch (...) { stb_vorbis_close(decoder); throw; }
+}
+WebAudioPcm DecodeWebOgg(std::span<const unsigned char> bytes)
+{
+    WebAudioPcm result;
+    DecodeWebOggFrames(bytes, [&](int channels, int rate, int frames) {
+        result.channels = channels;
+        result.sampleRate = rate;
+        result.samples.resize(static_cast<size_t>(frames) * channels);
+    }, [&](int channel, int offset, std::span<const float> plane) {
+        auto index = static_cast<size_t>(offset) * result.channels + channel;
+        for (const float sample : plane) {
+            result.samples[index] = sample;
+            index += result.channels;
+        }
+    });
+    return result;
 }
 }

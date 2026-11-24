@@ -5,6 +5,7 @@
 #include <charconv>
 #include <stdexcept>
 #include "platform/ApplicationHost.h"
+#include "platform/SaveFileWriter.h"
 #include "SexyAppBase.h"
 #include "misc/FloatingPointMode.h"
 #include <optional>
@@ -1789,46 +1790,15 @@ bool SexyAppBase::WriteBytesToFile(const std::string& theFileName, const void *t
 #ifndef _WIN32
 	std::replace(nativePath.begin(), nativePath.end(), '\\', '/');
 #endif
-	FILE* aFP = fopen(nativePath.c_str(), "w+b");
-
-	if (aFP == NULL)
-	{
-		if (mRecordingDemoBuffer)
-		{
-			WriteDemoTimingBlock();
-			mDemoBuffer.WriteNumBits(0, 1);
-			mDemoBuffer.WriteNumBits(DEMO_FILE_WRITE, 5);
-			mDemoBuffer.WriteNumBits(0, 1); // failure				
-		}
-
-		return false;
-	}
-
-	const size_t aWritten = fwrite(theData, 1, theDataLen, aFP);
-	const int closeResult = fclose(aFP);
-	if (aWritten != theDataLen || closeResult != 0)
-	{
-		// 写入不完整（磁盘满/文件被锁）：如实记失败位并返回，避免存档假成功
-		if (mRecordingDemoBuffer)
-		{
-			WriteDemoTimingBlock();
-			mDemoBuffer.WriteNumBits(0, 1);
-			mDemoBuffer.WriteNumBits(DEMO_FILE_WRITE, 5);
-			mDemoBuffer.WriteNumBits(0, 1); // failure
-		}
-
-		return false;
-	}
-
+	const bool success = WriteSaveFile(nativePath, theData, theDataLen);
 	if (mRecordingDemoBuffer)
 	{
 		WriteDemoTimingBlock();
 		mDemoBuffer.WriteNumBits(0, 1);
 		mDemoBuffer.WriteNumBits(DEMO_FILE_WRITE, 5);
-		mDemoBuffer.WriteNumBits(1, 1); // success
+		mDemoBuffer.WriteNumBits(success, 1);
 	}
-
-	return true;
+	return success;
 }
 
 bool SexyAppBase::WriteBufferToFile(const std::string& theFileName, const Buffer* theBuffer)

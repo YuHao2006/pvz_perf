@@ -1,4 +1,5 @@
 #include "WebGPURenderer.h"
+#include "graphics/WebTextureUpload.h"
 #include "WebGPUShaders.h"
 #include "graphics/FontWeights.h"
 #include "graphics/PoolMesh.h"
@@ -227,29 +228,24 @@ struct WebGPURenderer::Impl
         const int bytes = coverage ? 1 : 4;
         if (!pixels || pitch < t->width * bytes)
             throw std::invalid_argument("Invalid WebGPU upload pitch");
-        std::vector<unsigned char> rgba(size_t(t->width) * t->height * bytes);
-        for (int y = 0; y < t->height; y++)
-        {
-            const auto *source = static_cast<const unsigned char *>(pixels) + size_t(y) * pitch;
-            auto *out = rgba.data() + size_t(y) * t->width * bytes;
-            if (coverage)
-                std::memcpy(out, source, t->width);
-            else
-                for (int x = 0; x < t->width; x++)
-                {
-                    out[x * 4] = source[x * 4 + 2];
-                    out[x * 4 + 1] = source[x * 4 + 1];
-                    out[x * 4 + 2] = source[x * 4];
-                    out[x * 4 + 3] = source[x * 4 + 3];
-                }
-        }
         TexelCopyTextureInfo dest;
         dest.texture = t->image;
-        TexelCopyBufferLayout layout;
-        layout.bytesPerRow = t->width * bytes;
-        layout.rowsPerImage = t->height;
-        Extent3D extent{static_cast<unsigned>(t->width), static_cast<unsigned>(t->height), 1};
-        context.queue.WriteTexture(&dest, rgba.data(), rgba.size(), &layout, &extent);
+        const auto writeRows = [&](int y, int rows, const void* source, int rowPitch) {
+            dest.origin.y = static_cast<unsigned>(y);
+            TexelCopyBufferLayout layout;
+            layout.bytesPerRow = rowPitch;
+            layout.rowsPerImage = rows;
+            const std::size_t size = static_cast<std::size_t>(rows - 1) * rowPitch + t->width * bytes;
+            Extent3D extent{static_cast<unsigned>(t->width), static_cast<unsigned>(rows), 1};
+            context.queue.WriteTexture(&dest, source, size, &layout, &extent);
+        };
+        if (coverage) {
+            writeRows(0, t->height, pixels, pitch);
+            return;
+        }
+        UploadWebBgraRows(t->width, t->height, pixels, pitch, [&](int y, int rows, const unsigned char* rgba) {
+            writeRows(y, rows, rgba, t->width * 4);
+        });
     }
     const BindGroup &SourceGroup(WebGPUTexture *t, unsigned int sampling)
     {

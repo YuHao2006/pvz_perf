@@ -1,4 +1,9 @@
 """Run retail/project scene measurements from one canonical endless save."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '../../tools').resolve()))
+from workspace_paths import workspace_path
+from endless_checkpoint import completed_profile, original, convert
 
 import argparse
 import hashlib
@@ -14,8 +19,8 @@ import winreg
 from windows_game_probe import Game, checked, kernel, user, w
 
 ROOT = Path(__file__).resolve().parents[2]
-RETAIL = Path("C:/UserProgram/Plants_Vs_Zombies_V1.2.0.1073_EN/PlantsVsZombies.exe")
-RETAIL_DATA = Path("C:/ProgramData/PopCap Games/PlantsVsZombies/userdata")
+RETAIL = workspace_path('retail1073', 'PlantsVsZombies.exe')
+RETAIL_DATA = workspace_path('retailSave')
 PROJECT = ROOT / "out/x64-win32-vulkan/Release/pvz_perf.exe"
 CONVERTER = PROJECT.parent / "data/pvz_dat64_converter.exe"
 PROFILE = 1000003
@@ -25,21 +30,8 @@ def sha(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
 
-def canonical_saves():
-    assets = ROOT / "Tests"
-    manifest = json.loads((assets / "manifest.json").read_text(encoding="utf-8"))
-    paths = {}
-    for kind in ("original", "project"):
-        entry = manifest[kind]
-        path = assets / entry["file"]
-        if path.stat().st_size != entry["bytes"] or sha(path) != entry["sha256"]:
-            raise RuntimeError(f"Canonical benchmark asset does not match manifest: {path}")
-        paths[kind] = path
-    return paths
-
-
 def prepare(directory):
-    saves = canonical_saves()
+    retail = original()
     build = PROJECT.parent.parent
     layout = json.loads(subprocess.check_output(
         [str(build / "Tests/performance/build/pvz_game_perf_layout.exe")], text=True))
@@ -48,45 +40,25 @@ def prepare(directory):
     old, new = fixture / "original", fixture / "project"
     old.mkdir(parents=True)
     new.mkdir()
-    summary = (RETAIL_DATA / "users.dat").read_bytes()
-    version, count = struct.unpack_from("<IH", summary)
-    cursor, selected = 6, None
-    for _ in range(count):
-        length = struct.unpack_from("<H", summary, cursor)[0]
-        start = cursor
-        cursor += 2 + length
-        sequence, identity = struct.unpack_from("<II", summary, cursor)
-        cursor += 8
-        if identity == 3:
-            selected = summary[start:cursor - 4] + struct.pack("<I", PROFILE)
-    if version != 14 or selected is None or cursor != len(summary):
-        raise RuntimeError("Canonical user summary does not match the validated profile")
-    one_user = struct.pack("<IH", version, 1) + selected
+    name = b"PerfTest"
+    one_user = struct.pack("<IHH", 14, 1, len(name)) + name + struct.pack("<II", 1, PROFILE)
     (fixture / "users.dat").write_bytes(one_user)
-    shutil.copy2(RETAIL_DATA / "user3.dat", old / f"user{PROFILE}.dat")
-    shutil.copy2(saves["original"], old / f"game{PROFILE}_13.dat")
-    for source, destination in (
-        (old / f"user{PROFILE}.dat", new / f"user{PROFILE}.dat64"),
-        (saves["original"], new / f"game{PROFILE}_58.dat64"),
-    ):
-        command = [str(CONVERTER), str(source), str(destination)]
-        if source == saves["original"]:
-            command += ["--target", "dat64-v4"]
-        result = subprocess.run(command,
-                                capture_output=True, text=True, check=True)
-        (fixture / (destination.name + ".conversion.txt")).write_text(
-            result.stdout + result.stderr, encoding="utf-8")
+    profile = new / f"user{PROFILE}.dat64"
+    profile.write_bytes(completed_profile())
+    subprocess.run([str(CONVERTER), str(profile), str(old / f"user{PROFILE}.dat")], check=True)
+    shutil.copy2(retail, old / f"game{PROFILE}_13.dat")
+    convert(CONVERTER, new / f"game{PROFILE}_58.dat64")
     layout["executable_sha256"] = sha(PROJECT)
     (fixture / "game-layout.json").write_text(json.dumps(layout, indent=2))
     manifest = {
-        "source_save": str(saves["original"]),
-        "source_sha256": sha(saves["original"]),
-        "project_conversion_source": str(saves["original"]),
-        "project_conversion_source_sha256": sha(saves["original"]),
-        "project_save_format": "DAT64 v4",
+        "source_save": str(retail),
+        "source_sha256": sha(retail),
+        "project_conversion_source": str(retail),
+        "project_conversion_source_sha256": sha(retail),
+        "project_save_format": "DAT64 v5.1",
         "backend": "VULKAN",
-        "source_profile": str(RETAIL_DATA / "user3.dat"),
-        "profile_id": PROFILE, "profile_summary_version": version,
+        "source_profile": "generated completed PerfTest profile",
+        "profile_id": PROFILE, "profile_summary_version": 14,
         "canonical_original": str(old / f"game{PROFILE}_13.dat"),
         "canonical_original_sha256": sha(old / f"game{PROFILE}_13.dat"),
         "converted_project": str(new / f"game{PROFILE}_58.dat64"),
@@ -137,8 +109,12 @@ def run_case(directory, fixture, kind, scene, multiplier, seconds):
     data = RETAIL_DATA if kind == "original" else case / "data"
     data.mkdir(exist_ok=True)
     shutil.copy2(fixture / "users.dat", data / "users.dat")
-    for path in source.iterdir():
-        shutil.copy2(path, data / path.name)
+    if kind == "project":
+        shutil.copy2(source / f"user{PROFILE}.dat64", data)
+        convert(CONVERTER, data / f"game{PROFILE}_58.dat64")
+    else:
+        for path in source.iterdir():
+            shutil.copy2(path, data / path.name)
     executable = RETAIL if kind == "original" else PROJECT
     with winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\PopCap\PlantsVsZombies") as key:
         retail_settings = {
@@ -215,12 +191,10 @@ def main():
         fixture = args.fixture.resolve()
     else:
         fixture = prepare(directory)
-    saves = canonical_saves()
+    retail = original()
     fixture_manifest = json.loads((fixture / "manifest.json").read_text())
-    if sha(fixture / "original" / f"game{PROFILE}_13.dat") != sha(saves["original"]):
+    if sha(fixture / "original" / f"game{PROFILE}_13.dat") != sha(retail):
         raise RuntimeError("The original fixture differs from Tests")
-    if sha(fixture / "project" / f"game{PROFILE}_58.dat64") != fixture_manifest["converted_project_sha256"]:
-        raise RuntimeError("The converted fixture differs from its manifest")
     if sha(CONVERTER) != fixture_manifest["converter_sha256"] or sha(PROJECT) != fixture_manifest["project_sha256"]:
         raise RuntimeError("The executable/converter changed; prepare a new fixture")
     if args.prepare_only:

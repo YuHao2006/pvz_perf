@@ -68,7 +68,7 @@ try {
     if ($LASTEXITCODE -ne 0) { throw 'Cannot prepare isolated static-definition PNG fixtures' }
     $taskMetadata=$taskFixtureMetadata | ConvertFrom-Json
     $taskNinja=(Get-Command ninja -CommandType Application -ErrorAction Stop).Source
-    $taskVcvars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+    $taskVcvars=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
     $taskCommands=@(& $taskNinja -C $taskBuild -t commands LawnProject)
     if ($LASTEXITCODE -ne 0) { throw 'Cannot inspect the existing runtime build graph' }
     $taskMain=Join-Path $taskRoot 'pvzPerf\main.cpp'

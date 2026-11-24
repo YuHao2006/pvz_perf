@@ -949,7 +949,7 @@ void Coin::Draw(Graphics* g)
         }
 
         g->mColorizeImages = true;
-        DrawSeedPacket(g, (int)mPosX, (int)mPosY, mUsableSeedType, SeedType::SEED_NONE, 0.0f, aGrayness, false, false);
+        DrawFallingSeedPacket(g, (int)mPosX, (int)mPosY, mUsableSeedType, aGrayness);
         g->mColorizeImages = false;
         if (mIsBeingCollected)
             mBoard->DrawFieldCardSelection(g, *this);

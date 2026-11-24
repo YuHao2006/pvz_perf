@@ -1,8 +1,9 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import {gunzipSync} from 'node:zlib';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE||'playwright-core');
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge')});
 try{
  const page=await browser.newPage();
  const packed=fs.readFileSync('out/wasm/toy/pvz-perf.wasm.gz');

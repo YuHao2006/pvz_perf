@@ -1,6 +1,9 @@
 @echo off
 rem 1073 采样注入器构建（x86：目标 32 位原版进程）
-call "C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvarsall.bat" x86 || exit /b 1
+set "PVZ_RESOLVED_PATH="
+for /f "usebackq delims=" %%I in (`python "%~dp0..\..\tools\workspace_paths.py" vs "VC/Auxiliary/Build/vcvarsall.bat"`) do set "PVZ_RESOLVED_PATH=%%I"
+if not defined PVZ_RESOLVED_PATH exit /b 1
+call "%PVZ_RESOLVED_PATH%" x86 || exit /b 1
 cd /d "%~dp0" || exit /b 1
 if not exist build mkdir build
 pushd build || exit /b 1

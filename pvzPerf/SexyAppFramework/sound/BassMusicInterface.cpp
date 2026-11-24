@@ -199,6 +199,10 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 #else
 			BASS_STREAM_DECODE);
 #endif
+#ifdef __EMSCRIPTEN__
+		// The Web Audio bridge has finished decoding into its own AudioBuffer.
+		aMusicInfo.mStreamData.reset();
+#endif
 	}
 	else
 	{

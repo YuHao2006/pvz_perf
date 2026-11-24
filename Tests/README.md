@@ -1,24 +1,6 @@
 # 无尽性能基准
 
-本目录的两份关卡存档是同一游戏状态的两种格式，作为原版 1073 与本项目、
-Windows 与 Linux 性能测试的统一输入，随源码管理。
-
-| 文件 | 使用方 | 字节数 | 文件名模式编号 |
-| --- | --- | --- | --- |
-| `game3_13.dat` | 原版 1073 | 519016 | 13 |
-| `game3_58.dat64` | pvz_perf | 563888 | 58 |
-
-编号不同来自原版与项目的 GameMode 映射，不代表不同场景。
-DAT64 由本目录 DAT 经项目转换器生成；转换器完整解析两种格式并比较规范化语义。
-不能只改扩展名。机器可读校验值与来源记录见 [manifest.json](manifest.json)。
-
-## 使用规则
-
-每次测试复制本目录文件到独立测试用户目录，按测试用户 ID 重命名。
-不要让游戏直接读写本目录，不要把试玩推进后的存档覆盖回基准。
-用户名摘要和玩家详情不属于这两份关卡资产，测试工具另行准备。
-原版与项目必须使用这一对存档；Windows 与 Linux 也使用同一份 DAT64。
-每轮记录源文件 SHA256、程序版本、倍率、场景、采样范围及实际操作。
+唯一输入为原版 1073 的 `game3_13.dat`。测试时校验 `manifest.json` 中的 SHA-256，再用当前转换器生成独立的 DAT64 v5.1。原版模式 13 对应项目模式 58。
 
 当前基准来自用户将原版无尽推进到典型出怪组合后，
 于 2026 年 10 月 17 日 22:37:54（Asia/Shanghai）落盘的最新存档，
@@ -35,8 +17,5 @@ mainCounter 为 229196，nextSurvivalStageCounter 为 0。
 在项目根目录运行：
 
 ```powershell
-out/x64-win32-dx12/Release/data/pvz_dat64_converter.exe Tests/game3_13.dat Tests/game3_58.dat64
+python tools/endless_checkpoint.py out/x64-win32-vulkan/Release/data/pvz_dat64_converter.exe out/benchmark/game1_58.dat64
 ```
-
-变更基准时，两份文件及 manifest 必须一起更新，重新开始受影响的对照测试。
-转换格式说明见[存档转换与兼容性](../docs/DAT-DAT64-CONVERSION.md)。

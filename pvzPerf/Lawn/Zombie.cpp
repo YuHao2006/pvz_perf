@@ -4342,6 +4342,9 @@ void Zombie::DropArm(std::int64_t ownerNowNs, unsigned int theDamageFlags)
     {
         return;
     }
+    if (GetZombieDefinition(mZombieType).mReanimationType == ReanimationType::REANIM_ZOMBIE &&
+        (mHelmType != HelmType::HELMTYPE_NONE || mShieldType != ShieldType::SHIELDTYPE_NONE))
+        return;
     if (mShieldType == ShieldType::SHIELDTYPE_DOOR || mShieldType == ShieldType::SHIELDTYPE_NEWSPAPER)
     {
         return;

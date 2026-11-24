@@ -1,6 +1,7 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:process.env.PVZ_TEST_BACKEND==='webgpu'?['--enable-unsafe-webgpu','--ignore-gpu-blocklist']:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:process.env.PVZ_TEST_BACKEND==='webgpu'?['--enable-unsafe-webgpu','--ignore-gpu-blocklist']:['--use-angle=swiftshader','--enable-unsafe-swiftshader']});
 try{
  const page=await browser.newPage({viewport:{width:1440,height:900}}),errors=[];
  page.on('pageerror',error=>errors.push(error.message));

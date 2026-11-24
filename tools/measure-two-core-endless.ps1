@@ -9,8 +9,8 @@ $env:PVZ_APPDATA_DIR = ''
 $env:PVZ_SETTINGS_FILE = ''
 $env:PVZ_LOG_DIR = ''
 $taskRelease = Join-Path $taskRoot 'out/x64-win32-vulkan/Release'
-$taskRetail = 'C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN'
-$taskRetailData = 'C:\ProgramData\PopCap Games\PlantsVsZombies\userdata'
+$taskRetail = (& "$PSScriptRoot/workspace-path.ps1" 'retail1073')
+$taskRetailData = (& "$PSScriptRoot/workspace-path.ps1" 'retailSave')
 if (!$OutputDirectory) {
     $OutputDirectory = Join-Path $env:TEMP ('pvz-two-core-240-v100-' + [Guid]::NewGuid().ToString('N'))
 }

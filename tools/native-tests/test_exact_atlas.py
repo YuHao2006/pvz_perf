@@ -335,8 +335,8 @@ class ExactAtlasTests(unittest.TestCase):
             root = Path(directory)
             cache, destination = root / "cache", root / "portable"
             key, layout, manifest = self.legacy_completion_fixture(cache)
-            layout["machine_path"] = "C:/Users/private/build"
-            layout["exact"]["source_path"] = "C:/Users/private/source"
+            layout["machine_path"] = str(root / "private" / "build")
+            layout["exact"]["source_path"] = str(root / "private" / "source")
             exact_atlas._write_cache(cache / (key + ".json"), key, layout)
             manifest["atlas_groups"]["fixture"]["exact"] = copy.deepcopy(layout["exact"])
             # This valid but unrelated proof must not enter the curated export.
@@ -345,7 +345,7 @@ class ExactAtlasTests(unittest.TestCase):
             self.assertEqual(exact_atlas.export_completed_cache(cache, manifest, destination), 1)
             self.assertEqual([p.name for p in destination.glob("*.json")], [key + ".json"])
             exported = (destination / (key + ".json")).read_text()
-            self.assertNotIn("C:/Users", exported)
+            self.assertNotIn("private", exported)
             record = json.loads(exported)
             self.assertEqual(record["format"], exact_atlas.SCHEMA)
             self.assertEqual(record["geometry"], {"padding": 2, "max_side": 16384})

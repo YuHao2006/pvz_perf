@@ -7,6 +7,7 @@ import ghidra.program.model.listing.Function;
 import ghidra.program.model.listing.Listing;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -23,8 +24,13 @@ public class ZombatarVtable extends GhidraScript {
 			0x006f2dd8L
 		};
 
-		File outDir = new File("/tmp/zombatar_vtable");
-		outDir.mkdirs();
+		String[] args = getScriptArgs();
+		File scriptDir = new File(getSourceFile().getAbsolutePath()).getParentFile();
+		File outputRoot = args.length == 0
+		    ? new File(scriptDir, "../../out/ghidra").getCanonicalFile()
+		    : new File(args[0]);
+		File outDir = new File(outputRoot, "zombatar_vtable");
+		Files.createDirectories(outDir.toPath());
 		DecompInterface decomp = new DecompInterface();
 		decomp.openProgram(currentProgram);
 		Listing listing = currentProgram.getListing();

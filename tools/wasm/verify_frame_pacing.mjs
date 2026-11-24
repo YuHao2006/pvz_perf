@@ -1,8 +1,9 @@
+import {workspacePath} from '../workspace-path.mjs';
 import fs from 'node:fs';
 import path from 'node:path';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE || 'playwright-core');
 const output=path.resolve('out/wasm/verification');fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-webgl','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-webgl','--ignore-gpu-blocklist']});
 const events=[];const target=Number(process.argv.find(x=>x.startsWith('--target='))?.split('=')[1]||240);
 try {
  const portrait=process.argv.includes('--portrait');

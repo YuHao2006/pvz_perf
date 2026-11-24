@@ -1,7 +1,8 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 try{
  const context=await browser.newContext({acceptDownloads:true}),page=await context.newPage(),errors=[];
  page.on('pageerror',e=>errors.push(String(e)));

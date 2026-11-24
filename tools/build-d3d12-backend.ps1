@@ -1,5 +1,5 @@
 param(
-    [string]$VcVars='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+    [string]$VcVars=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 )
 $ErrorActionPreference='Stop'
 [Diagnostics.Process]::GetCurrentProcess().ProcessorAffinity=[IntPtr]0xBFFF

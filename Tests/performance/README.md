@@ -90,7 +90,7 @@ cmake --build out/x64-wayland-vulkan --target pvz_linux_perf_tools --parallel 8
 ./out/x64-wayland-vulkan/Release/measure-endless.sh
 ```
 
-每次运行都会验证 Tests/manifest.json 中的无尽基准哈希，然后覆盖实际存档目录的
+每次无尽测试都会校验原版 DAT 的哈希，再调用转换器生成实际测试目录中的
 game1_58.dat64，保证从同一关卡状态开始；users.dat 与 user1.dat64 不会被运行器替换。
 默认存档目录为 ~/.local/share/PlantsVsZombiesModern，可用 PVZ_APPDATA_DIR 指定独立目录。
 不要把 PVZ_APPDATA_DIR 指向仓库 Tests/，后者必须保持只读基准用途。

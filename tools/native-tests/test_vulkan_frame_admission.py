@@ -1,4 +1,8 @@
 """Compile actual BeginCommands against deterministic Vulkan admission doubles."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '..').resolve()))
+from workspace_paths import workspace_path
 from pathlib import Path
 import os
 import shutil
@@ -19,7 +23,7 @@ class VulkanFrameAdmissionTests(unittest.TestCase):
         fixture=(ROOT/'Tests/native/VulkanFrameAdmissionTests.cpp').read_text(encoding='utf-8')
         source=fixture.replace('/*PRODUCTION*/',production[start:end])
         compiler=shutil.which('c++') or shutil.which('g++') or shutil.which('clang++')
-        vcvars=Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat')
+        vcvars=workspace_path('vs', 'VC/Auxiliary/Build/vcvars64.bat')
         with tempfile.TemporaryDirectory(prefix='pvz-frame-admission-') as temp:
             cpp=Path(temp)/'frame_admission.cpp'
             exe=Path(temp)/('frame_admission.exe' if os.name=='nt' else 'frame_admission')
@@ -27,7 +31,7 @@ class VulkanFrameAdmissionTests(unittest.TestCase):
             if compiler:
                 command=[compiler,'-std=c++20',str(cpp),'-o',str(exe)]
             elif vcvars.exists():
-                toolset=Path('C:/UserProgram/Visual Studuio/2026/Community/VC/Tools/MSVC/14.51.36231')
+                toolset=workspace_path('vcToolset')
                 build=(f'call "{vcvars}" >nul && set "INCLUDE={toolset}/include;!INCLUDE!" && '
                        f'set "LIB={toolset}/lib/x64;!LIB!" && "{toolset}/bin/Hostx64/x64/cl.exe" '
                        f'/nologo /EHsc /std:c++20 "{cpp}" /Fo"{temp}/frame_admission.obj" /Fe"{exe}"')

@@ -6,6 +6,7 @@
 constexpr int PURCHASE_COUNT_OFFSET = 1000;
 
 #include <ctime>
+#include <span>
 #include <cstdint>
 #include "ConstEnums.h"
 #include "SexyAppFramework/Common.h"
@@ -107,8 +108,9 @@ public:
     void                SyncSummary(DataSync& theSync);
     bool                SyncDetails(DataSync& theSync);
     void                DeleteUserFiles();
+    static bool         IsReadableDetails(std::span<const unsigned char> file);
     bool                LoadDetails();
-    void                SaveDetails();
+    bool                SaveDetails();
     /*inline*/ void     ResetChallengeRecord(GameMode theGameMode);
     void                DeleteZombatarFromIndex(int* theIndex);
 };

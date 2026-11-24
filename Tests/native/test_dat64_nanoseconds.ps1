@@ -1,16 +1,23 @@
 param(
     [Parameter(Mandatory=$true)][string]$Converter,
-    [string]$Fixture = (Join-Path $PSScriptRoot '../game3_58.dat64'),
+    [string]$Fixture,
     [string]$OutputDirectory
 )
 $ErrorActionPreference = 'Stop'
 $converterPath = (Resolve-Path -LiteralPath $Converter).Path
-$fixturePath = (Resolve-Path -LiteralPath $Fixture).Path
+
 if (!$OutputDirectory) {
     $OutputDirectory = Join-Path $PSScriptRoot ("../../out/dat64-ns-regression-" + [guid]::NewGuid().ToString('N'))
 }
 $output = [IO.Path]::GetFullPath($OutputDirectory)
 New-Item -ItemType Directory -Path $output -ErrorAction Stop | Out-Null
+if ($Fixture) {
+    $fixturePath = (Resolve-Path -LiteralPath $Fixture).Path
+} else {
+    $fixturePath = Join-Path $output 'game3_58.dat64'
+    & $converterPath --target dat64-v1 (Join-Path $PSScriptRoot '../game3_13.dat') $fixturePath
+    if ($LASTEXITCODE) { throw "Cannot generate the v1 regression fixture" }
+}
 Add-Type @'
 using System;
 public static class Dat64NanosecondRegression {

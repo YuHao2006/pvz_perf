@@ -1,6 +1,7 @@
 #include "DataSync.h"
 #include "PlayerInfo.h"
 #include "LevelSaveFormat.h"
+#include "PendingSaveRecovery.h"
 #include "Lawn/LawnCommon.h"
 #include "Lawn/Widget/ChallengeScreen.h"
 #include "Sexy.TodLib/TodDebug.h"
@@ -28,23 +29,31 @@ static_assert(sizeof(PlayerInfo::mLastStinkyChocolateTime) == 4, "GOTY snail tim
 static_assert(sizeof(PottedPlant) == kPottedPlantSize, "PottedPlant no longer matches the GOTY save layout");
 static_assert(sizeof(Zombatar) == kZombatarSize, "Zombatar no longer matches the GOTY save layout");
 
-bool ReadSaveInt(const Buffer& theBuffer, size_t theOffset, int& theValue)
+bool ReadSaveInt(std::span<const unsigned char> bytes, size_t theOffset, int& theValue)
 {
-	if (theOffset + sizeof(theValue) > static_cast<size_t>(theBuffer.GetDataLen()))
+	if (theOffset + sizeof(theValue) > bytes.size())
 		return false;
 
-	memcpy(&theValue, static_cast<const unsigned char*>(theBuffer.GetDataPtr()) + theOffset, sizeof(theValue));
+	memcpy(&theValue, bytes.data() + theOffset, sizeof(theValue));
 	return true;
 }
 
-bool IsNativeGOTYDetailsBuffer(const Buffer& theBuffer)
+}
+
+bool PlayerInfo::IsReadableDetails(std::span<const unsigned char> file)
 {
-	const size_t aDataLen = static_cast<size_t>(theBuffer.GetDataLen());
+    if (file.size() < LevelSaveFormat::USER64_HEADER_SIZE ||
+        !std::equal(LevelSaveFormat::USER64_MAGIC.begin(), LevelSaveFormat::USER64_MAGIC.end(), file.begin()))
+        return false;
+    auto bytes = file.subspan(LevelSaveFormat::USER64_HEADER_SIZE);
+    int version;
+    if (!ReadSaveInt(bytes, 0, version) || version != gUserVersion) return false;
+	const size_t aDataLen = bytes.size();
 	if (aDataLen < kGOTYFixedCoreSize + kGOTYFixedTailSize)
 		return false;
 
 	int aNumPottedPlants = 0;
-	if (!ReadSaveInt(theBuffer, kPottedPlantCountOffset, aNumPottedPlants) ||
+	if (!ReadSaveInt(bytes, kPottedPlantCountOffset, aNumPottedPlants) ||
 		aNumPottedPlants < 0 || aNumPottedPlants > MAX_POTTED_PLANTS)
 	{
 		return false;
@@ -53,7 +62,7 @@ bool IsNativeGOTYDetailsBuffer(const Buffer& theBuffer)
 	const size_t aZombatarCountOffset = kGOTYFixedCoreSize +
 		static_cast<size_t>(aNumPottedPlants) * kPottedPlantSize + 41;
 	int aNumZombatars = 0;
-	if (!ReadSaveInt(theBuffer, aZombatarCountOffset, aNumZombatars) ||
+	if (!ReadSaveInt(bytes, aZombatarCountOffset, aNumZombatars) ||
 		aNumZombatars < 0 || aNumZombatars > MAX_NUM_ZOMBATARS)
 	{
 		return false;
@@ -63,7 +72,6 @@ bool IsNativeGOTYDetailsBuffer(const Buffer& theBuffer)
 		static_cast<size_t>(aNumPottedPlants) * kPottedPlantSize +
 		kGOTYFixedTailSize + static_cast<size_t>(aNumZombatars) * kZombatarSize;
 	return aDataLen == anExpectedSize;
-}
 }
 
 PlayerInfo::PlayerInfo()
@@ -184,24 +192,14 @@ bool PlayerInfo::LoadDetails()
 	std::string aFileName = GetAppDataFolder() + StrFormat("user%d.dat64", mId);
 	if (!gSexyAppBase->ReadBufferFromFile(aFileName, &aBuffer, false))
 	{
-		return true;
+		// Older builds could register a new user before writing its first details.
+		if (FileExists(aFileName) || PendingSaves::Unavailable(aFileName)) mDetailsLoadRejected = true;
+		return !mDetailsLoadRejected;
 	}
 
 	const unsigned char* aFileData = static_cast<const unsigned char*>(aBuffer.GetDataPtr());
 	const int aFileLen = aBuffer.GetDataLen();
-	if (aFileLen < (int)LevelSaveFormat::USER64_HEADER_SIZE ||
-		std::memcmp(aFileData, LevelSaveFormat::USER64_MAGIC.data(),
-			LevelSaveFormat::USER64_MAGIC.size()) != 0)
-	{
-		mDetailsLoadRejected = true;
-		TodTrace("Rejected unsupported player data without modifying it\n");
-		return false;
-	}
-
-	Buffer aDetails;
-	aDetails.SetData(const_cast<unsigned char*>(aFileData) + LevelSaveFormat::USER64_HEADER_SIZE,
-		aFileLen - (int)LevelSaveFormat::USER64_HEADER_SIZE);
-	if (!IsNativeGOTYDetailsBuffer(aDetails))
+	if (!IsReadableDetails({aFileData, static_cast<size_t>(aFileLen)}))
 	{
 		mDetailsLoadRejected = true;
 		TodTrace("Rejected unsupported player data without modifying it\n");
@@ -212,7 +210,7 @@ bool PlayerInfo::LoadDetails()
 	{
 		PlayerInfo aLoadedPlayer;
 		DataReader aReader;
-		aReader.OpenMemory(aDetails.GetDataPtr(), aDetails.GetDataLen(), false);
+		aReader.OpenMemory(aFileData + LevelSaveFormat::USER64_HEADER_SIZE, aFileLen - LevelSaveFormat::USER64_HEADER_SIZE, false);
 		DataSync aSync(aReader);
 		if (!aLoadedPlayer.SyncDetails(aSync))
 		{
@@ -247,12 +245,12 @@ bool PlayerInfo::LoadDetails()
 
 //0x4695F0
 // GOTY @Patoke: 0x46D750
-void PlayerInfo::SaveDetails()
+bool PlayerInfo::SaveDetails()
 {
 	if (mDetailsLoadRejected)
 	{
 		TodTrace("Refusing to overwrite unsupported player data\n");
-		return;
+		return false;
 	}
 
 	DataWriter aWriter;
@@ -261,7 +259,7 @@ void PlayerInfo::SaveDetails()
 	if (!SyncDetails(aSync))
 	{
 		TodTrace("Refusing to save out-of-range player data\n");
-		return;
+		return false;
 	}
 
 	// 魔数前缀 + v13 明细流，与 LoadDetails 的 user<ID>.dat64 布局对称。
@@ -272,8 +270,10 @@ void PlayerInfo::SaveDetails()
 
 	MkDir(GetAppDataFolder());
 	std::string aFileName = GetAppDataFolder() + StrFormat("user%d.dat64", mId);
-	gSexyAppBase->WriteBytesToFile(aFileName, aFileBytes.data(),
-		static_cast<unsigned long>(aFileBytes.size()));
+	if (gSexyAppBase->WriteBytesToFile(aFileName, aFileBytes.data(), static_cast<unsigned int>(aFileBytes.size())))
+		return true;
+	TodErrorMessageBox(("Could not save player progress to " + aFileName).c_str(), "Save failed");
+	return false;
 }
 
 //0x469810

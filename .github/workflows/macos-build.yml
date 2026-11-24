@@ -10,7 +10,7 @@ on:
       - 'CMake/**'
       - 'pvzPerf/**'
       - 'tools/**'
-      - 'assets/**'
+      - 'config/**'
       - 'vcpkg.json'
       - 'vcpkg-overlay-ports/**'
       - '.github/workflows/macos-build.yml'
@@ -29,11 +29,23 @@ jobs:
     env:
       VCPKG_ROOT: ${{ github.workspace }}/out/vcpkg
       PVZ_BASS_LIBRARY: ${{ github.workspace }}/out/macos-bass/libbass.dylib
+      PVZ_ASSET_LIBRARY: ${{ github.workspace }}/out/asset-library
       PVZ_MACOS_BUILD_DIR: ${{ github.workspace }}/out/arm64-cocoa-metal
       CMAKE_BUILD_PARALLEL_LEVEL: 3
       VCPKG_MAX_CONCURRENCY: 3
     steps:
       - uses: actions/checkout@v4
+      - name: Check out configured asset library
+        if: vars.PVZ_ASSET_REPOSITORY != '' && (github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository)
+        uses: actions/checkout@v4
+        with:
+          repository: ${{ vars.PVZ_ASSET_REPOSITORY }}
+          ref: ${{ vars.PVZ_ASSET_REVISION }}
+          token: ${{ secrets.PVZ_ASSET_READ_TOKEN || github.token }}
+          persist-credentials: false
+          path: out/asset-library
+      - name: Check resource inputs
+        run: test -s "$PVZ_ASSET_LIBRARY/library.json"
       - uses: actions/cache/restore@v4
         id: vcpkg_cache
         with:
@@ -113,7 +125,7 @@ jobs:
             echo 'Unexpected DXIL or Vulkan runtime asset in the native Metal artifact.' >&2
             exit 1
           fi
-          tar -czf "$RUNNER_TEMP/pvz-macos-arm64-experimental.tar.gz" -C "$output" .
+          tar --exclude=main.pak64 -czf "$RUNNER_TEMP/pvz-macos-arm64-experimental.tar.gz" -C "$output" .
       - uses: actions/upload-artifact@v4
         with:
           name: pvz-macos-arm64-experimental

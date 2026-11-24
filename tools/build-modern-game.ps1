@@ -3,13 +3,13 @@ param([switch]$StageRuntime,[string]$BuildDirectory,
     [string]$MsvcToolsetDirectory)
 $ErrorActionPreference='Stop'
 $root=Split-Path -Parent $PSScriptRoot
-$vs='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+$vs=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $cmake=(Get-Command cmake -ErrorAction Stop).Source
-$ninja='C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
+$ninja=(& "$PSScriptRoot/workspace-path.ps1" 'ninja')
 $build=if($BuildDirectory){[IO.Path]::GetFullPath($BuildDirectory)}elseif($WindowsPlatform -eq 'WIN7'){Join-Path $root 'out\x64-win7-vulkan'}else{Join-Path $root 'out\x64-win32-vulkan'}
 [Diagnostics.Process]::GetCurrentProcess().ProcessorAffinity=[IntPtr]0x3FFF
 $installed=Join-Path (Split-Path -Parent $root) '_shared\vcpkg_installed'
-$env:VULKAN_SDK='C:\UserProgram\VulkanSDK\1.4.350.0'
+$env:VULKAN_SDK=(& "$PSScriptRoot/workspace-path.ps1" 'vulkanSdk')
 if($WindowsPlatform -eq 'WIN7' -and !$MsvcToolsetDirectory){
     $MsvcToolsetDirectory=Join-Path $root 'out\toolchains\msvc-14.44\Contents\VC\Tools\MSVC\14.44.35207'
 }

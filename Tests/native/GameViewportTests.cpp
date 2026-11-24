@@ -65,9 +65,9 @@ static void CheckGardenToolButtons() {
                 // endpoints. Tree mode never applies the garden fade curve.
                 for (int fade = -72; fade <= 0; ++fade) {
                     const int offset = tree ? 0 : fade;
-                    const auto buttons = GardenHudLayout::LayoutTools(available, frame, tree, offset);
+                    const auto buttons = GardenHudLayout::LayoutTools(available, frame, tree, offset, 64);
                     Check(buttons.y == frame.top + offset);
-                    Check(buttons.x[9] == frame.left + 564);
+                    Check(buttons.x[9] == frame.right - 172 - 64);
                     for (int tool = 0; tool < 10; ++tool) {
                         if (tree) {
                             // CanUseGameObject only admits these two in tree mode.
@@ -90,7 +90,7 @@ static void CheckGardenToolButtons() {
                                 expected += 70;
                         }
                         if (tool == 9)
-                            expected = frame.left + 564;
+                            expected = frame.right - 172 - 64;
                         Check(buttons.x[tool] == expected);
                     }
                 }

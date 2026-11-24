@@ -231,7 +231,7 @@ static void SeedPacketDrawSeed(Graphics* g, float x, float y, SeedType theSeedTy
 }
 
 //0x4876F0
-void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost)
+static void DrawSeedPacketImpl(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost, bool useCardArt)
 {
 	SeedType aSeedType = theSeedType;
 	if (aSeedType == SeedType::SEED_IMITATER && theImitaterType != SeedType::SEED_NONE)
@@ -258,7 +258,7 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
             CommonUIAtlas::SeedCards[index].mWidth)
             highResolutionCard=&CommonUIAtlas::SeedCards[index];
     }
-    if(highResolutionCard)
+    if(highResolutionCard && useCardArt)
     {
         Sexy::DrawAtlasImageScaled(g,{CommonUIAtlas::Texture,0},*highResolutionCard,x,y,g->mScaleX,g->mScaleY);
         if(thePercentDark>0.0f)
@@ -521,6 +521,16 @@ void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedTyp
 	}
 
 	g->mColorizeImages = false;
+}
+
+void DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost)
+{
+    DrawSeedPacketImpl(g,x,y,theSeedType,theImitaterType,thePercentDark,theGrayness,theDrawCost,theUseCurrentCost,true);
+}
+
+void DrawFallingSeedPacket(Graphics* g,float x,float y,SeedType seed,int grayness)
+{
+    DrawSeedPacketImpl(g,x,y,seed,SEED_NONE,0.0f,grayness,false,false,false);
 }
 
 //0x488220

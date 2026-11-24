@@ -1,3 +1,4 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -5,7 +6,7 @@ import path from 'node:path';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
 const base=process.env.PVZ_WEBGPU_URL||'http://127.0.0.1:18089/';
 const output=path.join(os.tmpdir(),'pvz-web-graphics-failures');fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 const evidence=[];
 try{
  const cases=[

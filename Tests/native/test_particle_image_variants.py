@@ -64,9 +64,12 @@ def component_definitions() -> dict[str, dict]:
 
 
 def original_particle_paths() -> dict[str, str]:
-    config = resource_build_config.load(ROOT / "assets/definitions/ResourceBuild.pvzbuild")
+    text = (ROOT / "assets/definitions/ResourceBuild.pvzbuild").read_text(encoding="utf-8")
+    orders = [args[1:] for command, args in resource_build_config.commands(text)
+              if command == "definition_order" and args[:1] == ["particle"]]
+    (order,) = orders
     result = {effect: pak.definition_path(f"particles/{name}.xml")
-              for effect, name in config.definition_orders["particle"]}
+              for effect, name in (pair.split(":") for pair in order)}
     pak.require(len(result) == len(set(result.values())) == 106,
                 "Original 106 particle definitions are incomplete or aliased")
     return result
@@ -263,7 +266,7 @@ class ParticleVariantPackageTests(unittest.TestCase):
                 continue
             reader = pak.Reader(cls.archive.read(path))
             magic, names, name_hash, emitters, variants, slots = reader.unpack("<6I")
-            if magic != 0x31435450:
+            if magic not in (0x31435450, 0x32435450):
                 raise AssertionError(f"Unexpected particle runtime format: {path}")
             headers = []
             for _ in range(emitters):
@@ -281,7 +284,7 @@ class ParticleVariantPackageTests(unittest.TestCase):
             for _ in range(variants):
                 width, height, length = reader.unpack("<3I")
                 atlas_path = reader.take(length).decode("utf-8")
-                regions = [reader.unpack("<4f2i") for _ in range(slots)]
+                regions = [reader.unpack("<4f6i" if magic == 0x32435450 else "<4f2i") for _ in range(slots)]
                 rows.append((width, height, atlas_path, regions))
             reader.finish()
             cls.runtime[path] = (headers, rows)
@@ -298,9 +301,16 @@ class ParticleVariantPackageTests(unittest.TestCase):
         self.assertEqual((width, height, atlas_path),
                          (metadata["atlas_width"], metadata["atlas_height"], metadata["atlas_path"]))
         expected = []
-        for x, y, w, h in metadata["frame_rectangles"]:
+        by_source = {item["source"]: item for item in metadata["images"]}
+        for i, (x, y, w, h) in enumerate(metadata["frame_rectangles"]):
             values = (x / width, y / height, (x + w) / width, (y + h) / height) if width and height else (0.,) * 4
-            expected.append(struct.unpack("<4f2i", struct.pack("<4f2i", *values, w, h)))
+            source = by_source[metadata["frames"][i]["source"]]
+            logical = (round(w * source["logical_width"] / source["width"]),
+                       round(h * source["logical_height"] / source["height"]))
+            region = struct.unpack("<4f2i", struct.pack("<4f2i", *values, *logical))
+            if len(regions[i]) == 10:
+                region += tuple(source.get("sprite_crop", (0, 0, 0, 0)))
+            expected.append(region)
         self.assertEqual(regions, expected)
         return root, index, metadata, {
             "regions": [], "frame_fields4I": [tuple(rect) for rect in metadata["frame_rectangles"]],
@@ -341,11 +351,9 @@ class ParticleVariantPackageTests(unittest.TestCase):
         self.assertFalse({name for name in self.index if name.startswith("compiled/gpu-particle/")})
 
     def test_every_variant_region_matches_the_declared_source_image_pixels(self):
-        files = runtime_asset_sources.inventory(ROOT)
-        descriptors = definition_atlas.authoring_descriptors(
-            (ROOT / "assets/definitions/resources.json").read_bytes(), files,
-            {image["source"] for row in self.variants for image in self.appearance(row)[2]["images"]})
         sources, atlases = {}, {}
+        hd_manifest = ROOT / "assets/high-resolution/images.json"
+        hd_images = json.loads(hd_manifest.read_bytes())["images"]
         for row in self.variants:
             with self.subTest(component=row["component"], image=row["image"]):
                 name, variant_index, metadata, atlas = self.appearance(row)
@@ -368,14 +376,20 @@ class ParticleVariantPackageTests(unittest.TestCase):
                 blocks = {}
                 for image in metadata["images"]:
                     label = image["source"]
-                    descriptor = descriptors[label]
                     if label not in sources:
-                        sources[label] = definition_atlas.logical_image(descriptor, files)[0]
+                        path = next((hd_images[f.lower()] for f in image["files"] if f.lower() in hd_images), None)
+                        self.assertIsNotNone(path, label)
+                        with Image.open(hd_manifest.parent / path) as master:
+                            sources[label] = master.convert("RGBA")
                     source = sources[label]
+                    if "sprite_crop" in image:
+                        l, t, w, h = image["sprite_crop"]
+                        sx, sy = source.width // image["logical_width"], source.height // image["logical_height"]
+                        source = source.crop((l*sx, t*sy, (l+w)*sx, (t+h)*sy))
                     region = tuple(image["region"])
                     x, y, width, height, rows, cols = region
                     self.assertEqual((width, height), source.size)
-                    self.assertEqual((rows, cols), (descriptor.rows, descriptor.cols))
+                    self.assertEqual((rows, cols), (image["rows"], image["cols"]))
                     self.assertEqual(image["rgba_sha256"], hashlib.sha256(source.tobytes()).hexdigest())
                     self.assertEqual(packed.crop((x, y, x + width, y + height)).tobytes(),
                                      source.tobytes())

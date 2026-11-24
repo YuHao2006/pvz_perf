@@ -13,6 +13,9 @@ struct TextureRegion
     float mV1 = 0;
     int mWidth = 0;
     int mHeight = 0;
+    // Optional retained rectangle in authored canvas coordinates. UVs always
+    // refer to the physically packed pixels. Zero width denotes a full cel.
+    int mTrimX = 0, mTrimY = 0, mTrimWidth = 0, mTrimHeight = 0;
 };
 
 // Only dynamic Image crops need this bridge. Offline atlas regions already

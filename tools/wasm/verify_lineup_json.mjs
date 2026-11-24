@@ -1,8 +1,9 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs/promises';
 import {defaultLineups} from './game/lineups.js';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 const base=process.env.PVZ_WEBGPU_URL||'http://127.0.0.1:18089/';
 try{
  const page=await browser.newPage();page.on('dialog',d=>d.accept());

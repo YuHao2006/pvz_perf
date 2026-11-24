@@ -1,0 +1,5 @@
+{
+  "assetLibrary": "../pvz-assets",
+  "assetEdition": "pvz_perf-hd",
+  "machineConfig": "../pvz-workspace.local.json"
+}

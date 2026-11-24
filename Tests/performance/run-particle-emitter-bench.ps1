@@ -1,9 +1,9 @@
 [CmdletBinding()]
 param(
     [string]$ProjectRoot = (Split-Path -Parent (Split-Path -Parent $PSScriptRoot)),
-    [string]$GoldenCorpus = 'C:/Users/Administrator/CLionProjects/codex/openPvz/.particle_work/baseline_v4',
-    [string]$PythonExe = 'C:/UserProgram/DevTools/Python314/python.exe',
-    [string]$VsEnvironment = 'C:/UserProgram/Visual Studuio/2026/Community/VC/Auxiliary/Build/vcvars64.bat',
+    [string]$GoldenCorpus = (& "$PSScriptRoot/../../tools/workspace-path.ps1" 'particleCorpus'),
+    [string]$PythonExe = (& "$PSScriptRoot/../../tools/workspace-path.ps1" 'python'),
+    [string]$VsEnvironment = (& "$PSScriptRoot/../../tools/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat'),
     [string]$OutputDirectory = '',
     [switch]$FadeOutOnly
 )

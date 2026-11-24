@@ -9,13 +9,14 @@ import importlib.util
 import json
 import os
 from pathlib import Path
-import shutil
 import struct
 import subprocess
 import sys
 import time
 
 ROOT = Path(__file__).resolve().parents[2]
+sys.path.insert(0, str(ROOT / 'tools'))
+from endless_checkpoint import convert
 spec = importlib.util.spec_from_file_location('linux_cpu', Path(__file__).with_name('measure-linux-process.py'))
 cpu = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(cpu)
@@ -167,16 +168,14 @@ def run(args, build):
     data_dir = Path(os.environ.get('PVZ_APPDATA_DIR', str(Path.home() / '.local/share/PlantsVsZombiesModern'))).resolve()
     if data_dir.is_relative_to(ROOT / 'Tests'):
         raise RuntimeError('Never use the canonical Tests directory as writable game data')
-    fixture = ROOT / 'Tests/game3_58.dat64'
-    expected_hash = json.loads((ROOT / 'Tests/manifest.json').read_text())['project']['sha256']
-    if sha(fixture) != expected_hash:
-        raise RuntimeError('The canonical endless fixture checksum changed')
     if args.scene == 'endless':
         # The prepared completed profile is ID1; keep its original benchmark state each run.
         profile = (data_dir / 'user1.dat64').read_bytes()
         if profile[:8] != b'PVZUSR64':
             raise RuntimeError('Expected the prepared DAT64 profile ID1')
-        shutil.copyfile(fixture, data_dir / 'game1_58.dat64')
+        fixture = data_dir / 'game1_58.dat64'
+        convert(args.converter or game.parent / 'data/pvz_dat64_converter', fixture)
+        expected_hash = sha(fixture)
     output = args.output or build / 'measurements' / f'{args.scene}-{datetime.now():%Y%m%d-%H%M%S-%f}'
     output = output.resolve()
     output.mkdir(parents=True, exist_ok=False)
@@ -307,6 +306,7 @@ def main():
     parser.add_argument('--warmup', type=float, default=8)
     parser.add_argument('--output', type=Path)
     parser.add_argument('--build-dir', type=Path)
+    parser.add_argument('--converter', type=Path, help='Native pvz_dat64_converter for endless runs')
     parser.add_argument('--prepare', action='store_true')
     parser.add_argument('--non-interactive', action='store_true')
     parser.add_argument('--close-on-finish', action='store_true')

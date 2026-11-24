@@ -1,7 +1,7 @@
 param(
     [Parameter(Mandatory=$true)][string]$Name,
     [int]$Seconds = 120,
-    [string]$Out = "C:\temp\cpu_usage.csv"
+    [string]$Out = (& "$PSScriptRoot/../../tools/workspace-path.ps1" 'scratch' 'cpu_usage.csv')
 )
 # 进程 CPU 占用监控：每秒读一次 TotalProcessorTime 差分 → 该秒消耗的 CPU 核秒
 # 输出 CSV: elapsed_s,cpu_seconds(该秒),cpu_percent(单核=100)。进程退出即停。

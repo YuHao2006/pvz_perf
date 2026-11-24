@@ -80,3 +80,6 @@ public:
 	static void AchievementInitForPlayer(GameSelector* theSelector);
 };
 
+
+void LoadAchievementStrips();
+void FreeAchievementStrips();

@@ -5,10 +5,12 @@
 #include "TodAllocator.h"
 #include "Reanimator.h"
 #include <chrono>
+
 #include "ReanimRenderSemantics.h"
 #include "ReanimTrackMphfGlobal.h"  // 全局单表 MPHF（唯一 MPHF 层）：(type,id) 联合键 -> trackIndex + 语料成员位图（reanimc compile-v2 生成）
 #include "generated/ReanimAttacherMasks.h"  // P4：每类型轨道数 + attacher 位掩码（编译期生成，与本 cpp 独占包含）
 #include "generated/GeneratedDefinitions.h"
+#include "generated/FactoredAppearance.h"
 #include "Attachment.h"
 #include "EffectSystem.h"
 #include "GameConstants.h"
@@ -1037,7 +1039,8 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 		GetFrameTime(&frameTime);
 		theFrameTime = &frameTime;
 	}
-	auto* texture = mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
+	const auto row = AppearanceRow(theTrackIndex);
+	auto* texture = mDefinition->mTextures ? mDefinition->mTextures[row] : nullptr;
 	if (mDefinition->mExternalImageSlotBegin)
 	{
 		const auto slot = trackData.mTransforms[theFrameTime->mAnimFrameBeforeInt].mImageSlot;
@@ -1045,7 +1048,7 @@ bool Reanimation::DrawTrack(Graphics* g, int theTrackIndex, int theRenderGroup,
 		{
 			const auto count = mDefinition->mImageSlotCount - mDefinition->mExternalImageSlotBegin;
 			const auto id = GeneratedDefinitions::ExternalTextureIds[mDefinition->mExternalBindingOffset +
-				std::size_t(mVariant) * count + slot - mDefinition->mExternalImageSlotBegin];
+				std::size_t(row) * count + slot - mDefinition->mExternalImageSlotBegin];
 			if (id) texture = GeneratedDefinitions::ExternalTextures[id - 1];
 		}
 	}
@@ -1094,7 +1097,7 @@ bool Reanimation::DrawTrackWithTexture(Graphics* g, int theTrackIndex,
 	const TextureRegion* aImageRect = nullptr;
 	if (aHasImage)
 	{
-		aImageRect = &mDefinition->mImageRects[std::size_t(mVariant) * mDefinition->mImageSlotCount + aSlot];
+		aImageRect = &mDefinition->mImageRects[std::size_t(AppearanceRow(theTrackIndex)) * mDefinition->mImageSlotCount + aSlot];
 		// Blank appearances keep attachments visible, but fully transparent
 		// tracks above still report hidden. Neither case needs a matrix.
 		if (aImageRect->mWidth == 0 || aImageRect->mHeight == 0)
@@ -1128,7 +1131,13 @@ bool Reanimation::DrawTrackWithTexture(Graphics* g, int theTrackIndex,
 		aCelWidth = aGeometry.mWidth;
 		aCelHeight = aGeometry.mHeight;
 		aMatrix.LoadIdentity();
-		SexyMatrix3Translation(aMatrix, aCelWidth * 0.5f, aCelHeight * 0.5f);  // 将矩阵变换的坐标设定在贴图的中心位置
+		float centerX = aCelWidth * 0.5f, centerY = aCelHeight * 0.5f;
+        if (aImageRect->mTrimWidth)
+        {
+            centerX += aImageRect->mTrimX + (aImageRect->mTrimWidth - aImageRect->mWidth) * 0.5f;
+            centerY += aImageRect->mTrimY + (aImageRect->mTrimHeight - aImageRect->mHeight) * 0.5f;
+        }
+        SexyMatrix3Translation(aMatrix, centerX, centerY);
 	}
 	else if (aTransform.mFont != nullptr && aTransform.mText != nullptr)  // 如果存在字体且文本不为空
 	{
@@ -1157,7 +1166,12 @@ bool Reanimation::DrawTrackWithTexture(Graphics* g, int theTrackIndex,
 
 	if (aHasImage)
 	{
-		const TextureRegion& aSrcRect = *aImageRect;
+		TextureRegion aSrcRect = *aImageRect;
+        if (aSrcRect.mTrimWidth)
+        {
+            aSrcRect.mWidth = aSrcRect.mTrimWidth;
+            aSrcRect.mHeight = aSrcRect.mTrimHeight;
+        }
 		auto* const aTexture = theTexture;
 		if (!aTexture)
 			throw std::logic_error("reanimation appearance atlas is not uploaded");
@@ -1255,7 +1269,8 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 	bool aHasFrameTime = false;
 	// Binding mode is definition-wide. Only the few shared-image Credits
 	// definitions resolve external slots; battle tracks receive one atlas value.
-	if (mDefinition->mExternalImageSlotBegin)
+	const bool factored = FactoredAppearance::Get(static_cast<unsigned>(mReanimationType)).tracks != nullptr;
+	if (!factored && mDefinition->mExternalImageSlotBegin)
 	{
 		const auto firstExternal = mDefinition->mExternalImageSlotBegin;
 		const auto externalCount = mDefinition->mImageSlotCount - firstExternal;
@@ -1290,7 +1305,7 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 	}
 	// Pure text/fullscreen fixtures do not require an atlas at all. Resolve this
 	// once, outside the track loop, retaining their existing null-texture support.
-	auto* const texture = mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
+	auto* const texture = !factored && mDefinition->mTextures ? mDefinition->mTextures[mVariant] : nullptr;
 	for (int aTrackIndex = 0; aTrackIndex < mDefinition->mTracks.count; aTrackIndex++)
 	{
 		ReanimatorTrackInstance* aTrackInstance = &mTrackInstances[aTrackIndex];
@@ -1304,7 +1319,8 @@ void Reanimation::DrawRenderGroup(Graphics* g, int theRenderGroup)
 				GetFrameTime(&aFrameTime);
 				aHasFrameTime = true;
 			}
-			bool aTrackDrawn = DrawTrackWithTexture(g, aTrackIndex, &aFrameTime, texture);
+			bool aTrackDrawn = factored ? DrawTrack(g, aTrackIndex, theRenderGroup, &aFrameTime)
+			                        : DrawTrackWithTexture(g, aTrackIndex, &aFrameTime, texture);
 			if (aTrackInstance->mAttachmentID != AttachmentID::ATTACHMENTID_NULL)
 			{
 				AttachmentDraw(aTrackInstance->mAttachmentID, g, !aTrackDrawn, mStartTimeNs + mFrameAgeNs);
@@ -1550,9 +1566,28 @@ void Reanimation::SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmoun
 }
 
 //0x473470
+std::uint32_t Reanimation::AppearanceStateCount(ReanimationType type, const ReanimatorDefinition& definition)
+{
+    const auto layout = FactoredAppearance::Get(static_cast<unsigned>(type));
+    return layout.tracks ? layout.states : definition.mVariantCount;
+}
+
+std::uint32_t Reanimation::AppearanceStateCount() const
+{
+    return AppearanceStateCount(mReanimationType, *mDefinition);
+}
+
+std::uint32_t Reanimation::AppearanceRow(int track) const
+{
+    const auto layout = FactoredAppearance::Get(static_cast<unsigned>(mReanimationType));
+    if (!layout.tracks) return mVariant;
+    const auto axis = layout.tracks[track];
+    return (mVariant / axis.stride) % axis.radix;
+}
+
 void Reanimation::SelectVariant(std::uint32_t theVariant)
 {
-	if (!mDefinition || theVariant >= mDefinition->mVariantCount)
+	if (!mDefinition || theVariant >= AppearanceStateCount())
 		throw std::out_of_range("reanimation appearance variant out of range");
 	mVariant = theVariant;
 }
@@ -1562,7 +1597,15 @@ void Reanimation::SelectVariant(std::uint32_t theVariant)
 void Reanimation::SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOption)
 {
 	const int track = FindTrackIndex(theTrackId);
-	if (theOption >= mDefinition->mVariantActionCounts[track])
+	if (const auto axes = FactoredAppearance::Get(static_cast<unsigned>(mReanimationType)).tracks)
+    {
+        const auto axis = axes[track];
+        if (theOption >= axis.radix)
+            throw std::out_of_range("appearance track option out of range");
+        mVariant = mVariant - AppearanceRow(track) * axis.stride + theOption * axis.stride;
+        return;
+    }
+    if (theOption >= mDefinition->mVariantActionCounts[track])
 	{
 		if (theOption == 0 && mDefinition->mVariantActionCounts[track] == 0)
 			return;
@@ -1576,6 +1619,8 @@ void Reanimation::SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOp
 std::uint32_t Reanimation::VariantOption(ReanimTrackId theTrackId)
 {
 	const int track = FindTrackIndex(theTrackId);
+	if (FactoredAppearance::Get(static_cast<unsigned>(mReanimationType)).tracks)
+		return AppearanceRow(track);
 	return mDefinition->mVariantOptions[std::size_t(mVariant) * mDefinition->mTracks.count + track];
 }
 

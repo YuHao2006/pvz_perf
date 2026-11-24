@@ -1,3 +1,4 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -5,7 +6,7 @@ import path from 'node:path';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
 const base=process.env.PVZ_WEBGPU_URL||'http://127.0.0.1:18089/';
 const output=path.join(os.tmpdir(),'pvz-startup-compat');fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe',args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge'),args:['--enable-unsafe-webgpu','--ignore-gpu-blocklist']});
 try{
  for(const backend of ['webgl','webgpu']){
   const context=await browser.newContext(backend==='webgl'?{viewport:{width:390,height:844},hasTouch:true,isMobile:true,userAgent:'Mozilla/5.0 (iPhone; CPU iPhone OS 18_0 like Mac OS X) AppleWebKit/605.1.15 Version/18.0 Mobile/15E148 Safari/604.1'}:{viewport:{width:1280,height:900}});

@@ -36,7 +36,7 @@ uint32_t CombinedImageSamplingFlags()
 }
 }
 
-static bool gLinearFilter = false;
+static constexpr bool gLinearFilter = true;
 static GpuRenderer* gGpuRenderer = NULL;
 static int gGpuCurrentDrawMode = 0;
 static int gGpuSceneWidth = 800;
@@ -104,7 +104,6 @@ bool RenderInterface::InitGPU()
 	mPresentWidth = mPresentWidth > 0 ? mPresentWidth : mWidth;
 	mPresentHeight = mPresentHeight > 0 ? mPresentHeight : mHeight;
 
-	gLinearFilter = false;
 	RenderInterface::sSamplerAddressWrap = false;
 
 	const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders/";
@@ -499,13 +498,13 @@ static void SubmitGpuTriangles(
 #if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || (defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU))
     if (aCount==4) {
         gGpuRenderer->SubmitQuads(std::span<const GpuVertex>(aConverted,aCount),theSRV,
-            theLinearFilter,RenderInterface::sSamplerAddressWrap,aBlend,theClipRect ? &nativeClip : nullptr);
+            gLinearFilter,RenderInterface::sSamplerAddressWrap,aBlend,theClipRect ? &nativeClip : nullptr);
         return;
     }
 #endif
     gGpuRenderer->SubmitTriangles(
         std::span<const GpuVertex>(aConverted, aCount), theSRV,
-        theLinearFilter, RenderInterface::sSamplerAddressWrap, aBlend, theClipRect ? &nativeClip : nullptr);
+        gLinearFilter, RenderInterface::sSamplerAddressWrap, aBlend, theClipRect ? &nativeClip : nullptr);
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -829,7 +828,6 @@ void RenderInterface::Blt(Image* theImage, float theX, float theY, const Rect& t
 
 	gGpuCurrentDrawMode = theDrawMode;
 
-	gLinearFilter = linearFilter;
 	TextureSource{texture,theImage->mGpuSamplingFlags}.Blt(
 		theX,theY,PixelSourceToUv(theSrcRect,theImage->mWidth,theImage->mHeight),theColor);
 }
@@ -895,7 +893,6 @@ static void BltPreparedSource(RenderInterface& render,const TextureSource& sourc
 
 	if (!render.mTransformStack.empty())
 	{
-		gLinearFilter = true;
 		if (theX != 0 || theY != 0)
 		{
 			SexyTransform2D aTransform;
@@ -914,7 +911,6 @@ static void BltPreparedSource(RenderInterface& render,const TextureSource& sourc
 	}
 	else
 	{
-		gLinearFilter = linearFilter;
 		source.BltTransformed(theTransform, theSrcRect, theColor, theClipRect, theX, theY, center);
 	}
 }
@@ -1159,7 +1155,6 @@ void RenderInterface::DrawTrianglesTex(const TriVertex theVertices[][3], int the
 	gGpuCurrentDrawMode = theDrawMode;
 	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
 
-	gLinearFilter = blend;
 	TextureSource{texture,theTexture->mGpuSamplingFlags}.BltTriangles(
 		theVertices,theNumTriangles,aColor,tx,ty);
 }
@@ -1172,7 +1167,6 @@ void RenderInterface::DrawTrianglesTexClipped(const TriVertex vertices[][3], int
     auto* texture = CreateImageTexture(image);
     if (!texture) return;
     gGpuCurrentDrawMode = drawMode;
-    gLinearFilter = blend;
     SubmitTextureTriangleBatch(size_t(count),
         [&](size_t i)->const TriVertex& { return vertices[i/3][i%3]; },
         TextureSource{texture,image->mGpuSamplingFlags},
@@ -1199,7 +1193,6 @@ void RenderInterface::DrawTrianglesTexStrip(const TriVertex theVertices[], int t
 	auto* texture=CreateImageTexture(theTexture);
 	if(!texture) return;
 	gGpuCurrentDrawMode = theDrawMode;
-	gLinearFilter = blend;
 	const DWORD color=RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha);
 	SubmitTextureTriangleBatch(size_t(theNumTriangles),
 		[&](size_t i)->const TriVertex& {return theVertices[i/3+i%3];},
@@ -1213,7 +1206,6 @@ void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> 
 	auto* texture=CreateImageTexture(theTexture);
 	if(!texture) return;
 	gGpuCurrentDrawMode = theDrawMode;
-	gLinearFilter = blend;
 	TextureSource{texture,theTexture->mGpuSamplingFlags}.BltTriangles(theTriangles,
 		RGBA_MAKE(theColor.mRed,theColor.mGreen,theColor.mBlue,theColor.mAlpha),tx,ty);
 }
@@ -1223,7 +1215,6 @@ void RenderInterface::DrawTrianglesTex(std::span<const std::array<TriVertex,3>> 
 {
 	if (triangles.empty() || !source.mTexture || !PreDraw()) return;
 	gGpuCurrentDrawMode=drawMode;
-	gLinearFilter=blend;
 	source.BltTriangles(triangles,
 		RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,clip);
 }
@@ -1234,7 +1225,6 @@ void RenderInterface::DrawQuadsTex(std::span<const std::array<TriVertex,4>> quad
 {
     if (quads.empty() || !source.mTexture || !PreDraw()) return;
     gGpuCurrentDrawMode=drawMode;
-    gLinearFilter=blend;
     SubmitTextureTriangleBatch<true>(quads.size(),
         [&](size_t i)->const TriVertex& {return quads[i/4][i%4];},source,
         RGBA_MAKE(color.mRed,color.mGreen,color.mBlue,color.mAlpha),tx,ty,clip);

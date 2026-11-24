@@ -84,6 +84,7 @@ set(Lawn__System__System_Source
     "../Lawn/System/PoolEffect.cpp"
     "../Lawn/System/PopDRMComm.cpp"
     "../Lawn/System/ProfileMgr.cpp"
+    "../Lawn/System/PendingSaveRecovery.cpp"
     "../Lawn/System/ReanimationLawn.cpp"
     "../Lawn/System/SaveGame.cpp"
     "../Lawn/System/SaveClockProjection.cpp"

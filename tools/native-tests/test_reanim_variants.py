@@ -110,8 +110,8 @@ class ReanimVariantCompilerTests(unittest.TestCase):
         metadata = json.loads((output / "reanim_variants.json").read_text())["roots"]
         self.assertEqual(len(metadata), 146)
         self.assertEqual(len(list(output.glob("*.source-record"))), 146)
-        declarations = sum(len(row["variants"]) - 1 for row in metadata.values())
-        self.assertGreater(declarations, 2500)
+        self.assertEqual(len(metadata["Zombie_boss"]["variants"]), 3)
+        self.assertEqual(len(metadata["Zombie"]["variants"]), 7)
         self.assertLess(sum(path.stat().st_size for path in output.glob("*.source-record")), 64 * 1024 * 1024)
         # Exercise every authored transition without waiting for atlas proofs.
         # Synthetic bounded regions isolate behavior sharing and state tables.

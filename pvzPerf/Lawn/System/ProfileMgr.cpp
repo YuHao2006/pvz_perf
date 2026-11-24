@@ -1,5 +1,14 @@
 #include "DataSync.h"
 #include "ProfileMgr.h"
+#include "PendingSaveRecovery.h"
+#include "Sexy.TodLib/TodDebug.h"
+#include <algorithm>
+#include <charconv>
+#include <filesystem>
+#include <limits>
+#include <set>
+#include <string_view>
+#include <vector>
 #include "PlayerInfo.h"
 #include "SexyAppFramework/SexyAppBase.h"
 
@@ -10,13 +19,19 @@ static int gProfileVersion = 14;
 // GOTY @Patoke: 0x46EBC0
 PlayerInfo* ProfileMgr::GetAnyProfile()
 {
-    if (mProfileMap.size() == 0)
-        return nullptr;
-
-    PlayerInfo* aPlayerInfo = &mProfileMap.begin()->second;
-    aPlayerInfo->LoadDetails();
-    aPlayerInfo->mUseSeq = mNextProfileUseSeq++;
-    return aPlayerInfo;
+    std::vector<PlayerInfo*> ordered;
+    for (auto& entry : mProfileMap)
+        ordered.push_back(&entry.second);
+    std::stable_sort(ordered.begin(), ordered.end(), [](const PlayerInfo* a, const PlayerInfo* b) {
+        return a->mUseSeq > b->mUseSeq;
+    });
+    for (PlayerInfo* player : ordered) {
+        if (player->LoadDetails()) {
+            player->mUseSeq = mNextProfileUseSeq++;
+            return player;
+        }
+    }
+    return nullptr;
 }
 
 //0x46A7F0
@@ -73,6 +88,7 @@ void ProfileMgr::SyncState(DataSync& theSync)
 //0x46ABC0
 void ProfileMgr::Load()
 {
+    PendingSaves::RecoverDirectory(GetAppDataFolder());
     Buffer aBuffer;
     std::string aFileName = GetAppDataFolder() + "users.dat";
 
@@ -93,7 +109,7 @@ void ProfileMgr::Load()
 }
 
 //0x46AD80
-void ProfileMgr::Save()
+bool ProfileMgr::Save()
 {
     DataWriter aWriter;
     aWriter.OpenMemory(0x20);
@@ -102,7 +118,10 @@ void ProfileMgr::Save()
 
     MkDir(GetAppDataFolder());
     std::string aFileName = GetAppDataFolder() + "users.dat";
-    gSexyAppBase->WriteBytesToFile(aFileName, aWriter.GetDataPtr(), aWriter.GetDataLen());
+    if (gSexyAppBase->WriteBytesToFile(aFileName, aWriter.GetDataPtr(), aWriter.GetDataLen()))
+        return true;
+    TodErrorMessageBox(("Could not save the player list to " + aFileName).c_str(), "Save failed");
+    return false;
 }
 
 void ProfileMgr::DeleteProfile(ProfileMap::iterator theProfile)
@@ -152,21 +171,6 @@ bool ProfileMgr::RenameProfile(const SexyString& theOldName, const SexyString& t
     }
 }
 
-//0x46B1C0
-void ProfileMgr::DeleteOldestProfile()
-{
-    if (mProfileMap.size() == 0)
-        return;
-
-    //将 mUseSeq 最小的存档的所在位置记录在 anOldest 迭代器中
-    auto anOldest = mProfileMap.begin();
-    for (auto anItr = anOldest; anItr != mProfileMap.end(); anItr++)
-        if (anItr->second.mUseSeq < anOldest->second.mUseSeq)
-            anOldest = anItr;
-    //删除记录的 mUseSeq 最小的存档
-    DeleteProfile(anOldest);
-}
-
 //0x46B290
 // GOTY @Patoke: 0x46F7C0
 PlayerInfo* ProfileMgr::GetProfile(const SexyString& theName)
@@ -175,25 +179,74 @@ PlayerInfo* ProfileMgr::GetProfile(const SexyString& theName)
     if (anItr != mProfileMap.end())
     {
         PlayerInfo* aProfile = &anItr->second;
-        aProfile->LoadDetails();
+        if (!aProfile->LoadDetails()) return nullptr;
         aProfile->mUseSeq = mNextProfileUseSeq++;
         return aProfile;
     }
     return nullptr;
 }
 
+static unsigned int FindFreeProfileId(unsigned int first)
+{
+    // An imported users.dat may no longer list other users still on disk.
+    const std::filesystem::path directory(GetAppDataFolder());
+    std::set<unsigned int> occupied;
+    for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+        auto path = entry.path();
+        const auto pending = PendingSaves::TargetName(path.filename().string());
+        if (!pending.empty()) path = pending;
+        if (path.extension() != ".dat64" && path.extension() != ".dat") continue;
+        const auto stem = path.stem().string();
+        const std::string_view name(stem);
+        if (!name.starts_with("user") && !name.starts_with("game")) continue;
+        const char* end = stem.data() + stem.size();
+        unsigned int id;
+        const auto parsed = std::from_chars(stem.data() + 4, end, id);
+        if (parsed.ec == std::errc{} && (name.starts_with("user") ? parsed.ptr == end :
+                parsed.ptr != end && *parsed.ptr == '_'))
+            occupied.insert(id);
+    }
+    while (first && first <= std::numeric_limits<int>::max() && occupied.contains(first))
+        ++first;
+    if (!first || first > std::numeric_limits<int>::max())
+        throw std::runtime_error("No free player ID");
+    return first;
+}
+
 //0x46B310
 PlayerInfo* ProfileMgr::AddProfile(const SexyString& theName)
 {
-    auto aRet = mProfileMap.try_emplace(theName);
-    if (aRet.second)
-    {
-        PlayerInfo* aProfile = &aRet.first->second;
-        aProfile->mName = theName;
-        aProfile->mId = mNextProfileId++;
-        aProfile->mUseSeq = mNextProfileUseSeq++;
-        DeleteOldProfiles();
-        return aProfile;
+    if (mProfileMap.contains(theName)) return nullptr;
+
+    MkDir(GetAppDataFolder());
+    try {
+        mNextProfileId = FindFreeProfileId(mNextProfileId);
+    } catch (const std::runtime_error& error) {
+        TodErrorMessageBox(error.what(), "Cannot create player");
+        return nullptr;
     }
-    return nullptr;
+    PlayerInfo player;
+    player.mName = theName;
+    player.mId = mNextProfileId++;
+    player.mUseSeq = mNextProfileUseSeq++;
+    if (!player.SaveDetails()) return nullptr;
+    auto slot = mProfileMap.emplace(theName, player).first;
+    // Retire the oldest user only after the replacement index is on disk.
+    ProfileMap::node_type retired;
+    if (mProfileMap.size() > 200) {
+        auto oldest = mProfileMap.end();
+        for (auto it = mProfileMap.begin(); it != mProfileMap.end(); ++it) {
+            if (it != slot && (oldest == mProfileMap.end() || it->second.mUseSeq < oldest->second.mUseSeq))
+                oldest = it;
+        }
+        retired = mProfileMap.extract(oldest);
+    }
+    if (!Save()) {
+        mProfileMap.erase(slot);
+        if (!retired.empty()) mProfileMap.insert(std::move(retired));
+        gSexyAppBase->EraseFile(GetAppDataFolder() + StrFormat("user%u.dat64", player.mId));
+        return nullptr;
+    }
+    if (!retired.empty()) retired.mapped().DeleteUserFiles();
+    return &slot->second;
 }

@@ -1,5 +1,11 @@
 # 资产、构建输入与发行边界
 
+## 外部素材库
+
+本工程通过 `config/workspace-paths.json` 选择共享素材库和版本。默认库为同级 `pvz-assets`，也可设置 `PVZ_ASSET_LIBRARY` 或 CMake 参数 `-DPVZ_ASSET_LIBRARY`。在新检出目录从工程根运行 `python tools/select-assets.py` 即可准备本地 `assets` 入口，原生 CMake 配置也会执行这一步。母图位于外部库。编辑共用层会影响采用它的版本，单版改动应写入该版覆盖层。
+
+机器工具路径在同级 `pvz-workspace.local.json` 配置，通过 `PVZ_PATHS_CONFIG` 可更换。下文使用的 `assets/...` 路径均相对于当前工程的素材视图。macOS 云端构建从仓库变量 `PVZ_ASSET_REPOSITORY` 选择外部库，可用 `PVZ_ASSET_REVISION` 固定版本。私有库可配置只读密钥 `PVZ_ASSET_READ_TOKEN`。
+
 本文只维护必须保存的输入、当前运行包组成和许可边界。运行结构见[资源格式](resource-format.md)，作者语法见[场景图集 DSL](scene-atlas-dsl.md)，性能结果不在此重复。
 
 ## 必须保存的输入

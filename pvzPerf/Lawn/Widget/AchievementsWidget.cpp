@@ -21,6 +21,8 @@
 #include <algorithm>
 #include "Sexy.TodLib/generated/SceneAtlasData.h"
 #include "graphics/AtlasDraw.h"
+#include "Sexy.TodLib/generated/HdUiPieces.h"
+#include "Sexy.TodLib/DefinitionImageRegion.h"
 
 namespace
 {
@@ -29,8 +31,24 @@ static_assert(AchievementsAtlas::IconCount == MAX_ACHIEVEMENTS,
 	"Achievement icons need one authored rectangle per achievement");
 constexpr int kBackgroundExtension = 300;
 constexpr int kBackgroundWidth = BOARD_WIDTH + 2 * kBackgroundExtension;
+Sexy::GpuTexture* stripTexture = nullptr;
+void DrawStrip(Graphics* g, const HdUi::Strip& strip, int y)
+{
+    DrawAtlasImage(g, {stripTexture, 0}, strip.region, strip.left-kBackgroundExtension, y);
+}
 const Rect aBackButtonRect = { 120, 35, 130, 80 };
 }  // namespace
+
+void LoadAchievementStrips()
+{
+    DefinitionBindAtlasPath(stripTexture, HdUi::StripPageWidth, HdUi::StripPageHeight,
+        "images/hd_ui/achievements_strips.atlas.png");
+}
+
+void FreeAchievementStrips()
+{
+    DefinitionUnbindAtlas(stripTexture);
+}
 
 AchievementItem gAchievementList[MAX_ACHIEVEMENTS] = {
 	{ "Home Lawn Security", "Complete Adventure Mode." },
@@ -62,8 +80,7 @@ AchievementsWidget::AchievementsWidget(LawnApp* theApp) {
 	mClip = false;
 	mMouseInsets.mLeft = -kBackgroundExtension;
 	mMouseInsets.mRight = -kBackgroundExtension;
-	mHeight = AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)].mHeight
-		+ AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)].mHeight + 15700;
+	mHeight = 2 * HdUi::StripHeight + 15700;
 	mScrollDirection = -1;
 	mScrollValue = 0;
 	mDefaultScrollValue = 3000.0f;
@@ -135,22 +152,17 @@ void AchievementsWidget::Draw(Graphics* g) {
 	// Opaque underpaint also covers the original artwork's antialiased edges.
 	g->mColor = Color(55, 37, 19);
 	g->FillRect(-kBackgroundExtension, 0, kBackgroundWidth, mHeight);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)],-kBackgroundExtension,0);
+	DrawStrip(g,HdUi::SELECTORSCREEN_ACHIEVEMENTS_BG,0);
+    for (int i = 1; i <= 70; ++i)
+        DrawStrip(g,HdUi::ACHEESEMENTS_HOLE_TILE,HdUi::StripHeight*i);
+    DrawStrip(g,HdUi::ACHEESEMENTS_BOOKWORM,1125);
+    DrawStrip(g,HdUi::ACHEESEMENTS_BEJEWELED,2250);
+    DrawStrip(g,HdUi::ACHEESEMENTS_CHUZZLE,4500);
+    DrawStrip(g,HdUi::ACHEESEMENTS_PEGGLE,6750);
+    DrawStrip(g,HdUi::ACHEESEMENTS_PIPE,9000);
+    DrawStrip(g,HdUi::ACHEESEMENTS_ZUMA,11250);
+    DrawStrip(g,HdUi::ACHEESEMENTS_CHINA,mHeight-HdUi::StripHeight-50);
 
-	int aHeight = AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::SELECTORSCREEN_ACHIEVEMENTS_BG)].mHeight;
-	for (int i = 1; i <= 70; i++)
-		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_HOLE_TILE)],-kBackgroundExtension,aHeight*i);
-
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BOOKWORM)],-kBackgroundExtension,1125);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BEJEWELED)],-kBackgroundExtension,2250);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHUZZLE)],-kBackgroundExtension,4500);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_PEGGLE)],-kBackgroundExtension,6750);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_PIPE)],-kBackgroundExtension,9000);
-	DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_ZUMA)],-kBackgroundExtension,11250);
-
-	const TextureRegion& aChina=AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_CHINA)];
-	DrawAtlasImage(g,aTexture,aChina,-kBackgroundExtension,mHeight-aChina.mHeight-50);
-	
 	if (aBackButtonRect.Contains(aMousePosition))
 		DrawAtlasImage(g,aTexture,AchievementsAtlas::Images[static_cast<unsigned>(AchievementSprite::ACHEESEMENTS_BACK_HIGHLIGHT)],110,40);
 

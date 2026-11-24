@@ -10,6 +10,7 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.ReferenceIterator;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.io.PrintWriter;
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -25,8 +26,13 @@ public class DecompileZombatar extends GhidraScript {
 			"Zombatar"
 		};
 
-		File outDir = new File("/tmp/zombatar_decompile");
-		outDir.mkdirs();
+		String[] args = getScriptArgs();
+		File scriptDir = new File(getSourceFile().getAbsolutePath()).getParentFile();
+		File outputRoot = args.length == 0
+		    ? new File(scriptDir, "../../out/ghidra").getCanonicalFile()
+		    : new File(args[0]);
+		File outDir = new File(outputRoot, "zombatar_decompile");
+		Files.createDirectories(outDir.toPath());
 		PrintWriter refLog = new PrintWriter(new File(outDir, "refs.txt"));
 		Map<Long, Function> functions = new LinkedHashMap<>();
 

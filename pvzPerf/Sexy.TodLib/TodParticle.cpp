@@ -1281,7 +1281,31 @@ static void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	const float aClipLeft = particleEvaluate(aEmitterDef->mClipLeft, ParticleTracks::TRACK_PARTICLE_CLIP_LEFT);
 	const float aClipRight = particleEvaluate(aEmitterDef->mClipRight, ParticleTracks::TRACK_PARTICLE_CLIP_RIGHT);
 	const float aCelWidth = float(aRegion.mWidth), aCelHeight = float(aRegion.mHeight);
-	if (aClipLeft > 0.0f || aClipTop > 0.0f || aClipRight > 0.0f || aClipBottom > 0.0f)
+    float centerOffsetX = 0, centerOffsetY = 0;
+    const bool clipped = aClipLeft > 0 || aClipTop > 0 || aClipRight > 0 || aClipBottom > 0;
+    if (aRegion.mTrimWidth)
+    {
+        // Clip on the original canvas, then intersect with the packed texels.
+        const int x = clipped ? FloatRoundToInt(aClipLeft*aCelWidth) : 0;
+        const int y = clipped ? FloatRoundToInt(aClipTop*aCelHeight) : 0;
+        const int w = aRegion.mWidth - (clipped ? FloatRoundToInt(aCelWidth*(aClipLeft+aClipRight)) : 0);
+        const int h = aRegion.mHeight - (clipped ? FloatRoundToInt(aCelHeight*(aClipTop+aClipBottom)) : 0);
+        const int l = std::max(x,aRegion.mTrimX), t = std::max(y,aRegion.mTrimY);
+        const int r = std::min(x+w,aRegion.mTrimX+aRegion.mTrimWidth);
+        const int b = std::min(y+h,aRegion.mTrimY+aRegion.mTrimHeight);
+        if (clipped)
+        {
+            theParams->mPosX += aClipLeft*aCelWidth;
+            theParams->mPosY += aClipTop*aCelHeight;
+        }
+        centerOffsetX = l-x+(r-l-w)*0.5f;
+        centerOffsetY = t-y+(b-t-h)*0.5f;
+        aRegion.mWidth = aRegion.mTrimWidth;
+        aRegion.mHeight = aRegion.mTrimHeight;
+        aRegion = CropTextureRegion(aRegion, Rect(l-aRegion.mTrimX,t-aRegion.mTrimY,
+            std::max(0,r-l),std::max(0,b-t)));
+    }
+    else if (clipped)
 	{
 		// Legacy clipping rounds source boundaries to texels before converting
 		// them to UVs. The draw-position shift retains the unrounded fraction.
@@ -1326,7 +1350,13 @@ static void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 			theParams->mSpinPosition,
 			theParams->mParticleScale,
 			theParams->mParticleStretch * theParams->mParticleScale);
-		const TextureSource aSource{aAtlas, Sexy::RenderInterface::sImageSamplingFlags};
+        if (!aRegion.mWidth || !aRegion.mHeight) return;
+        if (centerOffsetX || centerOffsetY)
+        {
+            aTransform.m02 += aTransform.m00*centerOffsetX + aTransform.m01*centerOffsetY;
+            aTransform.m12 += aTransform.m10*centerOffsetX + aTransform.m11*centerOffsetY;
+        }
+        const TextureSource aSource{aAtlas, Sexy::RenderInterface::sImageSamplingFlags};
 		theTriangleGroup->AddTriangle(g, aSource, aTransform, g->mClipRect, theColor, aDrawMode, aRegion);
 		if (aEmitter->mExtraAdditiveDrawOverride)
 			theTriangleGroup->AddTriangle(g, aSource, aTransform, g->mClipRect, theColor, Graphics::DRAWMODE_ADDITIVE, aRegion);

@@ -1,3 +1,4 @@
+#include "Sexy.TodLib/generated/ReanimAppearanceSaveCatalog.h"
 #include "Lawn/BoardTouch.h"
 #include "Lawn/LandscapeHud.h"
 #include "SexyAppFramework/graphics/GameViewport.h"
@@ -869,7 +870,7 @@ void ReanimationAppearancePixels(SexyAppBase& app)
         {},{2.f/12,2.f/8,4.f/12,4.f/8,2,2},{6.f/12,2.f/8,8.f/12,4.f/8,2,2},
         {},{},                                  {6.f/12,2.f/8,8.f/12,4.f/8,2,2},
         {},{2.f/16,2.f/10,4.f/16,4.f/10,2,2},{7.f/16,5.f/10,11.f/16,7.f/10,4,2},
-        {},{},                                  {7.f/16,5.f/10,11.f/16,7.f/10,4,2}};
+        {},{},                                  {8.f/16,5.f/10,10.f/16,7.f/10,4,2,1,0,2,2}};
     std::array<std::uint32_t,16> transitions;
     std::vector<std::uint32_t> starts(trackCount),counts(trackCount),options(4*trackCount);
     starts[face]=0;counts[face]=2;
@@ -943,7 +944,9 @@ void ReanimationAppearancePixels(SexyAppBase& app)
                 if (!(v&1) && x>=4 && x<6 && y>=4 && y<6) expected=0xffff0000u;
                 if (v&2)
                 {
-                    if (x>=9 && x<13 && y>=4 && y<6) expected=0xff00ff00u;
+                    // The cropped appearance retains the middle two columns of its four-column canvas.
+                    const int left = v == 3 ? 10 : 9, right = v == 3 ? 12 : 13;
+                    if (x>=left && x<right && y>=4 && y<6) expected=0xff00ff00u;
                 }
                 else if (x>=10 && x<12 && y>=4 && y<6) expected=0xff0000ffu;
                 if (x>=4 && x<6 && y>=8 && y<10) expected=0xffff0000u;
@@ -1260,6 +1263,62 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
             first.SelectVariant(v);
             Require(first.VariantOption(id)==original,"Appearance option lookup changed state");
         }
+    }
+    ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_BOSS,false);
+    Reanimation boss;
+    boss.ReanimationInitializeType(0,0,ReanimationType::REANIM_BOSS,0);
+    Require(boss.mDefinition->mVariantCount == 3 && boss.AppearanceStateCount() == 1296,
+            "Boss texture rows must be independent of the frozen save range");
+    struct BossAxis { ReanimTrackId track; unsigned stride, radix; };
+    constexpr BossAxis bossAxes[] = {
+        {ReanimTrackId::Boss_innerleg_foot,1,2}, {ReanimTrackId::Boss_outerleg_foot,2,2},
+        {ReanimTrackId::Boss_mouthglow_red,4,2}, {ReanimTrackId::Boss_jaw,8,3},
+        {ReanimTrackId::Boss_eyeglow_red,24,2}, {ReanimTrackId::Boss_head,48,3},
+        {ReanimTrackId::Boss_outerarm_thumb2,144,3}, {ReanimTrackId::Boss_outerarm_hand,432,3}
+    };
+    for (unsigned state=0; state<boss.AppearanceStateCount(); ++state)
+        for (const auto& axis : bossAxes)
+        {
+            boss.SelectVariant(state);
+            const unsigned digit = state/axis.stride % axis.radix;
+            Require(boss.AppearanceRow(boss.FindTrackIndex(axis.track)) == digit &&
+                    boss.VariantOption(axis.track) == digit, "Incorrect boss texture row for save ID");
+            for (unsigned option=0; option<axis.radix; ++option)
+            {
+                boss.SetVariantOption(axis.track,option);
+                Require(boss.mVariant == state-digit*axis.stride+option*axis.stride,
+                        "Updating one boss track changed an unrelated save digit");
+            }
+        }
+    for (const auto& saved : ReanimAppearanceSaveCatalog::Definitions)
+    {
+        const auto type = static_cast<ReanimationType>(saved.type);
+        if (saved.axisCount < 2 || type == ReanimationType::REANIM_BOSS) continue;
+        Reanimation actor;
+        actor.ReanimationInitializeType(0,0,type,0);
+        if (actor.mDefinition->mVariantCount == saved.variantCount) continue;
+        unsigned rows=0;
+        for (unsigned i=0; i<saved.axisCount; ++i)
+        {
+            const auto axis=ReanimAppearanceSaveCatalog::Axes[saved.axisOffset+i];
+            rows=std::max(rows,axis.radix);
+            const auto track=actor.mDefinition->mTracks.tracks[axis.trackIndex].mTrackId;
+            for (unsigned state=0; state<saved.variantCount; ++state)
+            {
+                actor.SelectVariant(state);
+                const unsigned digit=state/axis.stride%axis.radix;
+                Require(actor.AppearanceRow(axis.trackIndex)==digit && actor.VariantOption(track)==digit,
+                        "Special zombie physical row differs from save catalog");
+                for (unsigned option=0; option<axis.radix; ++option)
+                {
+                    actor.SetVariantOption(track,option);
+                    Require(actor.mVariant==state-digit*axis.stride+option*axis.stride,
+                            "Special zombie appearance update changed other tracks");
+                }
+            }
+        }
+        Require(actor.mDefinition->mVariantCount==rows && actor.AppearanceStateCount()==saved.variantCount,
+                "Special zombie appearance table dimensions differ from save contract");
     }
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_GARGANTUAR,false);
     Reanimation giant;
@@ -3074,6 +3133,49 @@ void ZombieBehaviorCatalogRuntime(TestApp& app)
     profile.mLevel=31;profile.mFinishedAdventure=1;
     app.mPlayerInfo=&profile;app.mZenGarden=&garden;
     app.mGameMode=GAMEMODE_ADVENTURE;app.mGameScene=SCENE_PLAYING;
+    {
+        Board board(&app);board.mLevel=31;board.mCurrentWave=6;board.mNumWaves=20;
+        board.mSeedBank->mNumPackets=0;board.mBackground=BACKGROUND_1_DAY;
+        for(int row=0;row<MAX_GRID_SIZE_Y;++row)
+            board.mPlantRow[row]=row==5?PLANTROW_DIRT:PLANTROW_NORMAL;
+        struct Hit { int damage; bool arm, head; };
+        for (const Hit hit : {Hit{90,true,true}, Hit{91,false,true}, Hit{180,false,true},
+                              Hit{181,false,false}, Hit{270,true,false}, Hit{300,true,false}})
+        {
+            auto* zombie = board.AddZombieInRow(ZOMBIE_NORMAL,2,0);
+            Require(zombie->mBodyHealth==270 && zombie->mBodyMaxHealth==270, "Unexpected basic zombie health");
+            zombie->TakeDamage(0,0,0,hit.damage,0);
+            Require(zombie->mHasArm==hit.arm && zombie->mHasHead==hit.head &&
+                    zombie->mBodyHealth==std::max(0,270-hit.damage), "Basic zombie single-hit limb boundary");
+        }
+        auto* armoured = board.AddZombieInRow(ZOMBIE_PAIL,2,0);
+        armoured->mShieldType = SHIELDTYPE_DOOR;
+        armoured->DropArm(0,0);
+        Require(armoured->mHasArm,"Dual armour must block arm loss");
+        armoured->mShieldType = SHIELDTYPE_NONE;
+        armoured->DropArm(0,0);
+        Require(armoured->mHasArm,"Remaining bucket must block arm loss");
+        armoured->mHelmType = HELMTYPE_NONE;
+        armoured->DropArm(0,0);
+        Require(!armoured->mHasArm,"Unarmoured zombie should be able to lose its arm");
+        auto* door = board.AddZombieInRow(ZOMBIE_DOOR,2,0);
+        door->TakeDamage(0,0,0,135,1u<<static_cast<unsigned>(DamageFlags::DAMAGE_BYPASSES_SHIELD));
+        Require(door->mBodyHealth==135 && door->mHasArm && door->mHasHead &&
+                door->mShieldType==SHIELDTYPE_DOOR, "Screen door must block arm loss on a bypass hit");
+        door->TakeDamage(0,0,0,34,1u<<static_cast<unsigned>(DamageFlags::DAMAGE_BYPASSES_SHIELD));
+        door->TakeDamage(0,0,0,door->mShieldHealth,0);
+        Require(door->mBodyHealth==101 && door->mShieldType==SHIELDTYPE_NONE &&
+                door->mHasArm && door->mHasHead, "Breaking only the door must preserve remaining body state");
+        door->TakeDamage(0,0,0,101,0);
+        Require(!door->mHasHead && door->mHasArm && door->mBodyHealth==0,
+                "Lethal hit after dropping shield should skip arm loss");
+        auto* half = board.AddZombieInRow(ZOMBIE_NORMAL,2,0);
+        half->TakeDamage(0,0,0,135,0);
+        half->TakeDamage(0,0,0,102,0);
+        Require(half->mBodyHealth==33 && !half->mHasArm && !half->mHasHead,
+                "102 damage from half health must leave 33 headless body HP");
+        std::cout<<"PASS basic zombie armour, lethal skips arm, head and body-health thresholds\n";
+    }
     for(const auto type:{ZOMBIE_GARGANTUAR,ZOMBIE_REDEYE_GARGANTUAR})
     for(const int hz:{100,30,240,0})
     for(const int stun:{0,1,2})
@@ -8386,7 +8488,8 @@ void LandscapeHudRuntime(TestApp& app)
 void MenuAchievementsTransitionRuntime(TestApp& app)
 {
     LoadSceneAtlases(false);
-    struct FreeUI {~FreeUI(){FreeSceneAtlases();}} freeUI;
+    LoadAchievementStrips();
+    struct FreeUI {~FreeUI(){FreeAchievementStrips();FreeSceneAtlases();}} freeUI;
     ZenGarden garden;auto* previousGarden=app.mZenGarden;app.mZenGarden=&garden;
     struct RestoreGarden {TestApp& app;ZenGarden* previous;~RestoreGarden(){app.mZenGarden=previous;}} restoreGarden{app,previousGarden};
     auto& manager=*app.mWidgetManager;
@@ -10090,6 +10193,12 @@ int main(int argc, char** argv)
         app.mDDInterface=new DDInterface(&app);
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
+        if (argc==3 && std::string_view(argv[2])=="reanim-appearances")
+        {
+            Require(gPakInterface && gPakInterface->AddPakFile(argv[1]), "Cannot mount appearance test PAK");
+            ReanimationAppearanceDefinitions(app);
+            return 0;
+        }
         if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,

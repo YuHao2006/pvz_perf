@@ -508,3 +508,6 @@ standalone_build.log
 /assets/source-art/archive/
 /assets/source-art/work/
 /assets/source-art/masters/
+
+# Generated checkout view of the external asset library
+/assets

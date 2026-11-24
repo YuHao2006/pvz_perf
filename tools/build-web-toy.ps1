@@ -1,8 +1,8 @@
 param(
-    [string]$Emsdk = 'C:/UserProgram/DevTools/emsdk',
-    [string]$Python = 'C:/UserProgram/DevTools/Python314/python.exe',
+    [string]$Emsdk = (& "$PSScriptRoot/workspace-path.ps1" 'emsdk'),
+    [string]$Python = (& "$PSScriptRoot/workspace-path.ps1" 'python'),
     [string]$JsonInclude = '',
-    [string]$SpngSource = 'C:/UserProgram/vcpkg/buildtrees/libspng/src/v0.7.4-e8b3878a48.clean/spng',
+    [string]$SpngSource = (& "$PSScriptRoot/workspace-path.ps1" 'vcpkg' 'buildtrees/libspng/src/v0.7.4-e8b3878a48.clean/spng'),
     [string]$WebConfig = '',
     [string]$PakFile = '',
     [ValidateSet('WEBGL','WEBGPU','BOTH')][string]$GraphicsBackend = 'BOTH',

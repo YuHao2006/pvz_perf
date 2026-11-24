@@ -1,9 +1,10 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';import fs from 'node:fs/promises';import path from 'node:path';import {fileURLToPath} from 'node:url';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE||'playwright-core');
 const R=path.resolve(path.dirname(fileURLToPath(import.meta.url)),'../..'),D=path.resolve(R,'../PvzDevTools');
 const bytes=Array.from(await fs.readFile(R+'/out/verification/endless-user-stuck/game1_58.dat64'));
 const html=(await fs.readFile(R+'/tools/wasm/game/index.html','utf8')).replace(/<script\b[^>]*>[\s\S]*?<\/script>/g,'');
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge')});
 try{const page=await browser.newPage({viewport:{width:390,height:844},hasTouch:true}),errors=[];page.on('pageerror',e=>errors.push(String(e)));
  await page.addInitScript(()=>Object.defineProperty(navigator,'canShare',{value:()=>false,configurable:true}));
  await page.route('http://127.0.0.1:19996/**',async route=>{const n=new URL(route.request().url()).pathname.slice(1);if(!n)return route.fulfill({contentType:'text/html',body:html});let f=(n.startsWith('save-tool-')||n==='save-codec.js')?D+'/dist/web/'+n:R+'/tools/wasm/game/'+n;await route.fulfill({contentType:n.endsWith('.css')?'text/css':'text/javascript',body:await fs.readFile(f)})});await page.goto('http://127.0.0.1:19996/');

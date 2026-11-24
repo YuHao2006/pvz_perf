@@ -1,4 +1,8 @@
 """Build first, then serially refresh current production microbenchmarks on LP14."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '../../tools').resolve()))
+from workspace_paths import workspace_path
 import argparse
 import csv
 import hashlib
@@ -102,19 +106,19 @@ def main():
 
     # Real FastMath translation unit, linked separately from the benchmark.
     script = work/'build-trig.cmd'
-    script.write_text('@echo off\ncall "C:/UserProgram/Visual Studuio/2026/Community/Common7/Tools/VsDevCmd.bat" -arch=x64 -no_logo\n'
+    script.write_text('@echo off\ncall "' + workspace_path('vs', 'Common7/Tools/VsDevCmd.bat').as_posix() + '" -arch=x64 -no_logo\n'
         + 'cl /nologo /O2 /EHsc /std:c++latest /MD /I"'+str(root/'pvzPerf/SexyAppFramework')+'" '
         + '"'+str(tools/'trig_power_benchmark.cpp')+'" "'+str(root/'pvzPerf/SexyAppFramework/misc/FastMath.cpp')
         +'" /Fe"'+str(work/'trig.exe')+'"\n', encoding='utf-8')
     invoke([os.environ['COMSPEC'], '/d', '/c', script], output/'builds/trig/build.txt', cwd=work)
     launcher = work/'pin.exe'
     script = work/'build-pin.cmd'
-    script.write_text('@echo off\ncall "C:/UserProgram/Visual Studuio/2026/Community/Common7/Tools/VsDevCmd.bat" -arch=x64 -no_logo\n'
+    script.write_text('@echo off\ncall "' + workspace_path('vs', 'Common7/Tools/VsDevCmd.bat').as_posix() + '" -arch=x64 -no_logo\n'
         +'cl /nologo /O2 /EHsc /std:c++20 "'+str(tools/'run-pinned-benchmark.cpp')+'" /Fe"'+str(launcher)+'"\n', encoding='utf-8')
     invoke([os.environ['COMSPEC'], '/d', '/c', script], output/'builds/launcher/build.txt', cwd=work)
 
     invoke([sys.executable, tools/'run-production-small-benchmarks.py',
-            '--retail', 'C:/UserProgram/Plants_Vs_Zombies_V1.2.0.1073_EN/PlantsVsZombies.exe',
+            '--retail', str(workspace_path('retail1073', 'PlantsVsZombies.exe')),
             '--retail-probe', args.retail_probe, '--current-probe', builds['production_leaf_benchmark'],
             '--structure-probe', builds['production_structure_benchmark'],
             '--pak', root/'out/x64-win32-vulkan/Release/main.pak64', '--output', output/'production'],
@@ -160,7 +164,7 @@ def main():
     invoke([sys.executable, tools/'refresh-small-benchmarks.py', '--archive', args.archive,
             '--emitter-fixture', args.emitter_fixture, '--output', output/'table-models',
             '--only', 'current_|bench_particle_emitter_names',
-            '--vs-root', 'C:/UserProgram/Visual Studuio/2026/Community'], output/'table-console.txt')
+            '--vs-root', str(workspace_path('vs'))], output/'table-console.txt')
     table = json.loads((output/'table-models/manifest.json').read_text())
     if len(table['jobs']) != 14 or any(j['build_exit'] or len(j['runs']) != 2 or
             any(r.get('exit', 1) or r.get('mismatch_marker') for r in j['runs']) for j in table['jobs']):

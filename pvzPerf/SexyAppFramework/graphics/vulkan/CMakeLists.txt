@@ -6,10 +6,12 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
 endif()
 
 find_package(Vulkan 1.3 REQUIRED)
+include("${CMAKE_CURRENT_LIST_DIR}/../../../../CMake/WorkspacePaths.cmake")
+pvz_machine_path(vulkanSdk _pvz_vulkan_sdk)
 find_program(PVZ_GLSLC NAMES glslc HINTS "$ENV{VULKAN_SDK}/Bin"
-    "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
+    "${_pvz_vulkan_sdk}/Bin" REQUIRED)
 find_program(PVZ_SPIRV_VAL NAMES spirv-val HINTS "$ENV{VULKAN_SDK}/Bin"
-    "C:/UserProgram/VulkanSDK/1.4.350.0/Bin" REQUIRED)
+    "${_pvz_vulkan_sdk}/Bin" REQUIRED)
 
 option(PVZ_VULKAN_SEPARATE_BLEND_TEST "Android-only single-output premultiplied sprite blend test" OFF)
 if(PVZ_VULKAN_SEPARATE_BLEND_TEST AND NOT ANDROID)

@@ -637,7 +637,7 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 	if (theReanimation->mReanimationType < 0 ||
 		theReanimation->mReanimationType >= ReanimationType::NUM_REANIMS ||
 		aDefinition != &gReanimatorDefArray[theReanimation->mReanimationType] ||
-		theReanimation->mVariant >= aDefinition->mVariantCount)
+		theReanimation->mVariant >= Reanimation::AppearanceStateCount(theReanimation->mReanimationType, *aDefinition))
 	{
 		theContext.mFailed = true;
 		return;

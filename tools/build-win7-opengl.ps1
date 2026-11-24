@@ -22,8 +22,8 @@ if (Test-Path -LiteralPath $cache) {
 }
 $cmake = (Get-Command cmake -ErrorAction Stop).Source
 [Diagnostics.Process]::GetCurrentProcess().ProcessorAffinity = [IntPtr]0x3FFF
-$vs = 'C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
-$ninja = 'C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
+$vs = (& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
+$ninja = (& "$PSScriptRoot/workspace-path.ps1" 'ninja')
 $installed = Join-Path (Split-Path -Parent $root) '_shared\vcpkg_installed'
 if (!$MsvcToolsetDirectory) {
     $MsvcToolsetDirectory = Join-Path $root 'out\toolchains\msvc-14.44\Contents\VC\Tools\MSVC\14.44.35207'

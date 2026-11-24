@@ -1022,6 +1022,15 @@ void TodQueueTextureWarm(SharedImageRef theRef)
 			&& aImage->mWidth > 0 && aImage->mHeight > 0
 			&& aImage->mTexture == nullptr)
 		{
+#if defined(__EMSCRIPTEN__) && !defined(__EMSCRIPTEN_PTHREADS__)
+            // The web loader runs on the renderer thread. Once preparation has
+            // finished, uploading here releases mPendingDecoded before the next image.
+            if (gSexyAppBase && gSexyAppBase->mDDInterface && gSexyAppBase->mDDInterface->mRenderInterface
+                && gSexyAppBase->mDDInterface->mRenderInterface->mRenderer) {
+                gSexyAppBase->mDDInterface->mRenderInterface->CreateImageTexture(aImage);
+                return;
+            }
+#endif
 			std::unique_lock aLock(gWarmMutex);
 			gWarmQueue.push_back(std::move(theRef));
 			gWarmSweepClean.store(false, std::memory_order_release);

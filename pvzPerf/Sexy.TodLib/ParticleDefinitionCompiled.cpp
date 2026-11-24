@@ -132,12 +132,14 @@ void TodParticleLoadCompiledDefinition(TodParticleDefinition& definition, const 
         if (length < 24 || length > 256 * 1024 * 1024 || p_fseek(file, 0, SEEK_SET))
             throw std::runtime_error("Invalid particle data length");
         Reader reader{file, std::size_t(length), path};
-        reader.require(reader.word() == 0x31435450 &&
+        const unsigned format = reader.word();
+        const bool trimmedFormat = format == 0x32435450;
+        reader.require((format == 0x31435450 || trimmedFormat) &&
             reader.word() == unsigned(ParticleEmitterName::top) &&
             reader.word() == kParticleEmitterNameTableHash);
         const unsigned emitters = reader.word(), variants = reader.word(), slots = reader.word();
         reader.require(emitters <= 1000 && variants > 0 && variants <= 4096 &&
-            slots <= 100000 && std::uint64_t(variants) * slots <= reader.remaining / 24);
+            slots <= 100000 && std::uint64_t(variants) * slots <= reader.remaining / (trimmedFormat ? 40u : 24u));
         definition.mEmitterDefs = new TodEmitterDefinition[emitters]{};
         definition.mEmitterDefCount = int(emitters);
         definition.mTextures = new Sexy::GpuTexture*[variants]{};
@@ -207,11 +209,21 @@ void TodParticleLoadCompiledDefinition(TodParticleDefinition& definition, const 
                 rect.mU0 = reader.value<float>(); rect.mV0 = reader.value<float>();
                 rect.mU1 = reader.value<float>(); rect.mV1 = reader.value<float>();
                 rect.mWidth = reader.value<std::int32_t>(); rect.mHeight = reader.value<std::int32_t>();
+                if (trimmedFormat)
+                {
+                    rect.mTrimX = reader.value<std::int32_t>(); rect.mTrimY = reader.value<std::int32_t>();
+                    rect.mTrimWidth = reader.value<std::int32_t>(); rect.mTrimHeight = reader.value<std::int32_t>();
+                    reader.require(rect.mTrimX >= 0 && rect.mTrimY >= 0 && rect.mTrimWidth >= 0 && rect.mTrimHeight >= 0 &&
+                        std::int64_t(rect.mTrimX)+rect.mTrimWidth <= rect.mWidth &&
+                        std::int64_t(rect.mTrimY)+rect.mTrimHeight <= rect.mHeight &&
+                        ((rect.mTrimWidth == 0) == (rect.mTrimHeight == 0)));
+                }
                 reader.require(std::isfinite(rect.mU0) && std::isfinite(rect.mV0) &&
                     std::isfinite(rect.mU1) && std::isfinite(rect.mV1) &&
                     rect.mU0 >= 0 && rect.mV0 >= 0 && rect.mU1 >= rect.mU0 && rect.mV1 >= rect.mV0 &&
                     rect.mU1 <= 1 && rect.mV1 <= 1 && rect.mWidth >= 0 && rect.mHeight >= 0 &&
-                    unsigned(rect.mWidth) <= width && unsigned(rect.mHeight) <= height);
+                    unsigned(rect.mTrimWidth ? rect.mTrimWidth : rect.mWidth) <= width &&
+                    unsigned(rect.mTrimHeight ? rect.mTrimHeight : rect.mHeight) <= height);
             }
             if (pathLength) DefinitionBindAtlasPath(definition.mTextures[v], int(width), int(height), atlasPath.c_str());
         }

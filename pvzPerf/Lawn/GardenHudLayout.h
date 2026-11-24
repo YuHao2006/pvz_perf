@@ -17,6 +17,10 @@ constexpr int RightButtonX(int originalX, const Frame& frame) {
     return frame.right - (800 - originalX);
 }
 
+constexpr int NextGardenX(const Frame& frame, int buttonWidth) {
+    return RightButtonX(628, frame) - buttonWidth;
+}
+
 constexpr int CursorInBoard(int mouseWorld, int boardOrigin, int grabOffset) {
     return mouseWorld - boardOrigin - grabOffset;
 }
@@ -29,7 +33,7 @@ struct ToolButtons {
 };
 
 constexpr ToolButtons LayoutTools(const std::array<bool, 10>& available,
-    const Frame& frame, bool treeOfWisdom, int fadeOffset) {
+    const Frame& frame, bool treeOfWisdom, int fadeOffset, int arrowButtonWidth) {
     ToolButtons positions{{}, frame.top + fadeOffset};
     bool allUnlocked = true;
     for (int slot = 0; slot < 10; ++slot) {
@@ -44,7 +48,7 @@ constexpr ToolButtons LayoutTools(const std::array<bool, 10>& available,
     }
     if (treeOfWisdom)
         positions.x[8] = frame.left + 30;
-    positions.x[9] = frame.left + 564;
+    positions.x[9] = NextGardenX(frame, arrowButtonWidth);
     return positions;
 }
 

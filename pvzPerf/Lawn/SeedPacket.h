@@ -65,4 +65,5 @@ public:
 };
 
 void				    DrawSeedPacket(Graphics* g, float x, float y, SeedType theSeedType, SeedType theImitaterType, float thePercentDark, int theGrayness, bool theDrawCost, bool theUseCurrentCost);
+void DrawFallingSeedPacket(Graphics* g,float x,float y,SeedType seed,int grayness);
 

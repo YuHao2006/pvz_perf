@@ -1,12 +1,12 @@
 param([switch]$Test)
 $ErrorActionPreference = 'Stop'
 $root = Split-Path -Parent $PSScriptRoot
-$vs = 'C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+$vs = (& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $cmake = (Get-Command cmake -ErrorAction Stop).Source
-$ninja = 'C:\Users\Administrator\AppData\Local\Programs\CLion\bin\ninja\win\x64\ninja.exe'
+$ninja = (& "$PSScriptRoot/workspace-path.ps1" 'ninja')
 $packages = Join-Path (Split-Path -Parent $root) '_shared\vcpkg_installed\x64-windows-static-md'
 $build = Join-Path $root 'out\x64-win32-vulkan'
-$env:VULKAN_SDK = 'C:\UserProgram\VulkanSDK\1.4.350.0'
+$env:VULKAN_SDK = (& "$PSScriptRoot/workspace-path.ps1" 'vulkanSdk')
 foreach ($path in @($vs,$cmake,$ninja,$packages,$env:VULKAN_SDK)) {
     if (!(Test-Path -LiteralPath $path)) { throw "Required tool/dependency path missing: $path" }
 }

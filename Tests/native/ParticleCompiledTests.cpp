@@ -88,6 +88,16 @@ int main(int argc, char** argv)
                 !definition.mImageRects && definition.mEmitterDefCount == 0);
         };
         run(valid, true);
+        auto cropped = valid;
+        cropped[3] = '2';
+        for (unsigned value : {1u, 2u, 4u, 3u}) Word(cropped, value);
+        run(cropped, true);
+        auto truncatedCrop = cropped;
+        truncatedCrop.pop_back();
+        run(truncatedCrop, false);
+        auto outside = cropped;
+        outside[outside.size() - 16] = 7;
+        run(outside, false);
         for (std::size_t size = 0; size < valid.size(); ++size)
             run({valid.begin(), valid.begin() + size}, false);
         auto invalid = valid;

@@ -1,4 +1,8 @@
 """Archive one observed run and plot game-only FPS, CPU and CPU time per draw."""
+import sys as _pvz_sys
+from pathlib import Path as _PvzPath
+_pvz_sys.path.insert(0, str((_PvzPath(__file__).resolve().parent / '../../tools').resolve()))
+from workspace_paths import workspace_path
 
 import argparse
 from collections import Counter
@@ -22,7 +26,7 @@ def sha(path):
 def plot_game_timeline(rows, summary, label, destination, stem):
     selected = [r for r in rows if r["segment"] == "game"]
     seconds = summary["seconds"]
-    font = FontProperties(fname="C:/Windows/Fonts/msyh.ttc")
+    font = FontProperties(fname=str(workspace_path('fonts', 'msyh.ttc')))
     plt.rcParams.update({"axes.spines.top":False,"axes.spines.right":False,"axes.titleweight":"bold"})
     fig, axes = plt.subplots(2, 1, figsize=(12, 7.4), sharex=True,
                              gridspec_kw={"height_ratios":[2,1]})

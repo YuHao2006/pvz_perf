@@ -2,14 +2,28 @@
 #include "WebOggDecoder.h"
 #include <emscripten.h>
 #include <cstring>
+#include <stdexcept>
 // ABI adapter for the existing music controller. No BASS binary is loaded.
 EM_ASYNC_JS(unsigned int, web_music_load, (const void* data,unsigned int size,int stream), {
     const voice=Module.pvzMusic.load(HEAPU8.slice(Number(data),Number(data)+size),!!stream);
     await Module.pvzMusic.waitForLoads();
     return voice;
 });
-EM_JS(unsigned int, web_music_pcm, (const float* data,int samples,int channels,int rate), {
-    return Module.pvzMusic.loadStream(HEAPF32.subarray(Number(data)/4,Number(data)/4+samples),channels,rate);
+EM_JS(unsigned int, web_music_begin_pcm, (int channels, int rate, int frames), {
+    const engine = Module.pvzMusic;
+    try {
+        const buffer = engine.disabled ? null : engine.context.createBuffer(channels, frames, rate);
+        return engine.registerStream(buffer, channels, rate);
+    } catch (error) { console.error(error); return 0; }
+});
+EM_JS(int, web_music_write_pcm, (unsigned int id, int channel, int offset, const float* data, int frames), {
+    const buffer = Module.pvzMusic.voices.get(id).buffer;
+    if (!buffer) return 1;
+    try {
+        const start = Number(data) / 4;
+        buffer.copyToChannel(HEAPF32.subarray(start, start + frames), channel, offset);
+        return 1;
+    } catch (error) { console.error(error); return 0; }
 });
 EM_JS(double, web_music_command, (unsigned int id,const char* op,double value,int extra), {
     return Module.pvzMusic.command(id,UTF8ToString(Number(op)),value,extra);
@@ -26,8 +40,21 @@ unsigned int LoadModule(BASSBOOL memory,const void* data,QWORD offset,DWORD size
 }
 unsigned int LoadStream(BASSBOOL memory,const void* data,QWORD offset,QWORD size,DWORD) {
     if(!memory||!data||!size||size>0xffffffffULL||offset)return 0;
-    const auto pcm=Sexy::DecodeWebOgg({static_cast<const unsigned char*>(data),static_cast<size_t>(size)});
-    return web_music_pcm(pcm.samples.data(),static_cast<int>(pcm.samples.size()),pcm.channels,pcm.sampleRate);
+    unsigned int voice = 0;
+    try {
+        Sexy::DecodeWebOggFrames({static_cast<const unsigned char*>(data), static_cast<size_t>(size)},
+            [&](int channels, int rate, int frames) {
+                voice = web_music_begin_pcm(channels, rate, frames);
+                if (!voice) throw std::runtime_error("Unable to allocate credits AudioBuffer");
+            }, [&](int channel, int frameOffset, std::span<const float> plane) {
+                if (!web_music_write_pcm(voice, channel, frameOffset, plane.data(), static_cast<int>(plane.size())))
+                    throw std::runtime_error("Unable to fill credits AudioBuffer");
+            });
+    } catch (...) {
+        if (voice) web_music_command(voice, "free", 0, 0);
+        throw;
+    }
+    return voice;
 }
 BASSBOOL FreeVoice(DWORD id) { return web_music_command(id,"free",0,0); }
 BASSBOOL Play(DWORD id,BASSBOOL restart) { return web_music_command(id,"play",restart,0); }

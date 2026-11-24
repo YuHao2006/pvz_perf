@@ -345,6 +345,9 @@ public:
     bool                            TrackExists(ReanimTrackId theTrackId);
     void                            StartBlend(int theBlendTime);
     /*inline*/ void                 SetShakeOverride(ReanimTrackId theTrackId, float theShakeAmount);
+    static std::uint32_t            AppearanceStateCount(ReanimationType type, const ReanimatorDefinition& definition);
+    std::uint32_t                   AppearanceStateCount() const;
+    std::uint32_t                   AppearanceRow(int track) const;
     void                            SelectVariant(std::uint32_t theVariant);
     void                            SetVariantOption(ReanimTrackId theTrackId, std::uint32_t theOption);
     std::uint32_t                   VariantOption(ReanimTrackId theTrackId);

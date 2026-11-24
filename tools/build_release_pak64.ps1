@@ -1,6 +1,6 @@
 param(
-    [string]$SourcePak = 'C:\UserProgram\Plants_Vs_Zombies_V1.2.0.1073_EN\main.pak',
-    [string]$Converter = 'C:\Users\Administrator\CLionProjects\codex\pak64\out-vs\bin\Release\pak64.exe',
+    [string]$SourcePak = (& "$PSScriptRoot/workspace-path.ps1" 'retail1073' 'main.pak'),
+    [string]$Converter = (& "$PSScriptRoot/workspace-path.ps1" 'legacyConverter'),
     [string]$OutputPak64 = ''
 )
 

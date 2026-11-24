@@ -1,5 +1,5 @@
 param(
-    [string]$Emsdk = 'C:/UserProgram/DevTools/emsdk',
+    [string]$Emsdk = (& "$PSScriptRoot/workspace-path.ps1" 'emsdk'),
     [string]$OutputDirectory = 'out/wasm-webgpu/toy',
     [switch]$Run
 )

@@ -2,7 +2,7 @@ param([switch]$StageRuntime,[string]$BuildDirectory)
 $ErrorActionPreference='Stop'
 [Diagnostics.Process]::GetCurrentProcess().ProcessorAffinity=[IntPtr]0x3FFF
 $projectRoot=Split-Path -Parent $PSScriptRoot
-$vs='C:\UserProgram\Visual Studuio\2026\Community\VC\Auxiliary\Build\vcvars64.bat'
+$vs=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $cmake=(Get-Command cmake -ErrorAction Stop).Source
 $ninja=(Get-Command ninja -ErrorAction Stop).Source
 $build=if($BuildDirectory){[IO.Path]::GetFullPath($BuildDirectory)}else{Join-Path $projectRoot 'out\x64-win32-dx12'}

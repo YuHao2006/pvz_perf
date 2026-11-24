@@ -1,3 +1,4 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 import path from 'node:path';
@@ -5,7 +6,7 @@ const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE);
 const base=process.env.PVZ_GRAPHICS_SOURCE_URL||'http://127.0.0.1:18091/tools/wasm/game/';
 const output=path.resolve(process.env.PVZ_GRAPHICS_EVIDENCE||'out/verification/web-host-context-rejection');
 fs.mkdirSync(output,{recursive:true});
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge')});
 const results=[];
 try{
  for(const rejected of [false,true]){

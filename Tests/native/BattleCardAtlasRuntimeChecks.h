@@ -26,9 +26,11 @@ inline void CheckBattleCardAtlas(LawnApp& app,void (*deletes)(LawnApp&)) {
             require(b.mLandscapeHud==landscape,"Card atlas fixture created wrong layout");
             constexpr SeedType seeds[]{SEED_PEASHOOTER,SEED_WINTERMELON,SEED_IMITATER,SEED_TALLNUT,SEED_COBCANNON,SEED_POTATOMINE,SEED_GIANT_WALLNUT,SEED_SUNFLOWER,SEED_CHERRYBOMB,SEED_GLOOMSHROOM};
             if(!conveyor)for(int i=0;i<b.mSeedBank->mNumPackets;++i)b.mSeedBank->mSeedPackets[i].SetPacketType(seeds[i],seeds[i]==SEED_IMITATER?SEED_MELONPULT:SEED_NONE);
-            app.StartPlaying();require(bool(app.mBattleCardAtlas),"Battle card atlas was not created");
+            app.StartPlaying();
+            require(bool(app.mBattleCardAtlas),"Battle card atlas was not created");
             const auto compare=[&](SeedPacket& p,float dark,int gray){
-                auto* expected=render.CreateRenderImage(90,80);auto* actual=render.CreateRenderImage(90,80);
+                // Compare compositing on the same physical grid as the HD card atlas.
+                auto* expected=render.CreateRenderImage(90,80,2);auto* actual=render.CreateRenderImage(90,80,2);
                 struct Targets {Image* a;Image* b;~Targets(){delete a;delete b;}} cleanup{expected,actual};
                 {GpuImageDrawScope scope(render,expected);Graphics g(expected);g.mColor=Color(30,70,20);g.FillRect(0,0,90,80);
                     if(landscape)LandscapeHud::DrawPacket(&g,0,0,p.mPacketType,p.mImitaterType,dark,gray,!conveyor,true);
@@ -41,7 +43,7 @@ inline void CheckBattleCardAtlas(LawnApp& app,void (*deletes)(LawnApp&)) {
                     const unsigned error=std::abs(int((e.pixels[i]>>(8*channel))&255)-int((a.pixels[i]>>(8*channel))&255));
                     maxError=std::max(maxError,error);differing+=error>3;
                 }
-                if(differing){(void)ImageLib::WritePNGImage("card-atlas-expected.png",90,80,e.pixels);(void)ImageLib::WritePNGImage("card-atlas-actual.png",90,80,a.pixels);}
+                if(differing){(void)ImageLib::WritePNGImage("card-atlas-expected.png",e.width,e.height,e.pixels);(void)ImageLib::WritePNGImage("card-atlas-actual.png",a.width,a.height,a.pixels);}
                 require(maxError<=3,"Cached card pixels differ from layered reference");
             };
             if(conveyor) {
@@ -57,7 +59,7 @@ inline void CheckBattleCardAtlas(LawnApp& app,void (*deletes)(LawnApp&)) {
                 const int cellWidth=(landscape?81:50)+4;
                 for(size_t i=0;i<before.pixels.size();++i) {
                     const int x=static_cast<int>(i%before.width);
-                    if(x<cellWidth+2||x>=2*cellWidth-2)require(before.pixels[i]==after.pixels[i],"Price update changed a different card region");
+                    if(x<2*(cellWidth+2)||x>=2*(2*cellWidth-2))require(before.pixels[i]==after.pixels[i],"Price update changed a different card region");
                 }
                 compare(b.mSeedBank->mSeedPackets[1],0,255);
                 b.InitSurvivalStage();require(!app.mBattleCardAtlas,"Survival repick retained old card atlas");

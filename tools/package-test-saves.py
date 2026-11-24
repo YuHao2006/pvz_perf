@@ -1,46 +1,14 @@
 """Create a completed test profile and include the canonical endless checkpoint."""
 
+from endless_checkpoint import completed_profile, convert, original
+
 import argparse
-import hashlib
 import json
 from pathlib import Path
 import struct
 import subprocess
 import tempfile
 import zipfile
-
-
-def completed_profile():
-    # PlayerInfo::SyncDetails v13 field order; unused mode/purchase slots stay zero.
-    records = [0] * 100
-    for mode in range(1, 71):
-        if mode != 35:
-            records[mode] = 1
-    # Survival records store completed flags, unlike ordinary win-count records.
-    for mode in range(61, 66):
-        records[mode] = 10
-    for mode in range(66, 71):
-        records[mode] = 5
-    records[71] = 1000
-    purchases = [0] * 80
-    for item in list(range(9)) + [13, 16, 17, 18, 19, 20, 22, 23, 25, 27, 29]:
-        purchases[item] = 1
-    # STORE_ITEM_FIRSTAID (29): all completed profiles include Wall-nut First Aid.
-    purchases[9] = 2
-    purchases[21] = 4
-    for item in (14, 15):
-        purchases[item] = 1020
-    for item in (26, 28):
-        purchases[item] = 1010
-    purchases[24] = 3
-    scalars = [0] * 18
-    for index in (6, 7, 12, 15, 16):
-        scalars[index] = 1
-    # Two adventure completions, all trophies/achievements, ten seed slots.
-    values = [13, 1, 99999, 2] + records + purchases + [0, 0] + scalars + [0]
-    return (b"PVZUSR64" + struct.pack(f"<{len(values)}i", *values)
-            + bytes([1, 1]) * 20 + b"\0" + struct.pack("<i", 0)
-            + bytes([1]) * 20 + b"\1")
 
 
 def main():
@@ -52,15 +20,7 @@ def main():
     parser.add_argument("--perfect-output", type=Path, help="Optional completed-profile-only ZIP")
     parser.add_argument("--benchmark-output", type=Path, help="Optional independently named full benchmark ZIP")
     args = parser.parse_args()
-    root = Path(__file__).resolve().parents[1]
-    manifest = json.loads((root / "Tests/manifest.json").read_text(encoding="utf-8"))
-    source_files = {}
-    for format_name in ("original", "project"):
-        entry = manifest[format_name]
-        path = root / "Tests" / entry["file"]
-        if hashlib.sha256(path.read_bytes()).hexdigest() != entry["sha256"]:
-            raise ValueError(f"Canonical checkpoint changed: {path}")
-        source_files[format_name] = path
+    retail = original()
     profile = completed_profile()
     name = b"PerfTest"
     summary = struct.pack("<IHH", 14, 1, len(name)) + name + struct.pack("<II", 1, 1)
@@ -76,8 +36,7 @@ def main():
         if roundtrip.read_bytes() != profile:
             raise ValueError("Completed profile DAT64/DAT roundtrip differs")
         checkpoint = directory / "game1_58.dat64"
-        subprocess.run([str(converter), "--target", args.format,
-                        str(source_files["original"]), str(checkpoint)], check=True)
+        convert(converter, checkpoint, args.format)
         checkpoint_bytes = checkpoint.read_bytes()
         if (checkpoint_bytes[:8] != b"PVZDAT64"
                 or struct.unpack_from("<I", checkpoint_bytes, 8)[0] != (5 if args.format == "dat64-v5" else 4)
@@ -90,7 +49,7 @@ def main():
             archive.write(checkpoint, "data/game1_58.dat64")
             archive.writestr("retail/users.dat", summary)
             archive.write(dat, "retail/user1.dat")
-            archive.write(source_files["original"], "retail/game1_13.dat")
+            archive.write(retail, "retail/game1_13.dat")
             archive.writestr("README.txt",
                 f"pvz_perf {args.version} test saves\n\n"
                 "Exit the game. Extract data/ beside pvz_perf.exe in a fresh test directory.\n"

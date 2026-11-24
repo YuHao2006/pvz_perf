@@ -6,13 +6,21 @@ import ghidra.program.model.symbol.Reference;
 import ghidra.program.model.symbol.RefType;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.io.PrintWriter;
 
 public class InspectGlobalRefs extends GhidraScript {
     @Override
     public void run() throws Exception {
         long[] values = {0x00726ec4L, 0x00726e98L, 0x00726760L, 0x00727150L, 0x00726778L};
-        try (PrintWriter writer = new PrintWriter(new File("C:/tmp/global-refs.txt"), "UTF-8")) {
+        String[] args = getScriptArgs();
+        File scriptDir = new File(getSourceFile().getAbsolutePath()).getParentFile();
+        File outputRoot = args.length == 0
+            ? new File(scriptDir, "../../out/ghidra").getCanonicalFile()
+            : new File(args[0]);
+        Files.createDirectories(outputRoot.toPath());
+        File out = new File(outputRoot, "global-refs.txt");
+        try (PrintWriter writer = new PrintWriter(out, "UTF-8")) {
             Listing listing = currentProgram.getListing();
             for (long value : values) {
                 Address target = toAddr(value);
@@ -27,6 +35,6 @@ public class InspectGlobalRefs extends GhidraScript {
                 }
             }
         }
-        println("WROTE C:/tmp/global-refs.txt");
+        println("WROTE " + out.getAbsolutePath());
     }
 }

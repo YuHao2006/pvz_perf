@@ -1,7 +1,8 @@
+import {workspacePath} from '../workspace-path.mjs';
 import assert from 'node:assert/strict';
 import fs from 'node:fs';
 const {chromium}=await import(process.env.PVZ_PLAYWRIGHT_MODULE||'playwright-core');
-const browser=await chromium.launch({headless:true,executablePath:'C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe'});
+const browser=await chromium.launch({headless:true,channel:'msedge',executablePath:workspacePath('edge')});
 const results=[];
 try{
  const page=await browser.newPage({viewport:{width:1600,height:960}});

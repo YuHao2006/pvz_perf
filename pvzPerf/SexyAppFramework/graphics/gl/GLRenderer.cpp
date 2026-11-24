@@ -71,6 +71,7 @@ void GLRenderer::Impl::Upload(GLTexture* texture, const void* data, int pitch,
     const int bytes = format == GL_RED ? 1 : 4;
     if (!data || pitch < static_cast<long long>(texture->width) * bytes)
         throw std::invalid_argument("Invalid OpenGL texture upload");
+#if !defined(PVZ_GPU_WEBGL)
     std::vector<unsigned char> packed;
     if (pitch % bytes) {
         packed.resize(size_t(texture->width) * texture->height * bytes);
@@ -80,6 +81,7 @@ void GLRenderer::Impl::Upload(GLTexture* texture, const void* data, int pitch,
                 size_t(texture->width) * bytes);
         data = packed.data(); pitch = texture->width * bytes;
     }
+#endif
     glBindTexture(GL_TEXTURE_2D, texture->image);
     GLPlatform::UploadPixels(texture->width, texture->height, data, pitch, format);
     GL3::CheckError("Upload OpenGL image");

@@ -8,16 +8,12 @@
     "mode": 13,
     "sha256": "a1bbc2f43a129b655f0068de8f28a731f1ef6814170419d3f4ec406436437cf1"
   },
-  "project": {
-    "file": "game3_58.dat64",
-    "bytes": 563888,
-    "mode": 58,
-    "sha256": "0de22ff708e3f572a669a15cb138076148f59628f073e7cef46ffb252d96429a"
-  },
   "conversion": {
     "tool": "pvz_dat64_converter",
-    "executable_sha256": "03b239d7d3c65d80322df0e0aed18600b5fd110539348225e2e82f0bc54ba12c",
-    "validation": "Full source/target parse and canonical semantic comparison"
+    "target": "dat64-v5",
+    "schema": "0x10747",
+    "minor": 1,
+    "mode": 58
   },
   "saved_state": {
     "currentWave": 0,

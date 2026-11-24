@@ -1,9 +1,11 @@
 cmake_minimum_required(VERSION 3.16.0 FATAL_ERROR)
 
+include("${CMAKE_CURRENT_LIST_DIR}/CMake/WorkspacePaths.cmake")
 if(CMAKE_HOST_WIN32)
-    set(_PVZ_DEFAULT_VCPKG_ROOT "C:/UserProgram/vcpkg")
     if(DEFINED ENV{VCPKG_ROOT} AND NOT "$ENV{VCPKG_ROOT}" STREQUAL "")
         set(_PVZ_DEFAULT_VCPKG_ROOT "$ENV{VCPKG_ROOT}")
+    elseif(NOT PVZ_VCPKG_ROOT)
+        pvz_machine_path(vcpkg _PVZ_DEFAULT_VCPKG_ROOT)
     endif()
     set(PVZ_VCPKG_ROOT "${_PVZ_DEFAULT_VCPKG_ROOT}" CACHE PATH
         "Root of the vcpkg checkout used by this project")
@@ -489,6 +491,11 @@ foreach(pvzTarget IN ITEMS LawnProject sexy_native_window sexy_vulkan
 endforeach()
 
 if(BUILD_TESTING)
+    if(NOT EMSCRIPTEN)
+        add_executable(pvz_save_file_writer_tests EXCLUDE_FROM_ALL Tests/native/SaveFileWriterTests.cpp)
+        target_compile_features(pvz_save_file_writer_tests PRIVATE cxx_std_23)
+        add_test(NAME pvz_save_file_writer COMMAND pvz_save_file_writer_tests)
+    endif()
     add_executable(pvz_floating_point_mode_tests EXCLUDE_FROM_ALL
         Tests/native/FloatingPointModeTests.cpp
         pvzPerf/SexyAppFramework/misc/FloatingPointMode.cpp)

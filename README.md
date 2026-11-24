@@ -2,7 +2,9 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**当前版本：[v4.0.6](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.6)。**
+**普通版主线源码版本为 v4.0.7。** 主菜单 Options、Help、Quit 使用确认后的六张普通态和悬停态字图。
+
+**上一版下载：[v4.0.6](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.6)。**
 
 ## 图片素材与版权说明
 

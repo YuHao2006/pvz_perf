@@ -31,6 +31,10 @@ def main(hd_root):
     output.mkdir(parents=True, exist_ok=True)
     challenge = standard_size(masters / "exports4x/images/challenge_background.png")
     challenge.convert("RGB").save(IMAGES / "Challenge_Background.png")
+    for label in ("Options", "Help", "Quit"):
+        for state in (1, 2):
+            filename = f"SelectorScreen_{label}{state}.png"
+            standard_size(sources / filename.lower()).save(IMAGES / filename)
     names = ["paper", "indexpanels", "plantdecor", "zombiedecor", "plantcard", "zombiecard"]
     names += [f"{page}_border_{i}" for page in PAGES for i in range(8)]
     for name in names:

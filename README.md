@@ -4,7 +4,9 @@
 
 **高清分支说明：当前高清版（2×／4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
 
-**高清分支 [v4.1.4](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.4) 提供 Windows 10 与 Android 14 的 Vulkan 1.3 完整包（各有 1200p 和 2400p）、高清网页包和完美存档。普通版见 main 分支。**
+**高清主线源码版本为 v4.1.5。** Zombatar 与主菜单共用天空，木牌悬停字样和三个花盆按钮已更新。
+
+**上一版 [v4.1.4](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.4) 提供 Windows 10 与 Android 14 的 Vulkan 1.3 完整包（各有 1200p 和 2400p）、高清网页包和完美存档。普通版见 main 分支。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 

@@ -690,15 +690,25 @@ void GameSelector::Draw(Graphics* g)
 		return;
 
     LayoutZombatarPage();
-    {
-        Graphics background(*g);
-        background.Translate(mZombatarScreen->mX, mZombatarScreen->mY);
-        // The overlap's wall and grass belong to the animated menu foreground.
-        background.ClipRect(int(SELECTOR_LEFT_ART_EXTENSION), 0,
-            BOARD_WIDTH - int(SELECTOR_LEFT_ART_EXTENSION), BOARD_HEIGHT);
-        if (background.mClipRect.mWidth > 0 && background.mClipRect.mHeight > 0)
-            mZombatarScreen->DrawBackground(&background);
-    }
+    Graphics sky(*g);
+    sky.Translate(-mX, 0);
+    sky.ClipRect(-int(SELECTOR_LEFT_ART_EXTENSION), 0,
+        BOARD_WIDTH + int(SELECTOR_LEFT_ART_EXTENSION * 2), BOARD_HEIGHT);
+    sky.mLinearBlend = true;
+    mApp->ReanimationGet(mSelectorReanimID)->DrawRenderGroup(&sky, 1);
+    for (auto cloud : mCloudReanimID)
+        mApp->ReanimationGet(cloud)->Draw(&sky);
+
+    DrawMenuForeground(g);
+    Graphics background(*g);
+    background.Translate(mZombatarScreen->mX, mZombatarScreen->mY);
+    background.ClipRect(0, 0, BOARD_WIDTH, BOARD_HEIGHT);
+    if (background.mClipRect.mWidth > 0 && background.mClipRect.mHeight > 0)
+        mZombatarScreen->DrawBackground(&background);
+}
+
+void GameSelector::DrawMenuForeground(Graphics* g)
+{
     Graphics menu(*g);
     menu.ClipRect(int(SELECTOR_MAIN_PAGE_X - SELECTOR_LEFT_ART_EXTENSION), 0,
         BOARD_WIDTH + int(SELECTOR_LEFT_ART_EXTENSION * 2), BOARD_HEIGHT);
@@ -725,9 +735,6 @@ void GameSelector::Draw(Graphics* g)
 	const float aMenuTransX = g->mTransX;
 	g->mTransX = aMenuTransX + 800;
 
-	aSelectorReanim->DrawRenderGroup(g, 1);  // "SelectorScreen_BG"
-	for (int i = 0; i < 6; i++)
-		mApp->ReanimationGet(mCloudReanimID[i])->Draw(g);
 	aSelectorReanim->DrawRenderGroup(g, RENDER_GROUP_NORMAL);
 
 	g->mTransX = aMenuTransX;

@@ -8407,6 +8407,33 @@ void MenuAchievementsTransitionRuntime(TestApp& app)
         render.Flush();const auto pixels=render.ReadImagePixels(*target);
         Require(ImageLib::WritePNGImage("menu-achievements-"+std::to_string(offset)+".png",800,600,pixels.pixels),"Cannot write menu transition proof");
     }
+    ZombatarLoadResources();
+    struct ReleaseZombatarAtlas { ~ReleaseZombatarAtlas() { ZombatarFreeResources(); } } releaseZombatarAtlas;
+    const Rect oldBounds = app.mScreenBounds;
+    app.mScreenBounds = Rect(-80, 0, 960, 600);
+    selector.ShowZombatarScreen();
+    std::unique_ptr<Image> wide(render.CreateRenderImage(960, 600));
+    auto capture = [&](const char* name, int offset) {
+        selector.Move(-800 - offset, 0);
+        {
+            Graphics g(wide.get());
+            g.mColor = Color(255, 0, 255);
+            g.FillRect(0, 0, 960, 600);
+            g.Translate(80, 0);
+            manager.DrawWidgetsTo(&g);
+        }
+        render.Flush();
+        const auto frame = render.ReadImagePixels(*wide);
+        Require(ImageLib::WritePNGImage(std::string("zombatar-") + name + ".png", 960, 600, frame.pixels),
+            "Cannot write Zombatar pan proof");
+    };
+    const int distance = selector.mZombatarSlideDistance;
+    capture("start", 0);
+    capture("mid", distance / 2);
+    capture("open", distance);
+    selector.HideZombatarScreen();
+    capture("return", distance / 2);
+    app.mScreenBounds = oldBounds;
     std::cout<<"PASS actual menu/achievements transition render: five scroll positions\n";
 }
 
@@ -10011,7 +10038,8 @@ int main(int argc, char** argv)
     gHiddenRulesOnly=argc==3 && std::string_view(argv[2])=="hidden-rules";
     gGardenRulesOnly=argc==3 && std::string_view(argv[2])=="garden-rules";
     gIntroRulesOnly=argc==3 && std::string_view(argv[2])=="intro-rules";
-    gMenuTransitionOnly=argc==3 && std::string_view(argv[2])=="menu-transition";
+    const bool zombatarPanOnly = argc == 3 && std::string_view(argv[2]) == "zombatar-pan";
+    gMenuTransitionOnly=zombatarPanOnly || (argc==3 && std::string_view(argv[2])=="menu-transition");
     gDialogBakingOnly=argc==3 && std::string_view(argv[2])=="dialog-baking";
     gUiRulesOnly=argc==3 && std::string_view(argv[2])=="ui-rules";
     gAwardRulesOnly=argc==3 && std::string_view(argv[2])=="award-rules";
@@ -10062,7 +10090,7 @@ int main(int argc, char** argv)
         app.mDDInterface=new DDInterface(&app);
         Require(app.mDDInterface->Init(window.handle,true)==DDInterface::RESULT_OK,
             "Cannot initialize public image runtime");
-        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly) {
+        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)

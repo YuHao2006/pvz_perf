@@ -1267,13 +1267,6 @@ void ZombatarItems::Draw(Graphics* g)
 		}
 	}
 
-	// The selector's extended foreground overlaps the left edge of this
-	// baked rock. Restore its full normal appearance before the hover layer.
-	const Rect aBackSource(mX + mMainMenuButton->mX, mY + mMainMenuButton->mY,
-		mMainMenuButton->mWidth, mMainMenuButton->mHeight);
-	DrawZombatarImage(g, ZombatarImage::MAIN_BG,
-		Rect(mMainMenuButton->mX, mMainMenuButton->mY,
-			mMainMenuButton->mWidth, mMainMenuButton->mHeight), aBackSource);
 	mMainMenuButton->Draw(g);
 }
 

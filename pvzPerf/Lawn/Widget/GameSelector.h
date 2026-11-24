@@ -109,6 +109,7 @@ public:
 
     void                        SyncProfile(bool theShowLoading);
     virtual void                Draw(Graphics* g);
+    void                        DrawMenuForeground(Graphics* g);
     virtual void                DrawOverlay(Graphics* g);
     virtual void                Update();
     virtual void                AddedToManager(WidgetManager* theWidgetManager);

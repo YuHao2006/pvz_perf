@@ -145,7 +145,6 @@ void ZombatarScreen::Update()
 
 void ZombatarScreen::DrawBackground(Graphics* g)
 {
-    // The adjacent main-menu art overlaps this background and is painted above it.
     DrawZombatarImage(g, ZombatarImage::MAIN_BG, 0, 0);
 }
 

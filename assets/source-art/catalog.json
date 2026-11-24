@@ -101920,7 +101920,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_help1.png",
-        "sha256": "488f5e9bd4fcfdeba6a56977be6fda8de896d3365f429c1907c3833decfbb5a8",
+        "sha256": "3193adda8323bdff49878c279f5b57fac282c6503ccd06308e87dbef24643718",
         "physicalSize": [
           192,
           88
@@ -101929,7 +101929,7 @@
           48,
           22
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/488f5e9bd4fcfdeba6a56977be6fda8de896d3365f429c1907c3833decfbb5a8.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/3193adda8323bdff49878c279f5b57fac282c6503ccd06308e87dbef24643718.webp"
       },
       "status": "ready",
       "history": {
@@ -101988,9 +101988,27 @@
           }
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Help1.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            192,
+            424,
+            576,
+            600
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Help1--paired.png",
           "origin": "native",
@@ -102019,14 +102037,30 @@
           48,
           22
         ],
-        "sha256": "488f5e9bd4fcfdeba6a56977be6fda8de896d3365f429c1907c3833decfbb5a8",
-        "thumbnail": "out/media/hd-library-thumbnails/488f5e9bd4fcfdeba6a56977be6fda8de896d3365f429c1907c3833decfbb5a8.webp"
+        "sha256": "3193adda8323bdff49878c279f5b57fac282c6503ccd06308e87dbef24643718",
+        "thumbnail": "out/media/hd-library-thumbnails/3193adda8323bdff49878c279f5b57fac282c6503ccd06308e87dbef24643718.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            192,
+            424,
+            576,
+            600
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Help1--paired.png",
           "origin": "native",
@@ -136076,7 +136110,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_options2.png",
-        "sha256": "c847b128a12e14179d9ff2e1a6793790662b5e942446fb768738d955648291e6",
+        "sha256": "0c2a175d8cfd2b60208637ae86be125939380ae419d948773fd18a56cb024583",
         "physicalSize": [
           324,
           124
@@ -136085,7 +136119,7 @@
           81,
           31
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/c847b128a12e14179d9ff2e1a6793790662b5e942446fb768738d955648291e6.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/0c2a175d8cfd2b60208637ae86be125939380ae419d948773fd18a56cb024583.webp"
       },
       "status": "ready",
       "history": {
@@ -136114,9 +136148,27 @@
           "premultiplied": true
         },
         "status": "recovered-reverted-native-source-at-4x",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Options2.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            828,
+            46,
+            1476,
+            294
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Options2--paired.png",
           "origin": "native",
@@ -136145,14 +136197,30 @@
           81,
           31
         ],
-        "sha256": "c847b128a12e14179d9ff2e1a6793790662b5e942446fb768738d955648291e6",
-        "thumbnail": "out/media/hd-library-thumbnails/c847b128a12e14179d9ff2e1a6793790662b5e942446fb768738d955648291e6.webp"
+        "sha256": "0c2a175d8cfd2b60208637ae86be125939380ae419d948773fd18a56cb024583",
+        "thumbnail": "out/media/hd-library-thumbnails/0c2a175d8cfd2b60208637ae86be125939380ae419d948773fd18a56cb024583.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            828,
+            46,
+            1476,
+            294
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Options2--paired.png",
           "origin": "native",
@@ -151153,7 +151221,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_quit1.png",
-        "sha256": "31c0ed2e1aafa8a9b581c3362c9212396d33f461fc55c7dd6147bed16ebfaf4c",
+        "sha256": "2351b2d44bf68b041f859a2c522de8a765e534ee586f62ace40972d16282b6cf",
         "physicalSize": [
           188,
           108
@@ -151162,7 +151230,7 @@
           47,
           27
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/31c0ed2e1aafa8a9b581c3362c9212396d33f461fc55c7dd6147bed16ebfaf4c.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/2351b2d44bf68b041f859a2c522de8a765e534ee586f62ace40972d16282b6cf.webp"
       },
       "status": "ready",
       "history": {
@@ -151221,9 +151289,27 @@
           }
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Quit1.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            196,
+            745,
+            572,
+            961
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Quit1--paired.png",
           "origin": "native",
@@ -151252,14 +151338,30 @@
           47,
           27
         ],
-        "sha256": "31c0ed2e1aafa8a9b581c3362c9212396d33f461fc55c7dd6147bed16ebfaf4c",
-        "thumbnail": "out/media/hd-library-thumbnails/31c0ed2e1aafa8a9b581c3362c9212396d33f461fc55c7dd6147bed16ebfaf4c.webp"
+        "sha256": "2351b2d44bf68b041f859a2c522de8a765e534ee586f62ace40972d16282b6cf",
+        "thumbnail": "out/media/hd-library-thumbnails/2351b2d44bf68b041f859a2c522de8a765e534ee586f62ace40972d16282b6cf.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            196,
+            745,
+            572,
+            961
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Quit1--paired.png",
           "origin": "native",
@@ -164359,7 +164461,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_quit2.png",
-        "sha256": "89a3f3bec027facbf9c89e21defd1bc191387e67b57356821f2631f9f6fb3bd9",
+        "sha256": "aafd292f5511be01b0e12b279de1bb933665bdf80fff8da1c304c8384a1cc42a",
         "physicalSize": [
           188,
           108
@@ -164368,7 +164470,7 @@
           47,
           27
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/89a3f3bec027facbf9c89e21defd1bc191387e67b57356821f2631f9f6fb3bd9.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/aafd292f5511be01b0e12b279de1bb933665bdf80fff8da1c304c8384a1cc42a.webp"
       },
       "status": "ready",
       "history": {
@@ -164397,9 +164499,27 @@
           "premultiplied": true
         },
         "status": "recovered-reverted-native-source-at-4x",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Quit2.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            964,
+            745,
+            1340,
+            961
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Quit2--paired.png",
           "origin": "native",
@@ -164428,14 +164548,30 @@
           47,
           27
         ],
-        "sha256": "89a3f3bec027facbf9c89e21defd1bc191387e67b57356821f2631f9f6fb3bd9",
-        "thumbnail": "out/media/hd-library-thumbnails/89a3f3bec027facbf9c89e21defd1bc191387e67b57356821f2631f9f6fb3bd9.webp"
+        "sha256": "aafd292f5511be01b0e12b279de1bb933665bdf80fff8da1c304c8384a1cc42a",
+        "thumbnail": "out/media/hd-library-thumbnails/aafd292f5511be01b0e12b279de1bb933665bdf80fff8da1c304c8384a1cc42a.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            964,
+            745,
+            1340,
+            961
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Quit2--paired.png",
           "origin": "native",
@@ -187278,7 +187414,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_help2.png",
-        "sha256": "a9532eb14618ce60ebdcbff9d4637f8a764eeb984b348106f60ca0e2de788d4e",
+        "sha256": "ad5513d3d12c1a3d317c21eaf6332a4f7dde449821574c3e93d34ae673adca00",
         "physicalSize": [
           192,
           88
@@ -187287,7 +187423,7 @@
           48,
           22
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/a9532eb14618ce60ebdcbff9d4637f8a764eeb984b348106f60ca0e2de788d4e.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/ad5513d3d12c1a3d317c21eaf6332a4f7dde449821574c3e93d34ae673adca00.webp"
       },
       "status": "ready",
       "history": {
@@ -187316,9 +187452,27 @@
           "premultiplied": true
         },
         "status": "recovered-reverted-native-source-at-4x",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Help2.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            960,
+            424,
+            1344,
+            600
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Help2--paired.png",
           "origin": "native",
@@ -187347,14 +187501,30 @@
           48,
           22
         ],
-        "sha256": "a9532eb14618ce60ebdcbff9d4637f8a764eeb984b348106f60ca0e2de788d4e",
-        "thumbnail": "out/media/hd-library-thumbnails/a9532eb14618ce60ebdcbff9d4637f8a764eeb984b348106f60ca0e2de788d4e.webp"
+        "sha256": "ad5513d3d12c1a3d317c21eaf6332a4f7dde449821574c3e93d34ae673adca00",
+        "thumbnail": "out/media/hd-library-thumbnails/ad5513d3d12c1a3d317c21eaf6332a4f7dde449821574c3e93d34ae673adca00.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            960,
+            424,
+            1344,
+            600
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Help2--paired.png",
           "origin": "native",
@@ -197196,7 +197366,7 @@
       ],
       "current": {
         "path": "assets/high-resolution/current/images/selectorscreen_options1.png",
-        "sha256": "0caab61e969140633fb61e0e70ffadcdd3ff62d112f3eab035fbe10cfa09d974",
+        "sha256": "1773e909d658b97a6092c3c7195ddcd9e751e88f1322a49c5a18c425fd2f350b",
         "physicalSize": [
           324,
           124
@@ -197205,7 +197375,7 @@
           81,
           31
         ],
-        "thumbnail": "out/media/hd-library-thumbnails/0caab61e969140633fb61e0e70ffadcdd3ff62d112f3eab035fbe10cfa09d974.webp"
+        "thumbnail": "out/media/hd-library-thumbnails/1773e909d658b97a6092c3c7195ddcd9e751e88f1322a49c5a18c425fd2f350b.webp"
       },
       "status": "ready",
       "history": {
@@ -197264,9 +197434,27 @@
           }
         },
         "status": "registered-4x-source-staged",
-        "active": false
+        "active": false,
+        "menuLetteringRepair": {
+          "original": "assets/source-art/reference/original/images/SelectorScreen_Options1.png",
+          "anime4k": "Upscale_Denoise_UL x2, twice",
+          "detailMaster": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "masterSha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "masterBox": [
+            60,
+            46,
+            708,
+            294
+          ],
+          "exportMethod": "Crop the complete RGBA canvas and reduce 2:1 using nearest neighbour. Each 4x texel occupies an exact 2x2 block on the sheet."
+        }
       },
       "sources": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523"
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Options1--paired.png",
           "origin": "native",
@@ -197295,14 +197483,30 @@
           81,
           31
         ],
-        "sha256": "0caab61e969140633fb61e0e70ffadcdd3ff62d112f3eab035fbe10cfa09d974",
-        "thumbnail": "out/media/hd-library-thumbnails/0caab61e969140633fb61e0e70ffadcdd3ff62d112f3eab035fbe10cfa09d974.webp"
+        "sha256": "1773e909d658b97a6092c3c7195ddcd9e751e88f1322a49c5a18c425fd2f350b",
+        "thumbnail": "out/media/hd-library-thumbnails/1773e909d658b97a6092c3c7195ddcd9e751e88f1322a49c5a18c425fd2f350b.webp"
       },
       "sourceKinds": [
         "native",
-        "original"
+        "original",
+        "ai"
       ],
       "masters": [
+        {
+          "path": "assets/source-art/masters/ai/menu-original-lettering.png",
+          "origin": "ai",
+          "sha256": "92bd370201503e76626a61c59266db343a3e9449f70a10b10fd82d440146a523",
+          "physicalSize": [
+            1536,
+            1024
+          ],
+          "box": [
+            60,
+            46,
+            708,
+            294
+          ]
+        },
         {
           "path": "assets/source-art/masters/native/images/SelectorScreen_Options1--paired.png",
           "origin": "native",

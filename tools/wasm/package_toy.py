@@ -107,6 +107,8 @@ def main():
     if args.wasm64_build: builds.append((args.wasm64_build, True))
     if args.wasm64_webgl_build: builds.append((args.wasm64_webgl_build, True))
     resource_build = args.webgl_build if args.omit_wasm32_webgpu else args.build
+    with zipfile.ZipFile(resource_build / 'pvz-perf.data') as resources:
+        config['renderHeight'] = int(resources.read('compiled/render-height.txt'))
     resource_hash = hashlib.sha256((resource_build / 'pvz-perf.data').read_bytes()).digest()
     for build, is64 in builds:
         for name in required:

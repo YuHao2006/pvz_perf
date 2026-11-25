@@ -173,7 +173,8 @@ function fitCanvas(){
   Math.abs(measuredCanvas.cssWidth-displayWidth)<0.02 && Math.abs(measuredCanvas.cssHeight-displayHeight)<0.02;
  const visibleWidth=exact?measuredCanvas.width:estimatedWidth;
  const visibleHeight=exact?measuredCanvas.height:estimatedHeight;
- const pixelWidth=visibleWidth,pixelHeight=visibleHeight;
+ const pixelHeight=webConfig.renderHeight??1200;
+ const pixelWidth=Math.round(view.width*pixelHeight/view.height);
  Module.pvzViewport={width:view.width,height:view.height,pixelWidth,pixelHeight,visibleWidth,visibleHeight};
  document.getElementById('viewport-info').textContent=playing?
   `可见 ${visibleWidth}×${visibleHeight} · DPR ${dpr}`:`逻辑 ${view.width}×600`;

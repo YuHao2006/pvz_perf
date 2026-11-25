@@ -1994,6 +1994,8 @@ void Zombie::UpdateZombiePolevaulter(std::int64_t ownerNowNs)
             float aOldPosX = (mX);
             { mX -= (150.0f * (static_cast<double>(aBodyReanim->SamplePlayback().phaseNs) / aBodyReanim->mPeriodNs)); mRootBindingGeneration = 0; }
             mY = (GetPosYBasedOnRow(mRow));
+            // The row approach must start from the newly projected vault height.
+            mVelocityY = {};
             { mX = (aOldPosX); mRootBindingGeneration = 0; }
         }
     }

@@ -130,8 +130,8 @@
     },
     {
       "path": "pvz_dfu.dll",
-      "bytes": 565760,
-      "sha256": "82179fd0fe302063712839da9c9ee553ec591a86ceb240212b6ca32055ec0149"
+      "bytes": 566272,
+      "sha256": "1e3a25b6b96398f03d626ef14fe1aeac3b483a53048f34f49b81843140239fe5"
     }
   ],
   "source_commit": "753819cb73467e4cd2db56831664b7ccf3d46ebf",

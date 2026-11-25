@@ -980,8 +980,8 @@ void Projectile::DoImpact(Zombie* theZombie)
 		if (IsSplashDamage(theZombie))
 		{
 			Reanimation* aFireReanim = mApp->AddReanimation(mPosX + 38.0f, mPosY - 20.0f, mRenderOrder + 1, ReanimationType::REANIM_JALAPENO_FIRE, (mBoard && mBoard->AnimationTimeDomain() == ReanimTimeDomain::Battle ? static_cast<std::int64_t>(mBoard->mLevelTimeNs) : mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs), (mBoard ? mBoard->AnimationTimeDomain() : ReanimTimeDomain::Visual));
-			aFireReanim->Seek(250);
-			aFireReanim->ApplyRate(24.0f);
+			// The HD definition appends the looping row fire after this one-shot effect.
+			aFireReanim->PlayReanim(ReanimTrackId::anim_done, ReanimLoopType::REANIM_PLAY_ONCE, 0, 24.0f);
 			aFireReanim->mOverlayMatrix.m00 = 0.7f;
 			aFireReanim->mOverlayMatrix.m11 = 0.4f;
 		}

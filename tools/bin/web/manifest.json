@@ -2,7 +2,7 @@
   "tool": "PvzDevTools independent save tools",
   "version": "0.3.0-dfu-v5.1",
   "memory_model": "wasm32",
-  "source_commit": "09a19f6814c08b290028e5720292ba4dd0764518",
+  "source_commit": "d823a8f220934efa91f71a0541bc62808ff20dba",
   "source_dirty": false,
   "development": true,
   "source_url": "https://github.com/YuHao2006/PvzDevTools",
@@ -12,8 +12,8 @@
       "sha256": "42f628e7aa8d16b3c7481b90e2548e1871be30affc6207de84ebf21fb7095747"
     },
     "save-converter.html": {
-      "bytes": 603998,
-      "sha256": "96cebd57c0238d293eb860c721659d190ce505773a0d0bfb27cbc64689534f2d"
+      "bytes": 605111,
+      "sha256": "a24192d48a05378fe328b6919564ef2d1263026708bfd34e9a354b91310d8233"
     },
     "save-codec.js": {
       "bytes": 18137,
@@ -32,8 +32,8 @@
       "sha256": "2a9edf37764e0d201d3e92a86e2fdb8fbfce159ca9800c60b7b694e9f310f1dd"
     },
     "save-tool-core.js": {
-      "bytes": 596501,
-      "sha256": "a3bb1ba3012ce68af41773bab0ad79f8ffa5bcdc699f36630c33b83ac70db5ba"
+      "bytes": 597614,
+      "sha256": "d04bf0ff62e5c10175a97a637e29ac45143c5de156fb947c15b964e5170c6162"
     },
     "save-tool-client.js": {
       "bytes": 1695,

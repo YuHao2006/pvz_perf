@@ -319,26 +319,42 @@ void SyncDat64BoardState(
 void SyncDat64TrackInstances(
 	SaveGameContext& theContext,
 	ReanimatorTrackInstance* theTrackInstances,
-	int theTrackCount)
+	ReanimationType theType,
+	const ReanimatorTrackArray& theTracks)
 {
-	if (theTrackCount < 0 ||
-		static_cast<size_t>(theTrackCount) >
-			static_cast<size_t>(INT_MAX) / Dat64Layout<ReanimatorTrackInstance>::Size())
+	const int aTrackCount = theTracks.count;
+	const size_t aTrackSize = Dat64Layout<ReanimatorTrackInstance>::Size();
+	if (aTrackCount < 0 || static_cast<size_t>(aTrackCount) > INT_MAX / aTrackSize)
 	{
 		theContext.mFailed = true;
 		return;
 	}
 
-	const size_t aDat64Size = static_cast<size_t>(theTrackCount) *
-		Dat64Layout<ReanimatorTrackInstance>::Size();
+	size_t aDat64Size = static_cast<size_t>(aTrackCount) * aTrackSize;
+	int aMissingTrack = -1;
+	if (theContext.mReading && aTrackCount > 0 && theContext.ByteLeftToRead() >= 4)
+	{
+		const int aStemTrack = LevelSaveFormat::MissingHdStemTrack(theType, aTrackCount - 1);
+		if (aStemTrack >= 0 && theTracks.tracks[aStemTrack].mTrackId == ReanimTrackId::stalk_top)
+		{
+			// SyncBytes still validates and consumes the length and the complete block.
+			const int aReadPos = theContext.mBuffer.mReadBitPos;
+			const auto aStoredSize = theContext.mBuffer.ReadLong();
+			theContext.mBuffer.mReadBitPos = aReadPos;
+			if (aStoredSize == static_cast<long>(aDat64Size - aTrackSize))
+			{
+				aMissingTrack = aStemTrack;
+				aDat64Size -= aTrackSize;
+			}
+		}
+	}
 	std::vector<LegacyByte> aDat64Bytes(aDat64Size, 0);
 	if (!theContext.mReading)
 	{
-		for (int i = 0; i < theTrackCount; ++i)
+		for (int i = 0; i < aTrackCount; ++i)
 		{
 			Dat64Layout<ReanimatorTrackInstance>::Write(
-				aDat64Bytes.data() +
-					i * Dat64Layout<ReanimatorTrackInstance>::Size(),
+				aDat64Bytes.data() + i * aTrackSize,
 				theTrackInstances[i]);
 		}
 	}
@@ -351,12 +367,16 @@ void SyncDat64TrackInstances(
 		return;
 	}
 
-	for (int i = 0; i < theTrackCount; ++i)
+	const auto* aSavedTrack = aDat64Bytes.data();
+	for (int i = 0; i < aTrackCount; ++i)
 	{
-		Dat64Layout<ReanimatorTrackInstance>::Read(
-			theTrackInstances[i],
-			aDat64Bytes.data() +
-				i * Dat64Layout<ReanimatorTrackInstance>::Size());
+		if (i == aMissingTrack)
+		{
+			std::construct_at(theTrackInstances + i);
+			continue;
+		}
+		Dat64Layout<ReanimatorTrackInstance>::Read(theTrackInstances[i], aSavedTrack);
+		aSavedTrack += aTrackSize;
 	}
 }
 }
@@ -672,7 +692,8 @@ void SyncReanimation(Board* theBoard, Reanimation* theReanimation, SaveGameConte
 				anAllocator->Calloc(aNativeSize)));
 			aTracks = aPendingTracks.get();
 		}
-		SyncDat64TrackInstances(theContext, aTracks, aTrackCount);
+		SyncDat64TrackInstances(theContext, aTracks, theReanimation->mReanimationType,
+			aDefinition->mTracks);
 		if (theContext.mFailed)
 			return;
 

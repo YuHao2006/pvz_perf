@@ -131,6 +131,37 @@ constinit ReanimatorSourceTransform Reanim7Frames4[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+};
+constinit ReanimatorSourceTransform Reanim7Frames5[29] = {
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
+    {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {22.7999992f, 54.4000015f, 0.0f, 0.0f, 0.555000007f, 0.555000007f, 0, 1.0f, 5u, nullptr, nullptr},
     {22.7999992f, 54.0f, 0.0f, 0.0f, 0.558000028f, 0.569000006f, 0, 1.0f, 5u, nullptr, nullptr},
     {22.6000004f, 53.5999985f, 0.0f, 0.0f, 0.561999977f, 0.582000017f, 0, 1.0f, 5u, nullptr, nullptr},
@@ -157,7 +188,7 @@ constinit ReanimatorSourceTransform Reanim7Frames4[29] = {
     {22.7000008f, 54.0f, 0.0f, 0.0f, 0.558000028f, 0.569000006f, 0, 1.0f, 5u, nullptr, nullptr},
     {22.7999992f, 54.4000015f, 0.0f, 0.0f, 0.555000007f, 0.555000007f, 0, 1.0f, 5u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames5[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames6[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -188,7 +219,7 @@ constinit ReanimatorSourceTransform Reanim7Frames5[29] = {
     {56.0999985f, 55.5999985f, -1.39999998f, -1.39999998f, 0.583999991f, 0.57099998f, 0, 1.0f, 6u, nullptr, nullptr},
     {56.2999992f, 56.0f, 0.0f, 0.0f, 0.555000007f, 0.555000007f, 0, 1.0f, 6u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames6[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames7[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -219,7 +250,7 @@ constinit ReanimatorSourceTransform Reanim7Frames6[29] = {
     {18.4422092f, 61.2536316f, 1.29999995f, 1.29999995f, 0.573000014f, 0.57099998f, 0, 1.0f, 7u, nullptr, nullptr},
     {18.5902901f, 61.7198105f, 0.0f, 0.0f, 0.555000007f, 0.555000007f, 0, 1.0f, 7u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames7[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames8[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -250,7 +281,7 @@ constinit ReanimatorSourceTransform Reanim7Frames7[29] = {
     {23.3999996f, 46.4000015f, -0.400000006f, 0.0f, 0.800000012f, 0.850000024f, 0, 1.0f, 8u, nullptr, nullptr},
     {22.2999992f, 47.7999992f, 0.0f, 0.0f, 0.800000012f, 0.866999984f, 0, 1.0f, 8u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames8[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames9[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -281,7 +312,7 @@ constinit ReanimatorSourceTransform Reanim7Frames8[29] = {
     {15.1999998f, 42.4000015f, -3.4000001f, 0.0f, 1.00600004f, 1.06299996f, 0, 1.0f, 9u, nullptr, nullptr},
     {14.1000004f, 44.2999992f, -7.19999981f, 0.0f, 1.00800002f, 1.08399999f, 0, 1.0f, 9u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames9[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames10[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -312,7 +343,7 @@ constinit ReanimatorSourceTransform Reanim7Frames9[29] = {
     {9.80000019f, 38.0999985f, -0.699999988f, 0.0f, 0.810000002f, 0.850000024f, 0, 1.0f, 10u, nullptr, nullptr},
     {8.80000019f, 40.4000015f, -7.19999981f, 0.0f, 0.805999994f, 0.866999984f, 0, 1.0f, 10u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames10[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames11[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -343,7 +374,7 @@ constinit ReanimatorSourceTransform Reanim7Frames10[29] = {
     {6.5999999f, 32.0999985f, -1.5f, 0.0f, 0.805999994f, 0.805000007f, 0, 1.0f, 11u, nullptr, nullptr},
     {5.5999999f, 34.5f, -6.5999999f, 0.0f, 0.805999994f, 0.800000012f, 0, 1.0f, 11u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames11[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames12[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -374,7 +405,7 @@ constinit ReanimatorSourceTransform Reanim7Frames11[29] = {
     {9.10000038f, 24.0f, -2.4000001f, 0.0f, 0.805000007f, 0.795000017f, 0, 1.0f, 12u, nullptr, nullptr},
     {8.0f, 26.2000008f, -6.5999999f, 0.0f, 0.805999994f, 0.800000012f, 0, 1.0f, 12u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames12[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames13[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -405,7 +436,7 @@ constinit ReanimatorSourceTransform Reanim7Frames12[29] = {
     {13.5f, 19.0f, -2.20000005f, 0.0f, 0.805000007f, 0.795000017f, 0, 1.0f, 13u, nullptr, nullptr},
     {12.5f, 21.7000008f, -6.5999999f, 0.0f, 0.805999994f, 0.800000012f, 0, 1.0f, 13u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames13[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames14[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -436,7 +467,7 @@ constinit ReanimatorSourceTransform Reanim7Frames13[29] = {
     {20.6000004f, 13.3999996f, -0.400000006f, 0.0f, 1.0f, 1.00999999f, 0, 1.0f, 14u, nullptr, nullptr},
     {19.6000004f, 15.5f, 0.0f, 0.0f, 1.0f, 1.0f, 0, 1.0f, 14u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames14[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames15[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -467,7 +498,7 @@ constinit ReanimatorSourceTransform Reanim7Frames14[29] = {
     {26.7999992f, 12.1000004f, -0.400000006f, 0.0f, 0.800000012f, 0.82099998f, 0, 1.0f, 15u, nullptr, nullptr},
     {25.7000008f, 14.3999996f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, 0, 1.0f, 15u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames15[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames16[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -498,7 +529,7 @@ constinit ReanimatorSourceTransform Reanim7Frames15[29] = {
     {31.2000008f, 46.5999985f, -0.400000006f, 0.0f, 0.800000012f, 0.92900002f, 0, 1.0f, 16u, nullptr, nullptr},
     {30.1000004f, 47.7999992f, 0.0f, 0.0f, 0.800000012f, 0.985000014f, 0, 1.0f, 16u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames16[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames17[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -529,7 +560,7 @@ constinit ReanimatorSourceTransform Reanim7Frames16[29] = {
     {44.5f, 46.0999985f, -0.400000006f, 0.0f, 0.800000012f, 0.850000024f, 0, 1.0f, 17u, nullptr, nullptr},
     {43.4000015f, 47.9000015f, 0.0f, 0.0f, 0.800000012f, 0.866999984f, 0, 1.0f, 17u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames17[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames18[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -560,7 +591,7 @@ constinit ReanimatorSourceTransform Reanim7Frames17[29] = {
     {49.0f, 43.5f, 2.5f, 0.0f, 0.801999986f, 0.850000024f, 0, 1.0f, 18u, nullptr, nullptr},
     {48.0f, 45.0999985f, 4.80000019f, 0.0f, 0.802999973f, 0.866999984f, 0, 1.0f, 18u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames18[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames19[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -591,7 +622,7 @@ constinit ReanimatorSourceTransform Reanim7Frames18[29] = {
     {52.7000008f, 40.2999992f, 2.5f, 0.0f, 0.801999986f, 0.850000024f, 0, 1.0f, 19u, nullptr, nullptr},
     {51.5999985f, 42.0999985f, 4.80000019f, 0.0f, 0.802999973f, 0.866999984f, 0, 1.0f, 19u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames19[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames20[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -622,7 +653,7 @@ constinit ReanimatorSourceTransform Reanim7Frames19[29] = {
     {57.5f, 35.5999985f, 2.29999995f, 0.0f, 0.801999986f, 0.805000007f, 0, 1.0f, 20u, nullptr, nullptr},
     {56.4000015f, 37.4000015f, 4.4000001f, 0.0f, 0.801999986f, 0.800000012f, 0, 1.0f, 20u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames20[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames21[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -653,7 +684,7 @@ constinit ReanimatorSourceTransform Reanim7Frames20[29] = {
     {59.2999992f, 29.6000004f, 0.0f, 0.0f, 0.805000007f, 0.805000007f, 0, 1.0f, 21u, nullptr, nullptr},
     {58.2000008f, 31.3999996f, 4.4000001f, 0.0f, 0.801999986f, 0.800000012f, 0, 1.0f, 21u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames21[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames22[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -684,7 +715,7 @@ constinit ReanimatorSourceTransform Reanim7Frames21[29] = {
     {56.5f, 21.3999996f, 0.0f, 0.0f, 1.00600004f, 1.03699994f, 0, 1.0f, 22u, nullptr, nullptr},
     {55.0999985f, 23.6000004f, 4.4000001f, 0.0f, 1.00300002f, 1.0f, 0, 1.0f, 22u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames22[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames23[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -715,7 +746,7 @@ constinit ReanimatorSourceTransform Reanim7Frames22[29] = {
     {53.0f, 18.2000008f, 0.300000012f, 0.0f, 1.005f, 1.07599998f, 0, 1.0f, 23u, nullptr, nullptr},
     {51.7000008f, 20.7000008f, 4.4000001f, 0.0f, 1.00300002f, 1.0f, 0, 1.0f, 23u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames23[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames24[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -746,7 +777,7 @@ constinit ReanimatorSourceTransform Reanim7Frames23[29] = {
     {48.7999992f, 14.8000002f, 2.29999995f, 0.0f, 0.801999986f, 0.824000001f, 0, 1.0f, 24u, nullptr, nullptr},
     {47.7000008f, 17.5f, 4.4000001f, 0.0f, 0.801999986f, 0.800000012f, 0, 1.0f, 24u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames24[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames25[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -777,7 +808,7 @@ constinit ReanimatorSourceTransform Reanim7Frames24[29] = {
     {43.5f, 12.3999996f, -0.400000006f, 0.0f, 0.800000012f, 0.869000018f, 0, 1.0f, 25u, nullptr, nullptr},
     {42.5f, 15.1999998f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, 0, 1.0f, 25u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames25[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames26[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -808,7 +839,7 @@ constinit ReanimatorSourceTransform Reanim7Frames25[29] = {
     {33.0f, 11.6000004f, -0.400000006f, 0.0f, 0.800000012f, 0.90200001f, 0, 1.0f, 26u, nullptr, nullptr},
     {31.8999996f, 14.6999998f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, 0, 1.0f, 26u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames26[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames27[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
@@ -839,7 +870,7 @@ constinit ReanimatorSourceTransform Reanim7Frames26[29] = {
     {15.3999996f, 17.8999996f, 0.0f, 0.0f, 0.800000012f, 0.740999997f, 0, 1.0f, 27u, nullptr, nullptr},
     {14.3000002f, 20.3999996f, 0.0f, 0.0f, 0.800000012f, 0.712000012f, 0, 1.0f, 27u, nullptr, nullptr},
 };
-constinit ReanimatorSourceTransform Reanim7Frames27[29] = {
+constinit ReanimatorSourceTransform Reanim7Frames28[29] = {
     {0.0f, 0.0f, 0.0f, 0.0f, 1.0f, 1.0f, -1, 1.0f, 0u, nullptr, nullptr},
     {27.1000004f, 25.1000004f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, 0, 1.0f, 28u, nullptr, nullptr},
     {27.1000004f, 25.2999992f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, 0, 1.0f, 29u, nullptr, nullptr},
@@ -870,35 +901,36 @@ constinit ReanimatorSourceTransform Reanim7Frames27[29] = {
     {27.1000004f, 25.1000004f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, -1, 1.0f, 28u, nullptr, nullptr},
     {27.1000004f, 25.1000004f, 0.0f, 0.0f, 0.800000012f, 0.800000012f, -1, 1.0f, 28u, nullptr, nullptr},
 };
-constinit ReanimatorTrack Reanim7Tracks[28] = {
+constinit ReanimatorTrack Reanim7Tracks[29] = {
     {static_cast<ReanimTrackId>(522u), {Reanim7Frames0, 29}},
     {static_cast<ReanimTrackId>(523u), {Reanim7Frames1, 29}},
     {static_cast<ReanimTrackId>(524u), {Reanim7Frames2, 29}},
     {static_cast<ReanimTrackId>(1339u), {Reanim7Frames3, 29}},
-    {static_cast<ReanimTrackId>(885u), {Reanim7Frames4, 29}},
-    {static_cast<ReanimTrackId>(887u), {Reanim7Frames5, 29}},
-    {static_cast<ReanimTrackId>(886u), {Reanim7Frames6, 29}},
-    {static_cast<ReanimTrackId>(1361u), {Reanim7Frames7, 29}},
-    {static_cast<ReanimTrackId>(1360u), {Reanim7Frames8, 29}},
-    {static_cast<ReanimTrackId>(1359u), {Reanim7Frames9, 29}},
-    {static_cast<ReanimTrackId>(1358u), {Reanim7Frames10, 29}},
-    {static_cast<ReanimTrackId>(1357u), {Reanim7Frames11, 29}},
-    {static_cast<ReanimTrackId>(1356u), {Reanim7Frames12, 29}},
-    {static_cast<ReanimTrackId>(1355u), {Reanim7Frames13, 29}},
-    {static_cast<ReanimTrackId>(1354u), {Reanim7Frames14, 29}},
-    {static_cast<ReanimTrackId>(1351u), {Reanim7Frames15, 29}},
-    {static_cast<ReanimTrackId>(1370u), {Reanim7Frames16, 29}},
-    {static_cast<ReanimTrackId>(1369u), {Reanim7Frames17, 29}},
-    {static_cast<ReanimTrackId>(1368u), {Reanim7Frames18, 29}},
-    {static_cast<ReanimTrackId>(1367u), {Reanim7Frames19, 29}},
-    {static_cast<ReanimTrackId>(1366u), {Reanim7Frames20, 29}},
-    {static_cast<ReanimTrackId>(1365u), {Reanim7Frames21, 29}},
-    {static_cast<ReanimTrackId>(1364u), {Reanim7Frames22, 29}},
-    {static_cast<ReanimTrackId>(1363u), {Reanim7Frames23, 29}},
-    {static_cast<ReanimTrackId>(1362u), {Reanim7Frames24, 29}},
-    {static_cast<ReanimTrackId>(1371u), {Reanim7Frames25, 29}},
-    {static_cast<ReanimTrackId>(188u), {Reanim7Frames26, 29}},
-    {static_cast<ReanimTrackId>(31u), {Reanim7Frames27, 29}},
+    {static_cast<ReanimTrackId>(1340u), {Reanim7Frames4, 29}},
+    {static_cast<ReanimTrackId>(885u), {Reanim7Frames5, 29}},
+    {static_cast<ReanimTrackId>(887u), {Reanim7Frames6, 29}},
+    {static_cast<ReanimTrackId>(886u), {Reanim7Frames7, 29}},
+    {static_cast<ReanimTrackId>(1361u), {Reanim7Frames8, 29}},
+    {static_cast<ReanimTrackId>(1360u), {Reanim7Frames9, 29}},
+    {static_cast<ReanimTrackId>(1359u), {Reanim7Frames10, 29}},
+    {static_cast<ReanimTrackId>(1358u), {Reanim7Frames11, 29}},
+    {static_cast<ReanimTrackId>(1357u), {Reanim7Frames12, 29}},
+    {static_cast<ReanimTrackId>(1356u), {Reanim7Frames13, 29}},
+    {static_cast<ReanimTrackId>(1355u), {Reanim7Frames14, 29}},
+    {static_cast<ReanimTrackId>(1354u), {Reanim7Frames15, 29}},
+    {static_cast<ReanimTrackId>(1351u), {Reanim7Frames16, 29}},
+    {static_cast<ReanimTrackId>(1370u), {Reanim7Frames17, 29}},
+    {static_cast<ReanimTrackId>(1369u), {Reanim7Frames18, 29}},
+    {static_cast<ReanimTrackId>(1368u), {Reanim7Frames19, 29}},
+    {static_cast<ReanimTrackId>(1367u), {Reanim7Frames20, 29}},
+    {static_cast<ReanimTrackId>(1366u), {Reanim7Frames21, 29}},
+    {static_cast<ReanimTrackId>(1365u), {Reanim7Frames22, 29}},
+    {static_cast<ReanimTrackId>(1364u), {Reanim7Frames23, 29}},
+    {static_cast<ReanimTrackId>(1363u), {Reanim7Frames24, 29}},
+    {static_cast<ReanimTrackId>(1362u), {Reanim7Frames25, 29}},
+    {static_cast<ReanimTrackId>(1371u), {Reanim7Frames26, 29}},
+    {static_cast<ReanimTrackId>(188u), {Reanim7Frames27, 29}},
+    {static_cast<ReanimTrackId>(31u), {Reanim7Frames28, 29}},
 };
 constinit Sexy::GpuTexture* Reanim7Textures[7] = {
 };
@@ -1165,7 +1197,8 @@ constinit std::uint32_t Reanim7Transitions[49] = {
     5u,
     6u,
 };
-constinit std::uint32_t Reanim7ActionStarts[28] = {
+constinit std::uint32_t Reanim7ActionStarts[29] = {
+    0u,
     0u,
     0u,
     0u,
@@ -1195,7 +1228,8 @@ constinit std::uint32_t Reanim7ActionStarts[28] = {
     0u,
     0u,
 };
-constinit std::uint32_t Reanim7ActionCounts[28] = {
+constinit std::uint32_t Reanim7ActionCounts[29] = {
+    0u,
     0u,
     0u,
     0u,
@@ -1225,7 +1259,9 @@ constinit std::uint32_t Reanim7ActionCounts[28] = {
     7u,
     0u,
 };
-constinit std::uint32_t Reanim7Options[196] = {
+constinit std::uint32_t Reanim7Options[203] = {
+    0u,
+    0u,
     0u,
     0u,
     0u,
@@ -1308,7 +1344,9 @@ constinit std::uint32_t Reanim7Options[196] = {
     0u,
     0u,
     0u,
+    0u,
     2u,
+    0u,
     0u,
     0u,
     0u,
@@ -1364,6 +1402,7 @@ constinit std::uint32_t Reanim7Options[196] = {
     0u,
     0u,
     0u,
+    0u,
     4u,
     0u,
     0u,
@@ -1392,7 +1431,9 @@ constinit std::uint32_t Reanim7Options[196] = {
     0u,
     0u,
     0u,
+    0u,
     5u,
+    0u,
     0u,
     0u,
     0u,

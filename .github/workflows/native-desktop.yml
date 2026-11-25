@@ -20,7 +20,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: YuHao2006/PvzDevTools
-          ref: 298385695ad88c202a43df1bf8a46f8602420aca
+          ref: d823a8f220934efa91f71a0541bc62808ff20dba
           path: out/devtools
       - uses: actions/checkout@v4
         with:

@@ -15,6 +15,7 @@
 namespace Sexy
 {
 	class Graphics;
+	class Image;
 };
 //using namespace std;
 using namespace Sexy;
@@ -311,6 +312,7 @@ public:
 	DataArray<TodParticle>			mParticles;
 	std::array<double, 1024> mParticleLifeFractions{};
 	std::array<double, 1024> mEmitterLifeFractions{};
+	std::unique_ptr<Sexy::Image> mAwardLightBuffer;
 
 private:
 	friend struct TodParticleRosterStorage;
@@ -421,10 +423,10 @@ public:
 	void							Update(std::uint64_t deltaNs, std::int64_t nowNs, std::int64_t previousNowNs, std::span<const ParticleID> theParticles);
 	float							RandomFloat(float theMaximum);
 	int								RandomInt(int theMaximum);
-	void							Draw(Graphics* g, std::int64_t nowNs);
+	void							Draw(Graphics* g, std::int64_t nowNs, float targetScale = 1.0f);
 	void							SystemMove(float theX, float theY);
 	// CPU 绘制：三角形组内逐粒求值攒批。
-	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs);
+	void							DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs, float targetScale = 1.0f);
 	static bool						GetRenderParams(TodParticle* theParticle, ParticleRenderParams* theParams, std::int64_t nowNs);
 	static bool						GetRenderParamsDepth(TodParticle* theParticle, ParticleRenderParams* theParams, int theDepth, std::int64_t nowNs);
 	void							UpdateSpawning(std::uint64_t deltaNs, std::int64_t nowNs);

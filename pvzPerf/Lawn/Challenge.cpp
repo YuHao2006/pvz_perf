@@ -2618,7 +2618,8 @@ void Challenge::DrawBeghouled(Graphics* g)
 				-static_cast<float>(double(mBoard->mLevelTimeNs % BEGHOULED_ROTATION_PERIOD_NS) /
 					BEGHOULED_ROTATION_PERIOD_NS) * 2 * PI;
 			SexyTransform2D aTransform;
-			TodScaleRotateTransformMatrix(aTransform, aPixelX, aPixelY, aRotation, 1, 1);
+			// TodBltMatrix expects the pivot in destination coordinates.
+			TodScaleRotateTransformMatrix(aTransform, aPixelX + g->mTransX, aPixelY + g->mTransY, aRotation, 1, 1);
 
 			Image* aImageOverlay = Sexy::IMAGE_BEGHOULED_TWIST_OVERLAY;
 			Rect aSrcRect = Rect(0, 0, aImageOverlay->mWidth, aImageOverlay->mHeight);

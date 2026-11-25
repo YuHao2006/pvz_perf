@@ -331,12 +331,19 @@ if(APPLE)
     if(NOT macAppSources)
         message(FATAL_ERROR "The Cocoa platform sources must be integrated before building LawnProject")
     endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        list(FILTER macAppSources EXCLUDE REGEX "/(MacWindow|MacSystem)\\.mm$")
+        list(APPEND macAppSources "${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/IosHost.mm")
+        set(appleUIFrameworks UIKit UniformTypeIdentifiers AVFoundation)
+    else()
+        set(appleUIFrameworks Cocoa AudioUnit)
+    endif()
     target_sources(${PROJECT_NAME} PRIVATE ${macAppSources})
     target_compile_options(${PROJECT_NAME} PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         SEXY_WINDOW_COCOA=1 SEXY_RENDER_GPU=1 PVZ_GPU_METAL=1
         "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
-    foreach(framework IN ITEMS Cocoa CoreGraphics Metal QuartzCore AudioUnit AudioToolbox CoreAudio)
+    foreach(framework IN ITEMS ${appleUIFrameworks} CoreGraphics Metal QuartzCore AudioToolbox CoreAudio)
         find_library(PVZ_MAC_${framework} NAMES ${framework} REQUIRED)
         target_link_libraries(${PROJECT_NAME} PRIVATE "${PVZ_MAC_${framework}}")
     endforeach()
@@ -451,18 +458,20 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     file(GENERATE OUTPUT "$<TARGET_FILE_DIR:${PROJECT_NAME}>/start.cmd"
         INPUT "${CMAKE_SOURCE_DIR}/CMake/StartWslGame.cmd"
         NEWLINE_STYLE CRLF)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
-            "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        VERBATIM)
-    include(GNUInstallDirs)
-    install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications" COMPONENT branding)
-    install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
-        COMPONENT branding)
+    if(NOT PVZ_USE_CHECKED_IN_DEFINITIONS)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
+                "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            VERBATIM)
+        include(GNUInstallDirs)
+        install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications" COMPONENT branding)
+        install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
+            COMPONENT branding)
+    endif()
 endif()
 
 ################################################################################
@@ -519,60 +528,11 @@ elseif(PVZ_RENDER_BACKEND STREQUAL "METAL")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_metal)
     set(gameShaderDirectory "${CMAKE_BINARY_DIR}/SexyAppFramework/graphics/metal/shaders")
 endif()
-if(APPLE)
-    pvz_stage_macos_shader_compiler(${PROJECT_NAME})
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/platform/macos/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(PVZ_RENDER_BACKEND STREQUAL "OPENGL")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(PVZ_RENDER_BACKEND STREQUAL "D3D9")
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_CURRENT_SOURCE_DIR}/graphics/opengl/default-scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        VERBATIM)
-elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+if(gameShaderDirectory)
     add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
         COMMAND "${CMAKE_COMMAND}" -E copy_directory
             "${gameShaderDirectory}" "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
         VERBATIM)
-else()
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_directory
-            "${gameShaderDirectory}"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>/shaders"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_SOURCE_DIR}/effects"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>/effects"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageNumericEffects.cmake"
-        COMMAND "${CMAKE_COMMAND}"
-            "-DSOURCE=${CMAKE_SOURCE_DIR}/scale.json"
-            "-DDESTINATION=$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-            -P "${CMAKE_SOURCE_DIR}/CMake/StageScaleConfig.cmake"
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        VERBATIM)
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-        "$<TARGET_FILE_DIR:Microsoft::DirectXShaderCompiler>/${CMAKE_SHARED_LIBRARY_PREFIX}dxil${CMAKE_SHARED_LIBRARY_SUFFIX}"
-        "$<TARGET_FILE_DIR:${PROJECT_NAME}>" VERBATIM)
-endif()
 endif()
 
 set(ADDITIONAL_LIBRARY_DEPENDENCIES

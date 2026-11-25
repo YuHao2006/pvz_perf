@@ -7,7 +7,11 @@
 #include "widget/WidgetManager.h"
 #include "misc/KeyCodes.h"
 #include "misc/StableTime.h"
+#ifdef PVZ_IOS
+#import <UIKit/UIKit.h>
+#else
 #import <AppKit/AppKit.h>
+#endif
 #include <algorithm>
 #include <cmath>
 #include <cstdlib>
@@ -176,6 +180,18 @@ void SexyAppBase::ProcessMacWindowEvent(const MacWindowEvent& event)
     if (mPlayingDemoBuffer) return;
     mLastUserInputTick = SexyGetTickCount();
     switch (event.kind) {
+#ifdef PVZ_IOS
+    case MacEventKind::TouchStart: case MacEventKind::TouchMove: case MacEventKind::TouchEnd: case MacEventKind::TouchCancel:{
+        if(mNativeResizePending&&!mPhysMinimized)UpdateWindowGeometry();
+        const auto point=LogicalMouse(*this,event.x,event.y);
+        const TouchEvent touch{event.contact,point.mX,point.mY};
+        if(event.kind==MacEventKind::TouchStart){if(mScreenBounds.Contains(point.mX,point.mY))mWidgetManager->TouchBegan(touch);}
+        else if(event.kind==MacEventKind::TouchMove)mWidgetManager->TouchMoved(touch);
+        else if(event.kind==MacEventKind::TouchEnd)mWidgetManager->TouchEnded(touch);
+        else mWidgetManager->TouchCanceled(touch);
+        break;
+    }
+#endif
     case MacEventKind::MouseButton:
         if (!mSEHOccured)
             ApplyMouseButton(*this, event.button, event.pressed, event.x, event.y, event.clickCount);
@@ -201,7 +217,7 @@ void SexyAppBase::ProcessMacWindowEvent(const MacWindowEvent& event)
         if (key == KEYCODE_RETURN && event.pressed && mAltDown) {
             if (!mAltEnterDown) {
                 mAltEnterDown = true;
-                RequestScreenMode(!mIsWindowed, mUseCustomScale);
+                RequestScreenMode(!mIsWindowed);
             }
             break;
         }
@@ -256,7 +272,9 @@ void SexyAppBase::RegisterWindowClasses()
     // Cocoa has no class registration. Establish the real process application.
     if (![NSThread isMainThread])
         throw std::logic_error("Cocoa application must start on the main thread");
+#ifndef PVZ_IOS
     [NSApplication sharedApplication];
+#endif
     mIsWideWindow = sizeof(SexyChar) == sizeof(wchar_t);
 }
 
@@ -284,7 +302,6 @@ void SexyAppBase::MakeWindow()
     mDDInterface = new DDInterface(this);
     if (InitDDInterface() != DDInterface::RESULT_OK)
         throw std::runtime_error("Cocoa Metal display initialization failed");
-    ReInitImages();
     mWidgetManager->mImage = mDDInterface->mScreenImage;
     mWidgetManager->MarkAllDirty();
     mActive = mNativeWindow->Focused;
@@ -329,23 +346,6 @@ void SexyAppBase::SetWindowFullscreen(bool fullscreen)
     mNativeFullscreen = fullscreen;
     mNativeResizePending = true;
 }
-void SexyAppBase::PrepareFullscreenScaleForMonitor()
-{
-    if (!mModernScalePrepared || !mNativeFullscreen) return;
-    const int width = mNativeWindow->DrawableWidth, height = mNativeWindow->DrawableHeight;
-    if (width == mModernScaleTargetW && height == mModernScaleTargetH) return;
-    std::vector<ScaleEffectRuntimeDesc*> effects;
-    std::vector<ScaleEffectScaling> scaling;
-    if (mScaleFullscreenConfig.mDeclared && !BuildScalePipelineForMode(false, effects, scaling))
-        throw std::runtime_error("Cannot resolve Cocoa fullscreen scale pipeline");
-    std::vector<GpuScaleStep> steps;
-    for (size_t i = 0; i < effects.size(); ++i) steps.push_back({effects[i], scaling[i]});
-    auto& renderer = *mDDInterface->mRenderInterface->mRenderer;
-    renderer.PrepareScale(true, steps, width, height);
-    renderer.WarmScale(true);
-    mModernScaleTargetW = width;
-    mModernScaleTargetH = height;
-}
 void SexyAppBase::UpdateWindowGeometry()
 {
     mNativeResizePending = true;
@@ -355,7 +355,6 @@ void SexyAppBase::UpdateWindowGeometry()
     if (prepared == DDInterface::RESULT_DEFERRED) return;
     if (prepared != DDInterface::RESULT_OK)
         throw NativeDisplayError(NativeDisplayOperation::PrepareScreenMode, prepared);
-    PrepareFullscreenScaleForMonitor();
     const int resized = mDDInterface->ResizePreparedPresent();
     if (resized == DDInterface::RESULT_DEFERRED) return;
     if (resized != DDInterface::RESULT_OK)
@@ -389,13 +388,10 @@ void SexyAppBase::SwitchScreenMode(bool windowed, bool force)
     render.Flush();
     SetWindowFullscreen(!windowed);
     if (windowed) {
-        const auto scaled = render.mRenderer->ScaleOutput(false);
-        ResizeWindowClient(IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.width) : render.mRenderer->sceneWidth,
-                           IsScalePresentActiveForMode(true) ? static_cast<int>(scaled.height) : render.mRenderer->sceneHeight);
+        ResizeWindowClient(render.mRenderer->sceneWidth, render.mRenderer->sceneHeight);
     }
     mIsWindowed = windowed;
     mIsPhysWindowed = true;
-    render.mRenderer->SetScaleMode(IsScalePresentActiveForMode(windowed), !windowed);
     UpdateWindowGeometry();
     render.PresentRetainedFrame();
     ClearUpdateBacklog(false);
@@ -435,7 +431,13 @@ void SexyAppBase::NativeMouseButton(int button, bool pressed, double x, double y
     // Synthetic/probe entry only; real events use AppKit's clickCount directly.
     if (pressed) {
         if (button != 2 && time >= mNativeLastClickTime[button] &&
-            time - mNativeLastClickTime[button] <= NSEvent.doubleClickInterval &&
+            time - mNativeLastClickTime[button] <=
+#ifdef PVZ_IOS
+            0.5
+#else
+            NSEvent.doubleClickInterval
+#endif
+             &&
             std::abs(x - mNativeLastClickX[button]) <= 4 &&
             std::abs(y - mNativeLastClickY[button]) <= 4) {
             clicks = 2;

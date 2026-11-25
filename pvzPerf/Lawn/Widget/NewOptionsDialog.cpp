@@ -15,6 +15,9 @@
 #include "widget/WidgetLifetimeHold.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "pvz/BuildConfig.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 using namespace Sexy;
 
@@ -59,19 +62,13 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
     mSfxVolumeSlider = new Slider(IMAGE_OPTIONS_SLIDERSLOT, IMAGE_OPTIONS_SLIDERKNOB2, NewOptionsDialog::NewOptionsDialog_SoundVolume, this);
     mSfxVolumeSlider->SetValue(theApp->mSfxVolume / 0.65);
 
-#if defined(__ANDROID__)
-    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, false);
+#if defined(__ANDROID__) || defined(PVZ_IOS)
+    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog_Fullscreen, this, true);
     mFullscreenCheckbox->mDisabled = true;
 #else
-    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
+    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
 #endif
-    // 3D (D3D9) acceleration is always on. This checkbox now controls custom
-    // scaling (scale.json): OFF = native 800x600, ON = config-driven.
-    mScaleCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Scale, this, theApp->mUseCustomScale);
-    if constexpr (BuildConfig::Window == BuildConfig::WindowSystem::Browser) {
-        mScaleCheckbox->SetChecked(false, false);
-        mScaleCheckbox->mDisabled = true;
-    }
+    mLandscapeCheckbox = MakeNewCheckbox(NewOptionsDialog_Landscape, this, theApp->mLandscapeUI);
 
     if (mFromGameSelector)
     {
@@ -113,7 +110,7 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mMusicVolumeSlider;
     delete mSfxVolumeSlider;
     delete mFullscreenCheckbox;
-    delete mScaleCheckbox;
+    delete mLandscapeCheckbox;
     delete mAlmanacButton;
     delete mRestartButton;
     delete mBackToMainButton;
@@ -136,8 +133,8 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     AddWidget(mBackToMainButton);
     AddWidget(mMusicVolumeSlider);
     AddWidget(mSfxVolumeSlider);
-    AddWidget(mScaleCheckbox);
     AddWidget(mFullscreenCheckbox);
+    AddWidget(mLandscapeCheckbox);
     AddWidget(mBackToGameButton);
 }
 
@@ -149,7 +146,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     RemoveWidget(mMusicVolumeSlider);
     RemoveWidget(mSfxVolumeSlider);
     RemoveWidget(mFullscreenCheckbox);
-    RemoveWidget(mScaleCheckbox);
+    RemoveWidget(mLandscapeCheckbox);
     RemoveWidget(mBackToMainButton);
     RemoveWidget(mBackToGameButton);
     RemoveWidget(mRestartButton);
@@ -161,18 +158,18 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     Dialog::Resize(theX, theY, theWidth, theHeight);
     mMusicVolumeSlider->Resize(199, 116, 135, 40);
     mSfxVolumeSlider->Resize(199, 143, 135, 40);
-    mScaleCheckbox->Resize(283, 175, 46, 45);
     mFullscreenCheckbox->Resize(284, 206, 46, 45);
     mAlmanacButton->Resize(107, 241, 209, 46);
     mRestartButton->Resize(mAlmanacButton->mX, mAlmanacButton->mY + 43, 209, 46);
     mBackToMainButton->Resize(mRestartButton->mX, mRestartButton->mY + 43, 209, 46);
     mBackToGameButton->Resize(30, 381, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
 
+    mLandscapeCheckbox->Resize(283, 175, 46, 45);
     if (mFromGameSelector)
     {
+        mLandscapeCheckbox->mY += 15;
         mMusicVolumeSlider->mY += 5;
         mSfxVolumeSlider->mY += 10;
-        mScaleCheckbox->mY += 15;
         mFullscreenCheckbox->mY += 20;
     }
 
@@ -189,21 +186,20 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
 
     int aMusicOffset = 0;
     int aSfxOffset = 0;
-    int a3DAccelOffset = 0;
     int aFullScreenOffset = 0;
     if (mFromGameSelector)
     {
         aMusicOffset = 5;
         aSfxOffset = 10;
-        a3DAccelOffset = 15;
         aFullScreenOffset = 20;
     }
     Sexy::Color aTextColor(107, 109, 145);
 
     TodDrawString(g, ("Music"), 186, 140 + aMusicOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     TodDrawString(g, ("Sound FX"), 186, 167 + aSfxOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-    TodDrawString(g, ("Custom Scale"), 274, 197 + a3DAccelOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-    TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+    TodDrawString(g, "Landscape UI (Restart)", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+    if (mFullscreenCheckbox->mVisible)
+        TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 }
 
 //0x45CF50
@@ -232,9 +228,15 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
 {
     switch (theId)
     {
+    case NewOptionsDialog::NewOptionsDialog_Landscape:
+        mApp->mLandscapeUI = checked;
+#ifdef __EMSCRIPTEN__
+        EM_ASM({ Module.pvzSetLandscapePreference?.(Boolean($0)); }, checked);
+#endif
+        mApp->WriteToRegistry();
+        break;
     case NewOptionsDialog::NewOptionsDialog_Fullscreen:
-#if defined(__ANDROID__)
-        // This widget is HDR on Android. Never feed it into windowed/fullscreen.
+#if defined(__ANDROID__) || defined(PVZ_IOS)
         break;
 #else
         if (!checked && mApp->mForceFullscreen)
@@ -255,12 +257,7 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
         break;
 #endif
 
-    case NewOptionsDialog::NewOptionsDialog_Scale:
-        // The 2x scale selection is applied when the dialog is closed
-        // (KillNewOptionsDialog -> mWindowScale).
-        if (checked)
-            mApp->PlaySample(SOUND_BUTTONCLICK);
-        break;
+
     }
 }
 

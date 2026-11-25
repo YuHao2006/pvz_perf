@@ -76,11 +76,10 @@ def package(args):
             raise FileNotFoundError(path)
         files[name] = path
 
-    for name in ('pvz_perf', 'main.pak64', 'libbass.so', 'libdxcompiler.so', 'libdxil.so',
+    for name in ('pvz_perf', 'main.pak64', 'libbass.so',
                  'pvz_perf.png', 'pvz_perf.desktop'):
         include(release / name, name)
     include(release / 'data/pvz_dat64_converter', 'data/pvz_dat64_converter')
-    include(root / 'scale.json', 'scale.json')
     include(root / 'LICENSE', 'LICENSE')
     include(root / 'pvzPerf/SexyAppFramework/PopCap Framework License.txt',
             'licenses/PopCap-Framework.txt')
@@ -88,18 +87,10 @@ def package(args):
         for p in sorted((release / folder).rglob('*')):
             if p.is_file() and p.suffix.lower() in suffixes:
                 include(p, p.relative_to(release).as_posix())
-    for name, path in effect_files(args.effects_directory):
-        include(path, name)
-    for name in ('README.md', *EFFECT_NOTICES, 'Anime4K/Anime4K_Upscale_Denoise_UL.hlsl',
-                 'SSimDownscaler.hlsl', 'StubDefs.hlsli'):
-        if 'effects/' + name not in files:
-            raise ValueError('Missing default effect: ' + name)
     if not any(name.startswith('shaders/') for name in files):
         raise ValueError('No compiled Vulkan shaders')
-    for name in EFFECT_NOTICES:
-        include(args.effects_directory / name, 'licenses/' + name)
     include(args.bass / 'bass.txt', 'licenses/BASS.txt')
-    for name in ('directx-dxc', 'highway', 'jpegli', 'lcms', 'libjpeg-turbo', 'libspng', 'nlohmann-json', 'zlib'):
+    for name in ('highway', 'jpegli', 'lcms', 'libjpeg-turbo', 'libspng', 'nlohmann-json', 'zlib'):
         include(args.vcpkg / 'share' / name / 'copyright', 'licenses/' + name + '.txt')
     forbidden = [name for name in files if Path(name).suffix.lower() in
                  {'.dat', '.dat64', '.log', '.pdb', '.py', '.cpp'} or
@@ -130,7 +121,7 @@ def package(args):
     metadata = dict(version=args.version, backend=args.backend,
                     source_commit=args.source_commit or subprocess.check_output(
                         ['git', 'rev-parse', 'HEAD'], cwd=root, text=True).strip(),
-                    runtime_libraries_bundled=['libbass.so', 'libdxcompiler.so', 'libdxil.so'],
+                    runtime_libraries_bundled=['libbass.so'],
                     system_crt_bundled=False, cpu_baseline=args.cpu_baseline,
                     cpu_baseline_source='packager argument; build flags are not verified',
                     elf_requirements=requirements,
@@ -176,7 +167,6 @@ Install a working Vulkan ICD for your GPU. Audio uses OpenAL Soft and a host aud
 Wayland additionally needs its compositor, libdecor plugin and XKB data.
 Error dialogs use host zenity or kdialog; stderr and logs remain available without them.
 
-scale.json uses the included Anime4K and SSimDownscaler effects.
 Third-party sources/terms and the PopCap Framework notice are in licenses/.
 release-manifest.json records source revision, hashes and ELF dependencies.
 '''
@@ -222,7 +212,7 @@ if __name__ == '__main__':
     parser.add_argument('--version', default='v1.1')
     parser.add_argument('--test-saves', required=True, type=Path,
                         help='Generated package-test-saves.py ZIP; both data/ and retail/ are required')
-    parser.add_argument('--effects-directory', required=True, type=Path,
+    parser.add_argument('--effects-directory', required=False, type=Path,
                         help='Staged Magpie effects, README, SOURCES and licenses')
     parser.add_argument('--source-commit', help='Source revision; defaults to git HEAD at packaging time')
     parser.add_argument('--cpu-baseline', default='unspecified',

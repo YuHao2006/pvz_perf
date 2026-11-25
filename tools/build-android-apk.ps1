@@ -54,7 +54,7 @@ foreach ($required in @('game_vs.spv', 'game_ps.spv', 'game_sprite_ps.spv', 'gam
     }
 }
 New-Item -ItemType Directory -Force -Path $assetDir | Out-Null
-Copy-Item -LiteralPath (Join-Path $root 'pvzPerf/SexyAppFramework/platform/android/default-scale.json') -Destination (Join-Path $assetDir 'scale.json') -Force
+if (Test-Path -LiteralPath (Join-Path $assetDir 'scale.json')) { Remove-Item -LiteralPath (Join-Path $assetDir 'scale.json') }
 New-Item -ItemType Directory -Force -Path $jniDir | Out-Null
 Copy-Item -LiteralPath $BassLibrary -Destination (Join-Path $jniDir 'libbass.so') -Force
 $bundledAssets = Join-Path $assetDir 'bundled-saves'
@@ -120,7 +120,7 @@ try {
     $archive = [IO.Compression.ZipFile]::OpenRead($apk)
     try {
         foreach ($entry in @('lib/arm64-v8a/libpvz_perf.so','lib/arm64-v8a/libbass.so',
-                'assets/main.pak64','assets/scale.json') + @($bundledNames | ForEach-Object { "assets/bundled-saves/$_" })) {
+                'assets/main.pak64') + @($bundledNames | ForEach-Object { "assets/bundled-saves/$_" })) {
             $file = $archive.GetEntry($entry)
             if (!$file -or $file.Length -eq 0) { throw "APK runtime dependency is missing or empty: $entry" }
         }

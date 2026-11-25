@@ -42,7 +42,7 @@ try{
  engine.command(module,'free');
  console.log('Web BASS position scaler: raw decoder rows, 4x progress, half-pattern entry, row wrap, pause seek and invalid sentinel passed');
 
- for(const mode of ['error','processor-error']){
+ for(const mode of ['error']){
   behavior=mode;engine=await prepareMusic();await engine.unlock();const warnings=[];engine.onWarning=message=>warnings.push(message);
   await assert.doesNotReject(async()=>assert.equal(await engine.flush(),false),'Audio failure must not reject the game call');
   assert.equal(engine.disabled,true);assert.equal(engine.flushes.size,0);assert.equal(engine.node,null);assert.equal(warnings.length,1);
@@ -51,6 +51,20 @@ try{
   const stream=engine.loadStream(new Float32Array(8),2,22050);engine.command(stream,'play');engine.context.currentTime=2;assert.equal(engine.command(stream,'position'),176400,'Muted credits must still have a timeline');engine.command(stream,'pause');engine.context.currentTime=3;assert.equal(engine.command(stream,'position'),176400);engine.command(stream,'resume');engine.context.currentTime=4;assert.equal(engine.command(stream,'position'),264600);
   engine.close();assert.equal(engine.context,null);behavior='ack';await engine.unlock();assert.equal(await engine.flush(),true,'A new session may retry audio');
  }
+ behavior='ack';engine=await prepareMusic();await engine.unlock();
+ const song=engine.load(new Uint8Array([3,4]),false);
+ engine.loaded(song);engine.command(song,'seek',(5<<16)|17);engine.command(song,'gain',0.75);engine.command(song,'play');
+ const drums=engine.load(new Uint8Array([3,4]),false);engine.loaded(drums);
+ assert.equal(engine.voices.get(song).moduleData,engine.voices.get(drums).moduleData);
+ const oldNode=engine.node,liveVoice=engine.voices.get(song);
+ engine.receive({voices:[{id:song,revision:liveVoice.revision-1,playing:false,position:0}]});
+ assert.equal(liveVoice.playing,true,'A stale report must not undo Play');
+ oldNode.onprocessorerror();
+ await new Promise(resolve=>original.setTimeout(resolve,0));
+ assert.notEqual(engine.node,oldNode);assert.equal(engine.ready,true);assert.equal(engine.disabled,false);
+ assert.equal(liveVoice.position,(5<<16)|17);assert.equal(liveVoice.gain,0.75);
+ engine.node.onprocessorerror();assert.equal(engine.disabled,true,'Repeated processor errors must not cause a restart loop');
+ engine.close();
  behavior='silent';engine=await prepareMusic();await engine.unlock();const retained=engine.node;
  assert.equal(await engine.flush(),false);assert.equal(engine.disabled,false);assert.equal(engine.node,retained);assert.equal(engine.syncStalled,true);assert.equal(engine.flushes.size,0);
  const stalledPosts=posts;assert.equal(await engine.flush(),false);assert.equal(posts,stalledPosts,'A delayed worklet must not block each subsequent state query');

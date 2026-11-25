@@ -180,7 +180,7 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
     mIsWindowed = isWindowed;
     const auto client = QueryNativeClientExtent(mHWnd);
     mDisplayWidth=client.width;mDisplayHeight=client.height;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(PVZ_IOS)
     constexpr bool mobile=true;
 #else
     constexpr bool mobile=false;
@@ -258,14 +258,7 @@ int DDInterface::ResizePreparedPresent()
         mScreenImage->mHeight = mHeight;
         // Scale chains borrow the main canvas. Rebuild only after its fence and
         // only on an aspect change; resident game images never need host pixels.
-        if (mApp->mModernScalePrepared) {
-            mApp->mModernScalePrepared = false;
-            mApp->PrepareScalePipelineObjects();
-            auto& renderer = *mRenderInterface->mRenderer;
-            renderer.WarmScale(false);
-            renderer.WarmScale(true);
-            renderer.SetScaleMode(mApp->IsScalePresentActive(), !mIsWindowed);
-        }
+
     }
     mDisplayWidth=width; mDisplayHeight=height;
     mPresentationRect=Rect(0,0,width,height);

@@ -1,8 +1,8 @@
+#include <TargetConditionals.h>
 #include "SexyAppFramework/graphics/PoolMesh.h"
 #include "MetalRenderer.h"
 #include "MetalContext.h"
 #include "MetalShaderTypes.h"
-#include "MetalScalePipeline.h"
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 #include <algorithm>
@@ -60,13 +60,6 @@ struct MetalRenderer::Impl {
     std::array<MetalTexture*, SlotCount> owners{};
     uint32_t staticBase = SlotCount;
     std::unique_ptr<MetalTexture> scene;
-    std::unique_ptr<MetalScaleLibrary> scaleLibrary;
-    struct ScaleMode {
-        std::unique_ptr<MetalScalePipeline> pipeline;
-        bool warm = false;
-    };
-    std::array<ScaleMode, 2> scaleModes;
-    bool scaleEnabled = false, scaleFullscreen = false;
     MetalTexture* white = nullptr;
     MetalTexture* renderImage = nullptr;
     MetalTexture* causticSource = nullptr;
@@ -81,7 +74,7 @@ struct MetalRenderer::Impl {
           queue((__bridge id<MTLCommandQueue>)c.queue), width(w), height(h) {
         Dimensions(w, h);
         if (device.argumentBuffersSupport != MTLArgumentBuffersTier2)
-            throw std::runtime_error("Metal renderer requires Tier 2 argument buffers");
+            throw std::runtime_error("Metal renderer requires Tier 2 argument buffers for its 4096-texture table");
         const auto path = (directory / "game.metallib").string();
         NSString* name = [[NSString alloc] initWithBytes:path.data() length:path.size()
             encoding:NSUTF8StringEncoding];
@@ -126,12 +119,14 @@ struct MetalRenderer::Impl {
                 if (!poolPipelines[generated][blend]) MetalError(error, "Create Metal pool pipeline");
             }
         }
-        for (unsigned i = 0; i < 4; ++i) {
+        // The shared vertex ABI still supplies a filter bit. Both values use the same state.
+        for (unsigned i = 0; i < 4; i += 2) {
             MTLSamplerDescriptor* desc = [MTLSamplerDescriptor new];
-            desc.minFilter = desc.magFilter = (i & 1) ? MTLSamplerMinMagFilterLinear : MTLSamplerMinMagFilterNearest;
+            desc.minFilter = desc.magFilter = MTLSamplerMinMagFilterLinear;
             desc.sAddressMode = desc.tAddressMode = (i & 2) ? MTLSamplerAddressModeRepeat : MTLSamplerAddressModeClampToEdge;
             samplers[i] = [device newSamplerStateWithDescriptor:desc];
             if (!samplers[i]) MetalError(nil, "Create Metal sampler");
+            samplers[i + 1] = samplers[i];
         }
         static_assert(sizeof(GpuPoolVertex) == sizeof(MetalPoolVertex));
         poolVertices = [device newBufferWithBytes:GpuPoolVertices.data()
@@ -364,11 +359,6 @@ struct MetalRenderer::Impl {
     MetalTexture* Output() const { return renderImage ? renderImage : scene.get(); }
     GpuClip Rectangle(int w, int h) const {
         if (w <= 0 || h <= 0) return {};
-        if (scaleEnabled) {
-            const auto& image = scaleModes[scaleFullscreen ? 1 : 0].pipeline->output;
-            return {(w - int(image.width)) / 2, (h - int(image.height)) / 2,
-                int(image.width), int(image.height)};
-        }
         int rw = w, rh = h;
         if (int64_t(w) * height <= int64_t(h) * width)
             rh = std::max(1, int(int64_t(w) * height / width));
@@ -477,12 +467,6 @@ struct MetalRenderer::Impl {
         if (!drawable) return false;
         Begin();
         id<MTLTexture> source = scene->resource;
-        if (scaleEnabled) {
-            auto& mode = scaleModes[scaleFullscreen ? 1 : 0];
-            if (!mode.warm) throw std::logic_error("Metal scale pipeline was not warmed during loading");
-            mode.pipeline->Record((__bridge void*)commands);
-            source = (__bridge id<MTLTexture>)mode.pipeline->output.texture;
-        }
         const auto rectangle = Rectangle(int(drawable.texture.width), int(drawable.texture.height));
         // Use the game shader for SDR presentation so generated/straight-alpha
         // semantics remain identical to normal scene sampling.
@@ -992,8 +976,6 @@ void MetalRenderer::ResizeScene(int width, int height) {
     s.Finish(true);
     auto next = s.Image(width, height, MTLPixelFormatBGRA8Unorm, false, true);
     next->slot = 0;
-    s.scaleModes = {};
-    s.scaleEnabled = false;
     s.scene = std::move(next);
     s.owners[0] = s.scene.get();
     s.width = width;
@@ -1006,53 +988,6 @@ void MetalRenderer::SetHdrParams(const GpuHdrParams&) {
 GpuHdrParams MetalRenderer::HdrParams() const {
     throw std::runtime_error("Metal HDR is not supported in this milestone");
 }
-void MetalRenderer::PrepareScale(bool fullscreen, std::span<const MetalScaleStep> steps,
-    uint32_t width, uint32_t height) {
-    auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Prepare Metal scale between scenes");
-    s.Finish(true);
-    auto& mode = s.scaleModes[fullscreen ? 1 : 0];
-    mode.pipeline.reset();
-    mode.warm = false;
-    if (steps.empty()) return;
-    if (!s.scaleLibrary)
-        s.scaleLibrary = std::make_unique<MetalScaleLibrary>((__bridge void*)s.device);
-    const MetalScaleImage input{(__bridge void*)s.scene->resource,
-        uint32_t(s.scene->resource.pixelFormat), uint32_t(s.width), uint32_t(s.height)};
-    mode.pipeline = std::make_unique<MetalScalePipeline>(*s.scaleLibrary, input, steps, width, height);
-}
-void MetalRenderer::WarmScale(bool fullscreen) {
-    auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Warm Metal scale between scenes");
-    auto& mode = s.scaleModes[fullscreen ? 1 : 0];
-    if (mode.pipeline) {
-        s.Begin();
-        mode.pipeline->Record((__bridge void*)s.commands);
-        s.Finish(true);
-    }
-    mode.warm = true;
-}
-void MetalRenderer::SetScaleMode(bool enabled, bool fullscreen) {
-    auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Switch Metal scale modes between scenes");
-    const auto& mode = s.scaleModes[fullscreen ? 1 : 0];
-    if (enabled && (!mode.pipeline || !mode.warm))
-        throw std::logic_error("Metal scaling must be prepared and warmed during loading");
-    s.scaleEnabled = enabled;
-    s.scaleFullscreen = fullscreen;
-}
-MetalScaleImage MetalRenderer::ScaleOutput(bool fullscreen) const {
-    const auto& mode = impl_->scaleModes[fullscreen ? 1 : 0];
-    return mode.pipeline ? mode.pipeline->output : MetalScaleImage{};
-}
-MetalRenderer::ScaleCounts MetalRenderer::GetScaleCounts() const {
-    const auto& s = *impl_;
-    size_t images = 0;
-    for (const auto& mode : s.scaleModes)
-        if (mode.pipeline) images += mode.pipeline->WritableImageCount();
-    return {s.scaleLibrary ? s.scaleLibrary->ProgramCount() : 0,
-        s.scaleLibrary ? s.scaleLibrary->LookupCount() : 0, images};
-}
 GpuClip MetalRenderer::PresentRect(int w, int h) const { return impl_->Rectangle(w, h); }
 std::vector<uint32_t> MetalRenderer::ReadScenePixels() {
     if (!impl_->initialized) throw std::logic_error("No initialized Metal scene to read");
@@ -1061,24 +996,6 @@ std::vector<uint32_t> MetalRenderer::ReadScenePixels() {
 ImagePixels MetalRenderer::ReadTexturePixels(MetalTexture* texture) {
     impl_->Require(texture);
     return impl_->Read(texture);
-}
-std::vector<uint32_t> MetalRenderer::ReadScalePixels(bool fullscreen) {
-    auto& s = *impl_;
-    if (s.sceneOpen) throw std::logic_error("Read Metal scale pixels between scenes");
-    const auto& mode = s.scaleModes[fullscreen ? 1 : 0];
-    if (!mode.pipeline || !mode.warm) throw std::logic_error("No warmed Metal scale output");
-    const auto& image = mode.pipeline->output;
-    MetalTexture source;
-    source.resource = (__bridge id<MTLTexture>)image.texture;
-    source.width = int(image.width);
-    source.height = int(image.height);
-    auto converted = s.Image(source.width, source.height, MTLPixelFormatRGBA8Unorm, false, false);
-    const MetalColorConstants constants{{0, 0, source.width, source.height},
-        {255, 255, 255, 255}, 0, source.width, source.height, 0};
-    const std::array inputs{&source};
-    s.Compute(s.colorKernel, converted.get(), inputs, &constants, sizeof(constants),
-        source.width, source.height);
-    return s.Read(converted.get()).pixels;
 }
 uint32_t MetalRenderer::MaxImageDimension2D() const { return 16384; }
 MetalRenderer::ResourceCounts MetalRenderer::GetResourceCounts() const {

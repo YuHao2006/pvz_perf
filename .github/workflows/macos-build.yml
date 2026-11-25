@@ -29,6 +29,7 @@ jobs:
     env:
       VCPKG_ROOT: ${{ github.workspace }}/out/vcpkg
       PVZ_BASS_LIBRARY: ${{ github.workspace }}/out/macos-bass/libbass.dylib
+      PVZ_DEVTOOLS_BIN_DIR: ${{ github.workspace }}/out/asset-library/tools/bin/Darwin-arm64
       PVZ_ASSET_LIBRARY: ${{ github.workspace }}/out/asset-library
       PVZ_MACOS_BUILD_DIR: ${{ github.workspace }}/out/arm64-cocoa-metal
       CMAKE_BUILD_PARALLEL_LEVEL: 3
@@ -45,7 +46,14 @@ jobs:
           persist-credentials: false
           path: out/asset-library
       - name: Check resource inputs
-        run: test -s "$PVZ_ASSET_LIBRARY/library.json"
+        run: |
+          test -s "$PVZ_ASSET_LIBRARY/library.json"
+          for tool in reanimc pvz-resource-build pvz_dat64_converter; do
+            test -x "$PVZ_DEVTOOLS_BIN_DIR/$tool" || {
+              echo "::error::Missing native Apple build input $PVZ_DEVTOOLS_BIN_DIR/$tool"
+              exit 1
+            }
+          done
       - uses: actions/cache/restore@v4
         id: vcpkg_cache
         with:
@@ -54,11 +62,6 @@ jobs:
           restore-keys: |
             macos15-arm64-vcpkg-
             macos-arm64-vcpkg-
-      - uses: actions/cache/restore@v4
-        id: shader_cache
-        with:
-          path: out/arm64-cocoa-metal/macos-shader-tools
-          key: macos15-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}
       - name: Verify native Apple Silicon tools
         shell: bash
         run: |
@@ -106,30 +109,21 @@ jobs:
           test -s "$output/main.pak64"
           test -s "$output/shaders/game.metallib"
           test -s "$output/libbass.dylib"
-          test -s "$output/libdxcompiler.dylib"
           test -s "$output/data/pvz_dat64_converter"
           lipo "$output/pvz_perf" -verify_arch arm64
           lipo "$output/libbass.dylib" -verify_arch arm64
           otool -L "$output/pvz_perf"
-          python3 - "$output/scale.json" <<'PY'
-          import json, sys
-          with open(sys.argv[1]) as source:
-              config = json.load(source)
-          assert config["HDR"]["enable"] is False
-          assert config["window"]["multiplier"] == 1
-          assert config["window"]["effects"] == []
-          assert config["fullScreen"]["effects"] == []
-          PY
           if find "$output" -type f \( -iname '*dxil*' \
               -o -iname '*vulkan*' -o -iname '*.spv' \) | grep -q .; then
             echo 'Unexpected DXIL or Vulkan runtime asset in the native Metal artifact.' >&2
             exit 1
           fi
-          tar --exclude=main.pak64 -czf "$RUNNER_TEMP/pvz-macos-arm64-experimental.tar.gz" -C "$output" .
+          test "$(find "$PVZ_MACOS_BUILD_DIR/packages" -name '*.dmg' -size +0 | wc -l)" -eq 1
       - uses: actions/upload-artifact@v4
+        if: github.event_name == 'workflow_dispatch'
         with:
-          name: pvz-macos-arm64-experimental
-          path: ${{ runner.temp }}/pvz-macos-arm64-experimental.tar.gz
+          name: pvz-macos-arm64
+          path: out/arm64-cocoa-metal/packages/*.dmg
           if-no-files-found: error
           retention-days: 14
       - uses: actions/cache/save@v4
@@ -137,8 +131,3 @@ jobs:
         with:
           path: ~/.cache/vcpkg/archives
           key: macos15-arm64-vcpkg-${{ hashFiles('vcpkg.json', 'vcpkg-overlay-ports/**') }}
-      - uses: actions/cache/save@v4
-        if: always() && steps.shader_cache.outputs.cache-hit != 'true'
-        with:
-          path: out/arm64-cocoa-metal/macos-shader-tools
-          key: macos15-arm64-shader-tools-${{ hashFiles('tools/build-macos-shader-tools.sh') }}

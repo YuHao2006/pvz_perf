@@ -4,10 +4,17 @@
 #include <string>
 
 namespace Sexy {
-enum class MacEventKind { Close, Resize, Focus, MouseButton, MouseWheel, Key, Text };
+enum class MacEventKind { Close, Resize, Focus, MouseButton, MouseWheel, Key, Text
+#ifdef PVZ_IOS
+    , TouchStart, TouchMove, TouchEnd, TouchCancel
+#endif
+ };
 struct MacWindowEvent {
     MacEventKind kind{};
     double x = 0, y = 0, time = 0;
+#ifdef PVZ_IOS
+    uintptr_t contact = 0;
+#endif
     unsigned key = 0, text = 0;
     int button = 0, clickCount = 1;
     bool pressed = false, focused = false, minimized = false, repeat = false;

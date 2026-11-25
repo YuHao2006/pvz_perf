@@ -5,7 +5,12 @@ namespace Sexy {
 std::optional<std::string> ResolveDesktopDirectory()
 {
     @autoreleasepool {
-        NSURL* desktop = [NSFileManager.defaultManager URLsForDirectory:NSDesktopDirectory
+        #ifdef PVZ_IOS
+        constexpr auto directory = NSDocumentDirectory;
+#else
+        constexpr auto directory = NSDesktopDirectory;
+#endif
+        NSURL* desktop = [NSFileManager.defaultManager URLsForDirectory:directory
             inDomains:NSUserDomainMask].firstObject;
         if (!desktop || !desktop.fileURL) return std::nullopt;
         const char* path = desktop.fileSystemRepresentation;

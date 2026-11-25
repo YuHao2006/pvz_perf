@@ -1,20 +1,29 @@
 #include "MetalContext.h"
+#include <TargetConditionals.h>
+#if !TARGET_OS_IOS
 #include "SexyAppFramework/platform/macos/MacWindow.h"
+#endif
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
 #include <cmath>
 #include <stdexcept>
 
 namespace Sexy {
+#if TARGET_OS_IOS
+void* IosMetalLayer(NativeWindowHandle window);
+#endif
 struct MetalContext::Impl {
     id<MTLDevice> device;
     id<MTLCommandQueue> queue;
     CAMetalLayer* layer;
     Impl(NativeWindowHandle window, bool hdr) {
         if (hdr) throw std::runtime_error("Metal HDR is not supported in this milestone");
-        if (!window || !window->metalLayer)
-            throw std::invalid_argument("Metal requires a Cocoa window with a CAMetalLayer");
-        layer = (__bridge CAMetalLayer*)window->metalLayer;
+#if TARGET_OS_IOS
+        layer = (__bridge CAMetalLayer*)IosMetalLayer(window);
+#else
+        layer = window ? (__bridge CAMetalLayer*)window->metalLayer : nil;
+#endif
+        if (!layer) throw std::invalid_argument("Metal requires a window with a CAMetalLayer");
         device = MTLCreateSystemDefaultDevice();
         if (!device) throw std::runtime_error("No native Metal device");
         queue = [device newCommandQueue];

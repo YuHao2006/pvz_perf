@@ -35,6 +35,7 @@ export class MusicMixer {
   }
   const v=this.voices.get(c.id);if(!v)return;
   const call=(index,...args)=>m.functionAt(v.ptrs[index])(v.ext,...args);
+  if(c.revision!==undefined)v.revision=c.revision;
   switch(c.op){
    case 'free':m._openmpt_module_ext_destroy(v.ext);this.voices.delete(c.id);break;
    case 'play':

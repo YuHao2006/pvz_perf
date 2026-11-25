@@ -1,0 +1,45 @@
+name: Native iOS IPA
+on: workflow_dispatch
+permissions:
+  contents: read
+jobs:
+  ios:
+    runs-on: macos-26
+    timeout-minutes: 75
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: 127402f1c75bb3d5ff6bce04b285faa4930a5aca
+          fetch-depth: 0
+          path: out/vcpkg
+      - name: Build for iPhone and iPad
+        shell: bash
+        run: |
+          set -euxo pipefail
+          xcodebuild -version
+          xcrun -sdk iphoneos --find metal || xcodebuild -downloadComponent MetalToolchain
+          out/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+          curl -fLsS --retry 3 https://www.un4seen.com/files/bass24-ios.zip -o /tmp/bass-ios.zip
+          unzip -qo /tmp/bass-ios.zip -d out/bass
+          export IPHONEOS_DEPLOYMENT_TARGET=26.0
+          mkdir -p out/triplets
+          cp out/vcpkg/triplets/community/arm64-ios.cmake out/triplets/arm64-ios.cmake
+          echo 'set(VCPKG_OSX_DEPLOYMENT_TARGET "26.0")' >> out/triplets/arm64-ios.cmake
+          cmake -S . -B out/ios -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_SYSTEM_NAME=iOS \
+            -DCMAKE_OSX_SYSROOT=iphoneos -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=26.0 \
+            -DVCPKG_TARGET_TRIPLET=arm64-ios -DVCPKG_HOST_TRIPLET=arm64-osx \
+            "-DCMAKE_TOOLCHAIN_FILE=$PWD/out/vcpkg/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_OVERLAY_TRIPLETS=$PWD/out/triplets" "-DVCPKG_OVERLAY_PORTS=$PWD/vcpkg-overlay-ports" \
+            -DPVZ_USE_CHECKED_IN_DEFINITIONS=ON -DPVZ_BUILD_LEGACY_GAME=ON -DPVZ_BUILD_DAT64_CONVERTER=OFF \
+            -DPVZ_WINDOW_BACKEND=COCOA -DPVZ_RENDER_BACKEND=METAL -DPVZ_BUILD_FRAMEWORK_D3D12=OFF \
+            -DPVZ_BUILD_FRAMEWORK_VULKAN=OFF -DPVZ_BUILD_NATIVE_WINDOW_ADAPTER=OFF -DBUILD_TESTING=OFF
+          cmake --build out/ios --target LawnProject --parallel 3 -- -k 0
+          version=$(sed -n 's/.*mProductVersion = "\([0-9.]*\)";.*/\1/p' pvzPerf/LawnApp.cpp)
+          edition=$(python3 -c 'import json; print({"pvz_perf":"standard","pvz_perf-hd":"hd"}[json.load(open("config/workspace-paths.json"))["assetEdition"]])')
+          sh tools/package-ios-game.sh out/ios/Release out/bass/bass.xcframework/ios-arm64_armv7_armv7s/bass.framework out/packages "$version" "$edition"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ios-arm64-resignable
+          path: out/packages/*.ipa
+          if-no-files-found: error

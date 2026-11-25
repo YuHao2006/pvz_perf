@@ -317,6 +317,10 @@ void TodParticleSystem::ParticleSystemDie()
 			mParticleHolder->mEmitters.DataArrayFree(aEmitter);
 		}
 	}
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_OPENGL)
+    if (mEffectType == ParticleEffect::PARTICLE_SEED_PACKET_PICKUP && mParticleHolder)
+        mParticleHolder->mData->mAwardLightBuffer.reset();
+#endif
 	EmitterRosterClear();
 	mDead = true;
 }
@@ -1239,7 +1243,7 @@ bool TodParticleEmitter::GetRenderParamsDepth(TodParticle* theParticle, Particle
 // 求值完成的粒子 → 一个变换后的贴图三角形（v2.0 RenderParticle 语义，
 // 图源从 Image cel 网格改为编译图集的逐帧 TextureRegion）。
 static void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& theColor,
-	ParticleRenderParams* theParams, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs)
+	ParticleRenderParams* theParams, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs, float targetScale)
 {
 	TodParticleEmitter* aEmitter = theParticle->mParticleEmitter;
 	TodEmitterDefinition* aEmitterDef = aEmitter->mEmitterDef;
@@ -1321,11 +1325,11 @@ static void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	{
 		SexyMatrix3 aTransform;
 		TodScaleRotateTransformMatrix(aTransform,
-			theParams->mPosX,
-			theParams->mPosY,
+			theParams->mPosX * targetScale,
+			theParams->mPosY * targetScale,
 			theParams->mSpinPosition,
-			theParams->mParticleScale,
-			theParams->mParticleStretch * theParams->mParticleScale);
+			theParams->mParticleScale * targetScale,
+			theParams->mParticleStretch * theParams->mParticleScale * targetScale);
 		const TextureSource aSource{aAtlas, Sexy::RenderInterface::sImageSamplingFlags};
 		theTriangleGroup->AddTriangle(g, aSource, aTransform, g->mClipRect, theColor, aDrawMode, aRegion);
 		if (aEmitter->mExtraAdditiveDrawOverride)
@@ -1333,7 +1337,7 @@ static void RenderParticle(Graphics* g, TodParticle* theParticle, const Color& t
 	}
 }
 
-void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs)
+void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, TodTriangleGroup* theTriangleGroup, std::int64_t nowNs, float targetScale)
 {
 	if (theParticle->mCrossFadeDurationNs > 0)  // 交叉混合的源粒子不直接绘制
 		return;
@@ -1358,21 +1362,87 @@ void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, Tod
 				aParticle = mParticleSystem->mParticleHolder->mParticles.DataArrayTryToGet(
 					(unsigned int)theParticle->mCrossFadeParticleID);
 			if (aParticle != nullptr)
-				RenderParticle(g, aParticle, aColor, &aParams, theTriangleGroup, nowNs);
+				RenderParticle(g, aParticle, aColor, &aParams, theTriangleGroup, nowNs, targetScale);
 		}
 	}
 }
 
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_OPENGL)
+namespace
+{
+// Accumulate consecutive additive lights at half logical resolution. The flashes
+// use normal blending and must retain their position in the painter's order.
+void DrawAwardLights(TodParticleSystem& system, Graphics* g, std::int64_t nowNs)
+{
+    auto& render = *g->mDestImage->mRenderOwner;
+    const int width = g->mDestImage->mWidth, height = g->mDestImage->mHeight;
+    const Rect lightBounds(0, 0, (width + 1) / 2, (height + 1) / 2);
+    const Rect compositeBounds(0, 0, lightBounds.mWidth * 2, lightBounds.mHeight * 2);
+    const int count = system.EmitterRosterCount();
+    for (int i = 0; i < count;)
+    {
+        const int first = i;
+        int particles = 0;
+        while (i < count)
+        {
+            auto* emitter = system.EmitterRosterEmitterAt(i);
+            if (!TestBit(emitter->mEmitterDef->mParticleFlags, int(ParticleFlags::PARTICLE_ADDITIVE)))
+                break;
+            particles += emitter->ParticleRosterCount();
+            ++i;
+        }
+        if (first == i)
+        {
+            system.EmitterRosterEmitterAt(i++)->Draw(g, nowNs);
+            continue;
+        }
+        if (particles < 8)
+        {
+            for (int j = first; j < i; ++j)
+                system.EmitterRosterEmitterAt(j)->Draw(g, nowNs);
+            continue;
+        }
+
+        render.SelectDrawSurface(g->mDestImage);
+        if (!render.PreDraw()) return;
+        auto& buffer = system.mParticleHolder->mData->mAwardLightBuffer;
+        if (!buffer || buffer->mWidth != lightBounds.mWidth || buffer->mHeight != lightBounds.mHeight)
+            buffer.reset(render.CreateRenderImage(lightBounds.mWidth, lightBounds.mHeight));
+        {
+            GpuImageDrawScope target(render, buffer.get());
+            Graphics light(*g);
+            light.mDestImage = buffer.get();
+            light.mClipRect = lightBounds;
+            render.FillRect(lightBounds, Color(0, 0, 0, 0), 2);
+            for (int j = first; j < i; ++j)
+                system.EmitterRosterEmitterAt(j)->Draw(&light, nowNs, 0.5f);
+        }
+        render.StretchBlt(buffer.get(), compositeBounds, lightBounds, &g->mClipRect, Color::White,
+            Graphics::DRAWMODE_ADDITIVE, false, false);
+    }
+}
+}
+#endif
+
 //0x518370
 void TodParticleSystem::Draw(Graphics* g, std::int64_t nowNs)
 {
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_OPENGL)
+    if (mEffectType == ParticleEffect::PARTICLE_SEED_PACKET_PICKUP &&
+        g->mDestImage == gSexyAppBase->mDDInterface->mScreenImage &&
+        g->mDestImage->mRenderOwner->mTransformStack.empty())
+    {
+        DrawAwardLights(*this, g, nowNs);
+        return;
+    }
+#endif
 	const int aDrawCount = EmitterRosterCount();
 	for (int i = 0; i < aDrawCount; i++)
 		EmitterRosterEmitterAt(i)->Draw(g, nowNs);
 }
 
 //0x5183A0
-void TodParticleEmitter::Draw(Graphics* g, std::int64_t nowNs)
+void TodParticleEmitter::Draw(Graphics* g, std::int64_t nowNs, float targetScale)
 {
 	if (TestBit(mEmitterDef->mParticleFlags, (int)ParticleFlags::PARTICLE_SOFTWARE_ONLY))
 		return;
@@ -1382,7 +1452,7 @@ void TodParticleEmitter::Draw(Graphics* g, std::int64_t nowNs)
 	const int aProbeCount = ParticleRosterCount();
 	aTriangleGroup.mVertArray.reserve(size_t(aProbeCount) * 2);
 	for (int i = aProbeCount - 1; i >= 0; i--)
-		DrawParticle(g, ParticleRosterParticleAt(i), &aTriangleGroup, nowNs);
+		DrawParticle(g, ParticleRosterParticleAt(i), &aTriangleGroup, nowNs, targetScale);
 	aTriangleGroup.DrawGroup(g);
 }
 

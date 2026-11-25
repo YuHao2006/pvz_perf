@@ -70,17 +70,9 @@ public:
     void ResizeScene(int width, int height);
     void SetHdrParams(const GpuHdrParams& params);
     GpuHdrParams HdrParams() const;
-    void PrepareScale(bool fullscreen, std::span<const MetalScaleStep> steps,
-        uint32_t targetWidth, uint32_t targetHeight);
-    void WarmScale(bool fullscreen);
-    void SetScaleMode(bool enabled, bool fullscreen);
-    MetalScaleImage ScaleOutput(bool fullscreen) const;
-    struct ScaleCounts { size_t programs, lookups, writableImages; };
-    ScaleCounts GetScaleCounts() const;
     GpuClip PresentRect(int framebufferWidth, int framebufferHeight) const;
     std::vector<uint32_t> ReadScenePixels();
     ImagePixels ReadTexturePixels(MetalTexture* texture);
-    std::vector<uint32_t> ReadScalePixels(bool fullscreen);
     const int& sceneWidth;
     const int& sceneHeight;
     uint32_t MaxImageDimension2D() const;

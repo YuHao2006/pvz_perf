@@ -255,7 +255,7 @@ std::unique_ptr<Program> CreateProgram(id<MTLDevice> device, const ScaleEffectRu
     for (const auto& sampler : effect.mSamplers) {
         if (sampler.mFilter > 1 || sampler.mAddress > 3) Fail("Invalid Metal scale sampler");
         MTLSamplerDescriptor* desc = [MTLSamplerDescriptor new];
-        desc.minFilter = desc.magFilter = sampler.mFilter ? MTLSamplerMinMagFilterLinear : MTLSamplerMinMagFilterNearest;
+        desc.minFilter = desc.magFilter = MTLSamplerMinMagFilterLinear;
         desc.mipFilter = MTLSamplerMipFilterNotMipmapped;
         static constexpr MTLSamplerAddressMode modes[] = {MTLSamplerAddressModeRepeat,
             MTLSamplerAddressModeMirrorRepeat, MTLSamplerAddressModeClampToEdge,

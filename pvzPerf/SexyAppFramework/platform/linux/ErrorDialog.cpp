@@ -8,8 +8,7 @@ bool ShowNativeErrorDialog(const char* message, const char* title)
 {
     __android_log_print(ANDROID_LOG_FATAL, "pvz_perf", "%s: %s", title ? title : "Error",
         message ? message : "(null)");
-    std::fprintf(stderr, "%s: %s
-", title ? title : "Error", message ? message : "(null)");
+    std::fprintf(stderr, "%s: %s\n", title ? title : "Error", message ? message : "(null)");
     return true;
 }
 }

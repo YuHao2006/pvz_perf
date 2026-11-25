@@ -13,7 +13,16 @@ body.playing header,body.playing footer{display:none}body.playing main{padding:0
 #startup-status{position:absolute;left:12px;top:12px;right:12px;z-index:2;padding:10px 14px;background:#152011ed;color:#edf2e7;border:1px solid #61784d;border-radius:8px;pointer-events:none;white-space:pre-wrap;font-size:14px}
 #startup-status[hidden]{display:none}
 #error pre{white-space:pre-wrap;overflow-wrap:anywhere;font:inherit;user-select:text}#error h2{margin-top:0}.error-actions{display:flex;flex-wrap:wrap;gap:10px;margin-top:20px}
-body.playing.portrait-game .stage{position:fixed;flex:none;left:50%;top:50%;transform:translate(-50%,-50%) rotate(90deg);transform-origin:center}
+body.playing.portrait-game .stage{
+ position:fixed;flex:none;
+ width:var(--portrait-width);height:var(--portrait-height);
+ left:var(--portrait-x);top:var(--portrait-y);
+ transform:translate(-50%,-50%) rotate(90deg);transform-origin:center;
+ --system-safe-top:env(safe-area-inset-top,0px);
+ --system-safe-right:env(safe-area-inset-right,0px);
+ --system-safe-bottom:env(safe-area-inset-bottom,0px);
+ --system-safe-left:env(safe-area-inset-left,0px);
+}
 #web-text-input{position:fixed;left:0;right:0;bottom:0;z-index:10;display:flex;align-items:center;gap:8px;padding:10px;background:#17210ff5;border-top:1px solid #61784d}
 #web-text-input[hidden]{display:none}#web-text-input label{font-size:11px}#web-text-value{flex:1;min-width:0;padding:8px;font:16px system-ui;background:#fff;color:#111;border:1px solid #61784d;border-radius:4px}
 
@@ -40,17 +49,3 @@ body:not(.playing) .stage{display:block;overflow:visible}body:not(.playing) #can
 #save-maintenance-settings{margin-top:16px}#save-maintenance-settings button{margin:4px 8px 4px 0}#save-maintenance-dialog{width:min(850px,94vw);max-height:90dvh;overflow:auto;background:#192316;color:#e9efdf;border:1px solid #a8c681;border-radius:12px;padding:20px}#save-maintenance-dialog::backdrop{background:#000b}#maintenance-text{display:block;box-sizing:border-box;width:100%;height:40dvh;resize:vertical;background:#10170f;color:#edf2e7;font:12px/1.5 monospace;user-select:text;-webkit-user-select:text;touch-action:auto}#maintenance-text[hidden],#maintenance-export-actions[hidden],#maintenance-restore-actions[hidden],#maintenance-file-field[hidden]{display:none}#save-maintenance-dialog>div{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}#maintenance-status{white-space:pre-wrap}
 
 #high-resolution{border:1px solid #61784d;border-radius:7px;padding:10px 25px;font-weight:700;text-decoration:none}#high-resolution[hidden]{display:none}#high-resolution:hover{filter:brightness(1.08)}#high-resolution:focus-visible{outline:2px solid #d0ecab;outline-offset:3px}
-
-/* Insets are in the physical portrait viewport, before the game rotates. */
-@media (orientation:portrait){
- body.playing.portrait-game .stage{
-  --st:max(env(safe-area-inset-top,0px),var(--toy-safe-top,0px));
-  --sr:max(env(safe-area-inset-right,0px),var(--toy-safe-right,0px));
-  --sb:max(env(safe-area-inset-bottom,0px),var(--toy-safe-bottom,0px));
-  --sl:max(env(safe-area-inset-left,0px),var(--toy-safe-left,0px));
-  width:calc(100vh - var(--st) - var(--sb));width:calc(100dvh - var(--st) - var(--sb));
-  height:calc(100vw - var(--sl) - var(--sr));
-  left:calc(50vw + (var(--sl) - var(--sr))/2);
-  top:calc(50vh + (var(--st) - var(--sb))/2);top:calc(50dvh + (var(--st) - var(--sb))/2);
- }
-}

@@ -151,15 +151,45 @@ function viewportFor(width,height,mode,minimumWidth=800){
  return {width:logicalWidth,height:600,cssWidth,cssHeight:cssWidth/ratio};
 }
 let measuredCanvas=null;
+let toyContainerState=null;
+function measureView(){
+ const visual=window.visualViewport;
+ return visual?.width>0&&visual.height>0
+  ? {width:visual.width,height:visual.height,left:visual.offsetLeft,top:visual.offsetTop}
+  : {width:innerWidth,height:innerHeight,left:0,top:0};
+}
+function fitPortraitStage(view){
+ const style=getComputedStyle(stage);
+ const positive=value=>Number.isFinite(value)&&value>0?value:0;
+ const insets=edges=>edges.map(edge=>positive(parseFloat(style.getPropertyValue('--system-safe-'+edge))));
+ const toy=toyContainerState?.orientation==='landscape'?null:toyContainerState?.safeArea;
+ const fitInsets=(edges,extent)=>{
+  const system=insets(edges);
+  const combined=edges.map((edge,i)=>Math.max(system[i],positive(toy?.[edge])));
+  // An inset pair that consumes more than half the view cannot be used for the game.
+  if(combined[0]+combined[1]<=extent/2)return combined;
+  if(system[0]+system[1]<=extent/2)return system;
+  return [0,0];
+ };
+ const [top,bottom]=fitInsets(['top','bottom'],view.height);
+ const [left,right]=fitInsets(['left','right'],view.width);
+ const safeWidth=view.width-left-right,safeHeight=view.height-top-bottom;
+ stage.style.setProperty('--portrait-width',safeHeight+'px');
+ stage.style.setProperty('--portrait-height',safeWidth+'px');
+ stage.style.setProperty('--portrait-x',(view.left+left+safeWidth/2)+'px');
+ stage.style.setProperty('--portrait-y',(view.top+top+safeHeight/2)+'px');
+}
 function fitCanvas(){
  resizeScheduled=false;
  if(running&&Module.pvzTextInput?.active)return; // The soft keyboard must not rotate/resize the game underneath an editor.
  const mobile=mobileInput,playing=document.body.classList.contains('playing');
- const rotate=mobile&&playing&&innerHeight>innerWidth;
+ const viewport=measureView();
+ const rotate=mobile&&playing&&viewport.height>viewport.width;
  document.body.classList.toggle('portrait-game',rotate);
+ if(rotate)fitPortraitStage(viewport);
  const bounds=stage.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
  const p=preferences(),w=stage.clientWidth,h=playing?stage.clientHeight:Math.max(1,innerHeight-document.querySelector('header').offsetHeight-document.querySelector('footer').offsetHeight);
- const view=viewportFor(mobile?Math.max(w,h):w,mobile?Math.min(w,h):h,p.aspect,running&&Module.pvzLandscapeActive?890:800);
+ const view=viewportFor(mobile&&!playing?Math.max(w,h):w,mobile&&!playing?Math.min(w,h):h,p.aspect,running&&Module.pvzLandscapeActive?890:800);
  canvas.style.width=`${view.cssWidth}px`;canvas.style.height=`${view.cssHeight}px`;
  const box=canvas.getBoundingClientRect();
  const displayWidth=(rotate?box.height:box.width)||view.cssWidth;
@@ -182,6 +212,13 @@ function fitCanvas(){
  return view;
 }
 function scheduleResize(){if(!resizeScheduled){resizeScheduled=true;requestAnimationFrame(fitCanvas)}}
+let settleResizeTimer;
+function scheduleSettledResize(){
+ scheduleResize();
+ clearTimeout(settleResizeTimer);
+ settleResizeTimer=setTimeout(scheduleResize,320);
+}
+
 function pointerPosition(x,y){
  const b=canvas.getBoundingClientRect();
  return document.body.classList.contains('portrait-game')?
@@ -230,6 +267,8 @@ window.addEventListener('keydown',()=>{if(running)Module.pvzMusic?.resumeIfInter
 for(const type of ['mousedown','mousemove','mouseup','touchstart','touchmove','touchend','touchcancel'])
  canvas.addEventListener(type,e=>{if(running){e.preventDefault();e.stopImmediatePropagation()}},{capture:true,passive:false});
 window.addEventListener('resize',scheduleResize);
+window.visualViewport?.addEventListener('resize',scheduleResize);
+window.visualViewport?.addEventListener('scroll',scheduleResize);
 function observePixelRatio(){
  matchMedia('(resolution: '+devicePixelRatio+'dppx)').addEventListener('change',()=>{
   scheduleResize();observePixelRatio();
@@ -337,12 +376,8 @@ if(!webConfig.bypassBilibiliChecks)import('./rewards.js').then(async m=>{
  const toy=await m.provideBilibiliToy();
  let notified=false;
  const apply=state=>{
-  if(!state?.safeArea)return;
-  for(const edge of ['top','right','bottom','left']){
-   const value=state.safeArea[edge];
-   document.documentElement.style.setProperty('--toy-safe-'+edge,(Number.isFinite(value)&&value>0?value:0)+'px');
-  }
-  scheduleResize();
+  toyContainerState=state;
+  scheduleSettledResize();
  };
  if(typeof toy?.onContainerChange==='function')await toy.onContainerChange(state=>{notified=true;apply(state)});
  if(!notified && typeof toy?.getContainerState==='function'){
@@ -458,9 +493,9 @@ form.addEventListener('submit',async event=>{
   await startupDeadline(saveSettings(p),'保存启动设置');
   showPreparation('检查本地关卡存档');
   try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
-  running=true;if(!webConfig.bypassBilibiliChecks)void import('./rewards.js').then(m=>m.setToyPlaying(true));lastWidth=Module.pvzViewport.pixelWidth;lastHeight=Module.pvzViewport.pixelHeight;stage.classList.add('running');
+  running=true;if(!webConfig.bypassBilibiliChecks)void import('./rewards.js').then(m=>m.setToyPlaying(true)).then(scheduleSettledResize);lastWidth=Module.pvzViewport.pixelWidth;lastHeight=Module.pvzViewport.pixelHeight;stage.classList.add('running');
   for(const input of form.elements)input.disabled=true;
-  fitCanvas();canvas.focus();startFps();setStartupPhase('初始化窗口与图形');
+  fitCanvas();canvas.focus({preventScroll:true});scheduleSettledResize();startFps();setStartupPhase('初始化窗口与图形');
   startupMonitor?.stop();
   const {createStartupMonitor}=await startupToolsReady;
   startupMonitor=createStartupMonitor({

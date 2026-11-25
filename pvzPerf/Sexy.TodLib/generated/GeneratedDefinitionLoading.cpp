@@ -2585,7 +2585,7 @@ void LoadReanimationImages(int type) {
         DefinitionBindAtlasPath(Reanimations[66].mTextures[2], 936, 1608, "compiled/atlases/appearance_ladder.atlas.png");
         break;
     case 67:
-        DefinitionBindAtlasPath(Reanimations[67].mTextures[0], 404, 308, "compiled/reanim/puff.atlas.png");
+        DefinitionBindAtlasPath(Reanimations[67].mTextures[0], 408, 332, "compiled/reanim/puff.atlas.png");
         break;
     case 68:
         DefinitionBindAtlasPath(Reanimations[68].mTextures[0], 120, 144, "compiled/reanim/z.atlas.png");

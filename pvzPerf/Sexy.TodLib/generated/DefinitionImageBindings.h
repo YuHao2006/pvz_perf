@@ -537,7 +537,7 @@ inline constexpr std::array<Extent, 193> Extents{{
     {"compiled/reanim/poolcleaner.atlas.png", 708u, 340u},
     {"compiled/reanim/portal_circle.atlas.png", 440u, 1300u},
     {"compiled/reanim/portal_square.atlas.png", 504u, 540u},
-    {"compiled/reanim/puff.atlas.png", 404u, 308u},
+    {"compiled/reanim/puff.atlas.png", 408u, 332u},
     {"compiled/reanim/puffshroom.atlas.png", 332u, 380u},
     {"compiled/reanim/rain_circle.atlas.png", 120u, 104u},
     {"compiled/reanim/rain_splash.atlas.png", 532u, 120u},

@@ -5,7 +5,7 @@
   "dependencies": [
     {
       "name": "directx-dxc",
-      "platform": "!osx & !android"
+      "platform": "!osx & !android & !ios & !ios & !ios & !ios & !ios"
     },
     {
       "name": "jpegli",

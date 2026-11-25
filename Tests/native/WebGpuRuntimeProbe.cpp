@@ -89,6 +89,32 @@ int main()
         renderer.SetRenderImage(nullptr);
         values = renderer.ReadTextureFloats(coverageTarget);
         Check(values[3] == 0 && std::abs(values[7] - 64 / 255.0f) < .002f && values[15] > .99f, "coverage sampling");
+        // Move the two-texel black/white edge by a quarter texel between frames.
+        // Read the scene itself so the final canvas scaler cannot mask nearest sampling.
+        const unsigned int edgePixels[]{0xff000000, 0xffffffff};
+        auto* edge = renderer.CreateTexture(2, 1, edgePixels, 8);
+        auto checkEdge = [&](float u, unsigned int sampler, unsigned int flags, int expected) {
+            context.WaitIdle();
+            Check(renderer.BeginScene(), "begin moving-edge frame");
+            auto q = Quad(edge, 64, 64);
+            for (auto& vertex : q) {
+                vertex.u = u;
+                vertex.v = .5f;
+                vertex.sampler = sampler;
+                vertex.slot |= flags;
+            }
+            renderer.SubmitQuads(q, edge, true, bool(sampler & 2U), Sexy::GpuBlend::Normal);
+            renderer.EndSceneAndPresent();
+            const auto pixel = renderer.ReadScenePixels()[32 * 64 + 32];
+            Check(std::abs(int(pixel & 255U) - expected) <= 2, "incorrect subpixel edge sample");
+        };
+        for (unsigned int flags : {0U, unsigned(Sexy::GpuVertex::kAlphaEdgeFilter)}) {
+            checkEdge(.375f, 1U, flags, 64);
+            checkEdge(.5f, 1U, flags, 128);
+            checkEdge(.625f, 1U, flags, 191);
+            checkEdge(1.125f, 3U, flags, 64);
+            checkEdge(.375f, 0U, flags, 0);
+        }
         // A full 16-bit stream plus one quad must submit and reuse storage, not overflow or grow pages.
         renderer.SetRenderImage(target);
         Check(renderer.BeginScene(), "begin full stream");
@@ -144,7 +170,7 @@ int main()
             {
                 Module.pvzGpuProbe = {};
                 Module.pvzGpuProbe.ok = true;
-                Module.pvzGpuProbe.checks = 9;
+                Module.pvzGpuProbe.checks = 10;
                 Module.pvzGpuProbe.dualSource = !!$0;
                 Module.pvzGpuProbe.framesInFlight = 2;
             },

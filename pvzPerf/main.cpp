@@ -63,7 +63,11 @@ std::string SelectRuntimeRoot(const std::string& theExecutableDirectory)
 #ifdef _WIN32
 int WINAPI WinMain(_In_ HINSTANCE /* hInstance */, _In_opt_ HINSTANCE /* hPrevInstance */, _In_ LPSTR /* lpCmdLine */, _In_ int /* nCmdShow */)
 #else
+#if defined(PVZ_IOS)
+int PvzIosRun(int argc, char** argv)
+#else
 int main(int argc, char** argv)
+#endif
 #endif
 {
 	try {

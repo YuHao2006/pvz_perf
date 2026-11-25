@@ -58,7 +58,11 @@ struct Engine {
     {
         AudioComponentDescription description{};
         description.componentType = kAudioUnitType_Output;
+#ifdef PVZ_IOS
+        description.componentSubType = kAudioUnitSubType_RemoteIO;
+#else
         description.componentSubType = kAudioUnitSubType_DefaultOutput;
+#endif
         description.componentManufacturer = kAudioUnitManufacturer_Apple;
         const auto component = AudioComponentFindNext(nullptr, &description);
         if (!component) throw std::runtime_error("No macOS default-output Audio Unit");

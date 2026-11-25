@@ -180,7 +180,7 @@ int DDInterface::Init(NativeWindowHandle theWindow, bool isWindowed)
     mIsWindowed = isWindowed;
     const auto client = QueryNativeClientExtent(mHWnd);
     mDisplayWidth=client.width;mDisplayHeight=client.height;
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(PVZ_IOS)
     constexpr bool mobile=true;
 #else
     constexpr bool mobile=false;

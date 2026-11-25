@@ -58,6 +58,38 @@ class MusicEngine {
    this.loadWaiters.add(done);timer=setTimeout(()=>done(false),remaining);
   });
  }
+ recoverProcessor(reason){
+  if(this.recoveryUsed || !this.ready){this.disableMusic(reason);return}
+  this.recoveryUsed=true;
+  this.ready=false;
+  const node=this.node;
+  this.node=null;
+  node.onprocessorerror=null;
+  node.port.onmessage=null;
+  node.disconnect();
+  node.port.close();
+  for(const done of this.flushes.values())done(false);
+  this.flushes.clear();
+  this.syncStalled=false;
+  this.send=command=>this.queued.push(command);
+  for(const [id,v] of this.voices){
+   if(v.stream)continue;
+   const send=(op,fields={})=>this.send({id,op,...fields});
+   this.pendingLoads.add(id);
+   send('load',{data:v.moduleData});
+   send('loop',{value:!!(v.flags&4)});
+   for(const [channel,value] of v.channelGains)send('channel',{channel,value});
+   send('gain',{value:v.gain});
+   send('amplify',{value:v.amplify});
+   send('seek',{order:v.position&65535,row:v.position>>>16,revision:v.revision});
+   if(v.playing || v.paused)send('play');
+   send('tempo',{value:v.tempo});
+   send('speed',{value:v.speed});
+   if(v.paused)send('pause');
+  }
+  console.warn('Restarting music processor after a rendering failure',reason);
+  return this.initializeMusic(this.context,Promise.resolve());
+ }
  async initializeMusic(context,resumed){
   const receive=data=>{if(this.context!==context||this.disabled)return;if(data.error){this.disableMusic((data.op?'['+data.op+(data.id?' voice '+data.id:'')+'] ':'')+data.error);return}
    if(data.loaded)this.loaded(data.loaded);
@@ -78,9 +110,9 @@ class MusicEngine {
      node.connect(this.master);
     });
     if(this.context!==context)return false;
-    node.port.onmessage=event=>receive(event.data);
-    node.onprocessorerror=()=>receive({error:'Music audio thread failed'});
-    send=c=>node.port.postMessage(c,c.data?[c.data.buffer]:[]);backend='AudioWorklet';
+    node.port.onmessage=event=>{if(this.node!==node)return;const data=event.data;if(data.error&&!data.op)this.recoverProcessor(data.error);else receive(data)};
+    node.onprocessorerror=()=>{if(this.node===node)this.recoverProcessor('Music audio thread failed')};
+    send=c=>node.port.postMessage(c);backend='AudioWorklet';
    }else{
     const {MusicMixer}=await import('./music-mixer.js');
     const mixer=await MusicMixer.create(this.compiled,context.sampleRate);
@@ -120,6 +152,15 @@ class MusicEngine {
  load(data,stream){
   if(stream)throw Error('OGG streams must be decoded by Wasm');
   const id=this.next++,v={id,stream,playing:false,paused:false,position:0,positionScale:1,revision:0,tempo:155,speed:3,gain:0,flags:0,offset:0};this.voices.set(id,v);
+  // The decoder owns its Wasm copy. Keep the compressed input for node recovery.
+  v.moduleData=data;v.channelGains=new Map();v.amplify=1;
+  // The drums and main voice load the same MO3 with independent mixer state.
+  for(const other of this.voices.values()){
+   const bytes=other.moduleData;
+   if(other!==v && bytes?.length===data.length && data.every((byte,i)=>byte===bytes[i])){
+    v.moduleData=bytes;break;
+   }
+  }
   if(!this.disabled)this.pendingLoads.add(id);this.send({op:'load',id,data});
   return id;
  }
@@ -162,15 +203,19 @@ class MusicEngine {
    if(v.stream){v.offset=value/v.byteRate;if(v.playing&&!v.paused)this.startStream(v)}
    else this.send({id,op,revision:v.revision,order:value&65535,row:(value>>>16)&65535});return 1;
   }
+  if(!v.stream && op==='channel')v.channelGains.set(extra,value);
+  if(!v.stream && op==='amplify')v.amplify=value;
+  // Tempo corrections can arrive every game tick. They must not invalidate position reports.
+  if(!v.stream && ['play','pause','stop','resume'].includes(op))v.revision++;
   if(op==='gain'){v.gain=value;if(v.gainNode)v.gainNode.gain.setValueAtTime(value,this.context.currentTime)}
   if(op==='play'){if(value)v.offset=0;v.playing=true;v.paused=false;if(v.stream)this.startStream(v)}
   if(op==='stop'){v.playing=false;v.paused=false;v.source?.stop();v.source=null;v.offset=0}
   if(op==='pause'){if(v.stream){v.offset=this.streamPosition(v);v.source?.stop();v.source=null}v.paused=true}
   if(op==='resume'){v.paused=false;v.playing=true;if(v.stream)this.startStream(v)}
-  if(!v.stream)this.send({id,op,value,channel:extra,restart:!!value});return 1;
+  if(!v.stream)this.send({id,op,value,channel:extra,restart:!!value,revision:v.revision});return 1;
  }
  close(){
-  this.finishLoads(false);this.pendingLoads.clear();this.startupDeadline=0;
+  this.recoveryUsed=false;this.finishLoads(false);this.pendingLoads.clear();this.startupDeadline=0;
   for(const done of this.flushes.values())done(false);this.flushes.clear();
   this.sound?.close();for(const id of this.voices.keys())this.command(id,'free');
   if(this.disabled||!this.ready){this.node?.disconnect();this.node?.port?.close();this.node=null;this.queued=[];this.master?.disconnect();this.context?.close().catch(()=>{});this.context=null;this.sound=null;this.backend='pending';this.disabled=false;this.ready=false;this.unlocking=null}

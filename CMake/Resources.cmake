@@ -1,3 +1,17 @@
+set(PVZ_STATIC_DEFINITION_SOURCES
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitions.cpp"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitionLoading.cpp"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ZombatarAtlasData.cpp"
+    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasData.cpp")
+foreach(index RANGE 0 7)
+    list(APPEND PVZ_STATIC_DEFINITION_SOURCES
+        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/definitions/ReanimData0${index}.cpp")
+endforeach()
+option(PVZ_USE_CHECKED_IN_DEFINITIONS "Build native engine against the matching separately packaged resources" OFF)
+if(PVZ_USE_CHECKED_IN_DEFINITIONS)
+    add_custom_target(pvz_resources)
+    return()
+endif()
 # The checkout contains only a generated view of the selected library.
 find_package(Python3 COMPONENTS Interpreter REQUIRED)
 set(PVZ_ASSET_LIBRARY "" CACHE PATH "External PVZ asset library (default in config/workspace-paths.json)")
@@ -42,15 +56,7 @@ endif()
 
 set(PVZ_RESOURCE_CACHE "${CMAKE_BINARY_DIR}/cache/resources" CACHE PATH
     "Resource compiler cache, optionally shared with a verified host build")
-set(PVZ_STATIC_DEFINITION_SOURCES
-    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitions.cpp"
-    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/GeneratedDefinitionLoading.cpp"
-    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/ZombatarAtlasData.cpp"
-    "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/SceneAtlasData.cpp")
-foreach(index RANGE 0 7)
-    list(APPEND PVZ_STATIC_DEFINITION_SOURCES
-        "${PVZ_GAME_SOURCE_DIR}/Sexy.TodLib/generated/definitions/ReanimData0${index}.cpp")
-endforeach()
+
 file(GLOB_RECURSE PVZ_RESOURCE_INPUTS CONFIGURE_DEPENDS
     "${CMAKE_SOURCE_DIR}/assets/definitions/*"
     "${CMAKE_SOURCE_DIR}/assets/runtime/*"

@@ -157,8 +157,6 @@ function fitCanvas(){
  const mobile=mobileInput,playing=document.body.classList.contains('playing');
  const rotate=mobile&&playing&&innerHeight>innerWidth;
  document.body.classList.toggle('portrait-game',rotate);
- if(rotate){stage.style.width=`${innerHeight}px`;stage.style.height=`${innerWidth}px`}
- else{stage.style.width='';stage.style.height=''}
  const bounds=stage.getBoundingClientRect();if(bounds.width<1||bounds.height<1)return;
  const p=preferences(),w=stage.clientWidth,h=playing?stage.clientHeight:Math.max(1,innerHeight-document.querySelector('header').offsetHeight-document.querySelector('footer').offsetHeight);
  const view=viewportFor(mobile?Math.max(w,h):w,mobile?Math.min(w,h):h,p.aspect,running&&Module.pvzLandscapeActive?890:800);
@@ -334,7 +332,22 @@ document.getElementById('coin-video').onclick=event=>{
   document.getElementById('coin-video').onclick=null;
  });
 };
-if(!webConfig.bypassBilibiliChecks)import('./rewards.js').then(m=>m.provideBilibiliToy()).catch(()=>{});
+if(!webConfig.bypassBilibiliChecks)import('./rewards.js').then(async m=>{
+ const toy=await m.provideBilibiliToy();
+ let notified=false;
+ const apply=state=>{
+  if(!state?.safeArea)return;
+  for(const edge of ['top','right','bottom','left']){
+   const value=state.safeArea[edge];
+   document.documentElement.style.setProperty('--toy-safe-'+edge,(Number.isFinite(value)&&value>0?value:0)+'px');
+  }
+  scheduleResize();
+ };
+ if(typeof toy?.onContainerChange==='function')await toy.onContainerChange(state=>{notified=true;apply(state)});
+ if(!notified && typeof toy?.getContainerState==='function'){
+  const state=await toy.getContainerState();if(!notified)apply(state);
+ }
+}).catch(()=>{});
 rewardStatus.textContent=webConfig.bypassBilibiliChecks?'本地版：已绕过 B 站接口。':'给 '+webConfig.rewardVideoBvid+' 投满两个币，解锁自定义存档（含用户进度、布阵与 DAT64 导入／导出）；作者本人可直接使用。';
 let rewardBusy=false;
 async function authorize(){const {authorizeReward,provideBilibiliToy}=await import('./rewards.js');await authorizeReward(webConfig,provideBilibiliToy)}
@@ -383,7 +396,7 @@ async function returnToSettings(){
  Module.pvzTextInput.hide();cancelPointers();
  try{await syncSaves();document.getElementById('local-save-status').textContent='本地存档已写入浏览器'}catch(error){document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试保存或导出 DAT64，不要刷新页面。'}
  if(document.fullscreenElement)await document.exitFullscreen().catch(console.warn);
- running=false;document.body.classList.remove('playing','portrait-game');stage.classList.remove('running');
+ running=false;if(!webConfig.bypassBilibiliChecks)void import('./rewards.js').then(m=>m.setToyPlaying(false));document.body.classList.remove('playing','portrait-game');stage.classList.remove('running');
  await synchronizeProgress();
 
  document.documentElement.classList.remove('playing');window.scrollTo(0,0);
@@ -394,7 +407,10 @@ async function returnToSettings(){
 }
 canvas.addEventListener('webglcontextcreationerror',event=>{Module.pvzWebGLCreationError=event.statusMessage||'浏览器未提供创建失败的详情'});
 canvas.addEventListener('webglcontextlost',event=>{event.preventDefault();showError('WebGL 图形上下文丢失，浏览器已停止绘制。请重新加载。')});
-var Module={canvas,locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:mobileInput,
+var Module={canvas,pvzSetLandscapePreference(enabled){
+ landscape.checked=enabled;
+ try{localStorage.setItem(storageKey,JSON.stringify(preferences()))}catch{}
+},locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:mobileInput,
  pvzStartupPhase:setStartupPhase,
  pvzSetFullscreen:enabled=>{if(enabled&&!document.documentElement.requestFullscreen){console.warn('当前浏览器不支持 Fullscreen API');return}const change=enabled?document.documentElement.requestFullscreen():document.fullscreenElement?document.exitFullscreen():Promise.resolve();change.catch(error=>console.warn('浏览器未允许全屏',error))},
  pvzOnQuit:()=>returnToSettings().catch(showError),
@@ -441,7 +457,7 @@ form.addEventListener('submit',async event=>{
   await startupDeadline(saveSettings(p),'保存启动设置');
   showPreparation('检查本地关卡存档');
   try{await fixLocalLevelSaves()}finally{(await saveToolsReady).releaseSaveTools()}
-  running=true;lastWidth=Module.pvzViewport.pixelWidth;lastHeight=Module.pvzViewport.pixelHeight;stage.classList.add('running');
+  running=true;if(!webConfig.bypassBilibiliChecks)void import('./rewards.js').then(m=>m.setToyPlaying(true));lastWidth=Module.pvzViewport.pixelWidth;lastHeight=Module.pvzViewport.pixelHeight;stage.classList.add('running');
   for(const input of form.elements)input.disabled=true;
   fitCanvas();canvas.focus();startFps();setStartupPhase('初始化窗口与图形');
   startupMonitor?.stop();

@@ -15,6 +15,7 @@
 namespace Sexy
 {
 	class Graphics;
+	class Image;
 };
 //using namespace std;
 using namespace Sexy;
@@ -311,6 +312,7 @@ public:
 	DataArray<TodParticle>			mParticles;
 	std::array<double, 1024> mParticleLifeFractions{};
 	std::array<double, 1024> mEmitterLifeFractions{};
+	std::unique_ptr<Sexy::Image> mAwardLightBuffer;
 
 private:
 	friend struct TodParticleRosterStorage;

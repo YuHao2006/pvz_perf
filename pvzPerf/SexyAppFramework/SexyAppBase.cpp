@@ -91,6 +91,9 @@ extern char** environ;
 #endif
 
 using namespace Sexy;
+#ifdef PVZ_IOS
+void PvzIosUpdateFrame(Sexy::SexyAppBase& app);
+#endif
 
 namespace
 {
@@ -3122,8 +3125,6 @@ void SexyAppBase::RequestScreenMode(bool wantWindowed)
 	if (mSoundManager != NULL)
 		mSoundManager->SetCooperativeWindow(mHWnd);
 
-	// Persist the mode/scale pair only after both public states describe the
-	// committed transaction. A no-op still saves unrelated options fields.
 	WriteToRegistry();
 	ClearUpdateBacklog(false);
 	UpdateCursorClip();
@@ -3494,7 +3495,11 @@ void SexyAppBase::DoMainLoop()
 	{
 		if (mExitToTop)
 			mExitToTop = false;
+#if defined(PVZ_IOS)
+		PvzIosUpdateFrame(*this);
+#else
 		UpdateApp();
+#endif
         HostYield();
 	}
 }
@@ -3973,8 +3978,6 @@ void SexyAppBase::Init()
 #endif
 
 	InitPropertiesHook();
-	// Settings (settings.json) are read before the immutable
-	// scale configuration. Both pipelines compile regardless of checkbox state.
 	ReadFromRegistry();
 	gUpdateTicks = static_cast<double>(mFrameTiming.mIntervalNs) / FrameTiming::LegacyTickNs;
 	gStepsPerLegacyTick = 1.0 / gUpdateTicks;
@@ -3982,11 +3985,6 @@ void SexyAppBase::Init()
 	gLegacyTickPhaseNs = 0;
 	LoadHdrConfig();
 
-	// The two XML pipelines are process-global immutable configuration. Read and
-	// inline-compile them exactly once before any main HWND exists, even when the
-	// direct (Custom Scale off) presentation path is initially selected. Their
-	// Vulkan shader objects are materialized after the device is created and then
-	// remain resident for that device's lifetime.
 
 #ifdef _WIN32
 	if (CheckForVista())
@@ -4057,7 +4055,21 @@ void SexyAppBase::Init()
 
 	// The x64 build has exactly one packaged-resource format: the converter's
 	// plain main.pak64.  Never mount the official 32-bit/XOR main.pak here.
-	if (!gPakInterface->AddPakFile("main.pak64"))
+	std::filesystem::path archive = "main.pak64";
+#if defined(PVZ_IOS)
+    if(const char* imported = std::getenv("PVZ_IOS_PAK")) archive=imported;
+#elif defined(__APPLE__)
+	// An independently distributed PAK can sit beside the signed app bundle.
+	if (!std::filesystem::exists(archive)) {
+		const auto executable = std::filesystem::path(GetExecutableDirectory()).lexically_normal();
+		const auto macOS = executable.filename().empty() ? executable.parent_path() : executable;
+		const auto contents = macOS.parent_path();
+		const auto bundle = contents.parent_path();
+		if (macOS.filename() == "MacOS" && contents.filename() == "Contents" && bundle.extension() == ".app")
+			archive = bundle.parent_path() / "main.pak64";
+	}
+#endif
+	if (!gPakInterface->AddPakFile(archive.string()))
 	{
 		throw std::runtime_error("missing or invalid plain x64 resource archive: main.pak64");
 	}
@@ -4457,18 +4469,11 @@ static std::string LowerScaleText(const std::string& theText)
 
 void SexyAppBase::LoadHdrConfig()
 {
-#if !defined(__ANDROID__)
+#if defined(_WIN32) && (defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12))
     JsonDoc settings;
     settings.LoadFile(SettingsPath());
     mHdrRequested = settings.GetBool("hdr", false);
     double strength = settings.GetFloat("hdrStrength", 1.0);
-    if (!settings.Has("hdr")) {
-        JsonDoc legacy;
-        if (legacy.LoadFile("scale.json") && legacy.GetType("HDR") == JsonDoc::Type::Object) {
-            mHdrRequested = legacy.GetBool("HDR/enable", true);
-            strength = legacy.GetFloat("HDR/strength", 1.0);
-        }
-    }
     mScaleHDREnabled = mHdrRequested;
     if (!std::isfinite(strength) || strength < 0.0 || strength > 1.0)
         throw std::runtime_error("HDR strength must be a finite number in [0,1]");

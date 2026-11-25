@@ -126,7 +126,9 @@ std::string FormatWin32Error(DWORD theError)
 }
 #else
 std::mutex gBassMutex;
-#ifdef __APPLE__
+#ifdef PVZ_IOS
+constexpr const char* NativeBassFilename = "Frameworks/bass.framework/bass";
+#elif defined(__APPLE__)
 constexpr const char* NativeBassFilename = "libbass.dylib";
 #else
 constexpr const char* NativeBassFilename = "libbass.so";

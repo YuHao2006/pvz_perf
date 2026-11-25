@@ -1,0 +1,115 @@
+name: Native desktop build
+on:
+  workflow_dispatch:
+    inputs:
+      platforms:
+        default: '["ubuntu-22.04","macos-15"]'
+        type: string
+permissions:
+  contents: read
+jobs:
+  game:
+    strategy:
+      fail-fast: false
+      matrix:
+        os: ${{ fromJSON(inputs.platforms) }}
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: YuHao2006/PvzDevTools
+          ref: 298385695ad88c202a43df1bf8a46f8602420aca
+          path: out/devtools
+      - uses: actions/checkout@v4
+        with:
+          repository: microsoft/vcpkg
+          ref: 127402f1c75bb3d5ff6bce04b285faa4930a5aca
+          fetch-depth: 0
+          path: out/vcpkg
+      - name: Native platform tools
+        shell: bash
+        run: |
+          set -euxo pipefail
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            sudo apt-get update -qq
+            sudo apt-get install -y patchelf libpulse-dev libasound2-dev libx11-dev libxrandr-dev libxi-dev libxcursor-dev libxinerama-dev libvulkan-dev spirv-tools xorg-dev
+            for package in glslc libshaderc1; do
+              curl -fLsS --retry 3 "https://deb.debian.org/debian/pool/main/s/shaderc/${package}_2023.2-1_amd64.deb" -o /tmp/shaderc.deb
+              dpkg-deb -x /tmp/shaderc.deb "$RUNNER_TEMP/shaderc"
+            done
+            mkdir -p "$RUNNER_TEMP/native-tools"
+            printf '#!/bin/sh\nLD_LIBRARY_PATH="%s/usr/lib/x86_64-linux-gnu" exec "%s/usr/bin/glslc" "$@"\n' "$RUNNER_TEMP/shaderc" "$RUNNER_TEMP/shaderc" > "$RUNNER_TEMP/native-tools/glslc"
+            chmod +x "$RUNNER_TEMP/native-tools/glslc"
+            "$RUNNER_TEMP/native-tools/glslc" --version
+            echo "$RUNNER_TEMP/native-tools" >> "$GITHUB_PATH"
+            git clone --depth 1 --branch v1.4.304 https://github.com/KhronosGroup/Vulkan-Headers.git "$RUNNER_TEMP/vkh"
+            sudo cp -r "$RUNNER_TEMP/vkh/include/"* /usr/local/include/
+            echo "CC=gcc-13" >> "$GITHUB_ENV"
+            echo "CXX=g++-13" >> "$GITHUB_ENV"
+            if ! command -v g++-13; then sudo add-apt-repository -y ppa:ubuntu-toolchain-r/test && sudo apt-get update -qq && sudo apt-get install -y g++-13; fi
+          else
+            xcodebuild -version
+            xcrun --find metal || xcodebuild -downloadComponent MetalToolchain
+          fi
+          out/vcpkg/bootstrap-vcpkg.sh -disableMetrics
+      - uses: actions/cache@v4
+        with:
+          path: ~/.cache/vcpkg/archives
+          key: native-desktop-v1-${{ runner.os }}-${{ hashFiles('vcpkg.json','vcpkg-overlay-ports/**') }}
+      - name: Build and package
+        shell: bash
+        run: |
+          set -euxo pipefail
+          export VCPKG_ROOT="$PWD/out/vcpkg"
+          cmake -S out/devtools/saveConverter/src -B out/converter -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF
+          cmake --build out/converter --target pvz_dat64_converter
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            curl -fLsS --retry 3 https://www.un4seen.com/files/bass24-linux.zip -o /tmp/bass.zip
+            unzip -qo /tmp/bass.zip -d out/bass
+            bass=$(find "$PWD/out/bass" -path '*/x86_64/libbass.so' -print -quit)
+            git clone -q --depth 1 --branch 1.23.1 https://github.com/kcat/openal-soft.git out/openal-src
+            cmake -S out/openal-src -B out/openal-build -G Ninja -DCMAKE_BUILD_TYPE=Release "-DCMAKE_INSTALL_PREFIX=$PWD/out/openal" -DALSOFT_EXAMPLES=OFF -DALSOFT_UTILS=OFF -DALSOFT_TESTS=OFF
+            cmake --build out/openal-build --parallel 3
+            cmake --install out/openal-build
+            platform=("-DOPENAL_LIBRARY=$PWD/out/openal/lib/libopenal.so" "-DOPENAL_INCLUDE_DIR=$PWD/out/openal/include" -DPVZ_WINDOW_BACKEND=X11 -DPVZ_RENDER_BACKEND=VULKAN -DVCPKG_TARGET_TRIPLET=x64-linux)
+          else
+            curl -fLsS --retry 3 https://www.un4seen.com/files/bass24-osx.zip -o /tmp/bass.zip
+            unzip -qo /tmp/bass.zip -d out/bass
+            bass=$(find "$PWD/out/bass" -name libbass.dylib -print -quit)
+            platform=(-DPVZ_WINDOW_BACKEND=COCOA -DPVZ_RENDER_BACKEND=METAL -DCMAKE_OSX_ARCHITECTURES=arm64 -DCMAKE_OSX_DEPLOYMENT_TARGET=14.0 -DVCPKG_TARGET_TRIPLET=arm64-osx -DPVZ_BUILD_FRAMEWORK_VULKAN=OFF -DPVZ_BUILD_FRAMEWORK_D3D12=OFF -DPVZ_BUILD_NATIVE_WINDOW_ADAPTER=OFF)
+          fi
+          test -s "$bass"
+          cmake -S . -B out/game -G Ninja -DCMAKE_BUILD_TYPE=Release -DBUILD_TESTING=OFF -DPVZ_BUILD_LEGACY_GAME=ON -DPVZ_USE_CHECKED_IN_DEFINITIONS=ON "-DPVZ_DAT64_CONVERTER_HOST=$PWD/out/converter/pvz_dat64_converter" "-DPVZ_BASS_LIBRARY=$bass" "-DCMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake" "-DVCPKG_OVERLAY_PORTS=$PWD/vcpkg-overlay-ports" "${platform[@]}"
+          cmake --build out/game --target LawnProject --parallel 3 -- -k 0
+          test -s out/game/Release/pvz_perf
+          if [[ "$RUNNER_OS" == Linux ]]; then
+            cp -L out/openal/lib/libopenal.so.1 out/game/Release/libopenal.so.1
+            cp -L "$($CXX -print-file-name=libstdc++.so.6)" out/game/Release/libstdc++.so.6
+            cp -L "$($CXX -print-file-name=libgcc_s.so.1)" out/game/Release/libgcc_s.so.1
+            cd out/game/Release
+            for file in pvz_perf *.so*; do patchelf --set-rpath '$ORIGIN' "$file"; done
+            patchelf --set-rpath '$ORIGIN/..' data/pvz_dat64_converter
+            for file in pvz_perf data/pvz_dat64_converter *.so*; do
+              ldd "$file" | tee /tmp/native-deps
+              if grep -q 'not found' /tmp/native-deps; then exit 1; fi
+              min=$(readelf --version-info "$file" | grep -oE 'GLIBC_[0-9.]*' | sort -Vu | tail -1)
+              echo "$file max $min"
+              [[ $(printf '%s\n' "$min" GLIBC_2.35 | sort -V | tail -1) == GLIBC_2.35 ]]
+            done
+            cd ../../..
+            (cd out/game/Release && ldd ./pvz_perf && readelf -V ./pvz_perf | grep 'Name: GLIBC_' )
+          else
+            lipo out/game/Release/pvz_perf -verify_arch arm64
+            version=$(sed -n 's/.*mProductVersion = "\([0-9.]*\)";.*/\1/p' pvzPerf/LawnApp.cpp)
+            sh tools/package-macos-game.sh out/game/Release out/packages "$version" without-pak
+          fi
+          tar -czf "$RUNNER_TEMP/desktop.tar.gz" -C out/game/Release .
+      - uses: actions/upload-artifact@v4
+        with:
+          name: native-${{ runner.os }}
+          path: |
+            ${{ runner.temp }}/desktop.tar.gz
+            out/packages/*.zip
+            out/packages/*.dmg

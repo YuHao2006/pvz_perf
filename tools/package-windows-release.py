@@ -1,4 +1,4 @@
-"""Package a Windows release with explicitly supplied generated test saves and effects."""
+"""Package a Windows release with explicitly supplied generated test saves."""
 
 import argparse
 import hashlib
@@ -14,8 +14,6 @@ SAVE_ENTRIES = frozenset({
     "data/users.dat", "data/user1.dat64", "data/game1_58.dat64",
     "retail/users.dat", "retail/user1.dat", "retail/game1_13.dat",
 })
-EFFECT_NOTICES = ("SOURCES.txt", "Magpie-LICENSE.txt", "Anime4K-LICENSE.txt",
-                  "SSimDownscaler-LGPL-3.0.txt")
 
 
 def read_test_saves(path):
@@ -43,24 +41,6 @@ def read_test_saves(path):
     return result
 
 
-def effect_files(directory):
-    if not directory.is_dir():
-        raise FileNotFoundError(directory)
-    for path in sorted(directory.rglob("*")):
-        relative = path.relative_to(directory)
-        if any(part.startswith(".") or part.lower() in {
-                "build", "debug", "cache", "__pycache__", "intermediate", "intermediates"
-        } for part in relative.parts):
-            continue
-        name = path.name.lower()
-        document = (path.name in EFFECT_NOTICES
-                    or name.startswith(("readme", "sources", "license", "copying", "notice"))
-                    or "license" in name)
-        if path.is_file() and (path.suffix.lower() in {".hlsl", ".hlsli", ".dds"}
-                               or (document and path.suffix.lower() in {"", ".md", ".txt", ".rst"})):
-            yield "effects/" + relative.as_posix(), path
-
-
 def package(args):
     root = Path(__file__).resolve().parents[1]
     release = args.release.resolve()
@@ -82,7 +62,7 @@ def package(args):
     for name in ("pvz_perf.exe", "main.pak64", "bass.dll"):
         include(release / name, name)
     if modern:
-        for name in ("dxcompiler.dll", "dxil.dll", "start-lp14.cmd"):
+        for name in (("dxcompiler.dll", "dxil.dll", "start-lp14.cmd") if args.backend == "d3d12" else ("start-lp14.cmd",)):
             include(release / name, name)
     include(release / "data/pvz_dat64_converter.exe", "data/pvz_dat64_converter.exe")
     include(release / "data/pvz_dfu.dll", "data/pvz_dfu.dll")
@@ -101,14 +81,6 @@ def package(args):
                 include(path, path.relative_to(release).as_posix())
     if shader_extension and not any(n.startswith("shaders/") for n in files):
         raise ValueError(f"No compiled {shader_extension} shaders found")
-    for name, path in effect_files(args.effects_directory):
-        include(path, name)
-    for name in ("README.md", *EFFECT_NOTICES,
-                 "Anime4K/Anime4K_Upscale_Denoise_UL.hlsl", "SSimDownscaler.hlsl", "StubDefs.hlsli"):
-        if "effects/" + name not in files:
-            raise ValueError("Missing staged effect or notice: " + name)
-    for name in EFFECT_NOTICES:
-        include(args.effects_directory / name, "licenses/" + name)
     for path in sorted(args.notices.iterdir()):
         if path.is_file():
             destination = "licenses/" + path.name
@@ -149,9 +121,8 @@ def package(args):
         "All DAT64 v3 intermediate inputs and targets are unsupported.\n"
         "The game uses the Microsoft Visual C++ x64 runtime (/MD); the converter is /MT.\n"
         "CRT DLLs are not bundled. Install a compatible Microsoft Visual C++ x64 runtime on the host.\n"
-        + ("HDR is configured in settings.json. Change HDR in Options, then restart the game.\n"
+        + ("HDR defaults to off. To enable it, set hdr to true in settings.json and restart.\n"
            if modern else
-           "Magpie effects and licenses are included for reference. This backend cannot run them.\n"
            "This backend runs in SDR.\n")
         + (f"Requires {api} and the game's bindless feature set.\n\n" if modern else
            f"Requires a vendor graphics driver supporting {api}; Microsoft Basic/GDI OpenGL is insufficient.\n"
@@ -191,8 +162,8 @@ if __name__ == "__main__":
     parser.add_argument("--version", default="v3.1")
     parser.add_argument("--test-saves", type=Path, required=True,
                         help="Generated package-test-saves.py ZIP; both data/ and retail/ are required")
-    parser.add_argument("--effects-directory", type=Path, required=True,
-                        help="Staged Magpie effects, README, SOURCES and licenses")
+    parser.add_argument("--effects-directory", type=Path,
+                        help=argparse.SUPPRESS)
     parser.add_argument("--render-height", type=int, choices=(1200, 2400), default=1200)
     parser.add_argument("--source-commit", help="Source revision; defaults to git HEAD at packaging time")
     parser.add_argument("--cpu-baseline", default="unspecified",

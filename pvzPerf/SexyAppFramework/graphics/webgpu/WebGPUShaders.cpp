@@ -77,7 +77,17 @@ fn texel(p: vec2i, flags: u32, sampling: u32, straight: bool) -> vec4f {
 }
 fn sampleFiltered(in: Vertex, straight: bool) -> vec4f {
     let size = vec2f(textureDimensions(image));
-    return texel(vec2i(floor(in.uv*size)),in.flags,in.sampling,straight);
+    if ((in.sampling & 1u) == 0u) {
+        return texel(vec2i(floor(in.uv*size)),in.flags,in.sampling,straight);
+    }
+    let pos = in.uv * size - vec2f(0.5);
+    let base = vec2i(floor(pos));
+    let weight = fract(pos);
+    let top = mix(texel(base,in.flags,in.sampling,straight),
+                  texel(base+vec2i(1,0),in.flags,in.sampling,straight),weight.x);
+    let bottom = mix(texel(base+vec2i(0,1),in.flags,in.sampling,straight),
+                     texel(base+vec2i(1,1),in.flags,in.sampling,straight),weight.x);
+    return mix(top,bottom,weight.y);
 }
 @fragment fn coverage(in: Vertex) -> @location(0) vec4f {
     let source=textureSample(image,imageSampler,in.uv);
@@ -97,20 +107,21 @@ fn sampleFiltered(in: Vertex, straight: bool) -> vec4f {
     let sand=(in.flags&0x88000000u)==0x08000000u;
     if(premultipliedOutput){
         if(kind!=0u||sand){
-            if(sand){source=sampleFiltered(in,independent);}
+            if(sand || (in.sampling & 1u)!=0u){source=sampleFiltered(in,independent);}
             else{source=filtered(source,in.flags,independent);}
             if(independent){source=vec4f(source.rgb*source.a,source.a);}
         }else if(independent){
-            if(generated){
-                var rgb=vec3f(0);if(source.a>0.0){rgb=source.rgb/source.a;}source=vec4f(rgb,source.a);
-            }
+            if(generated){source=sampleFiltered(in,true);}
             source=vec4f(source.rgb*source.a,source.a);
-        }else if(!generated){source=vec4f(source.rgb*source.a,source.a);}
+        }else if(!generated){
+            if((in.sampling & 1u)!=0u){source=sampleFiltered(in,false);}
+            else{source=vec4f(source.rgb*source.a,source.a);}
+        }
         return vec4f(source.rgb*in.color.rgb*in.color.a,source.a*in.color.a);
     }
     let filteredPremult=!generated&&kind!=0u&&!independent;
     if(kind!=0u||sand){
-        if(sand){source=sampleFiltered(in,!generated&&!filteredPremult);}
+        if(sand || (in.sampling & 1u)!=0u){source=sampleFiltered(in,!generated&&!filteredPremult);}
         else{source=filtered(source,in.flags,!generated&&!filteredPremult);}
     }
     if(generated||filteredPremult){

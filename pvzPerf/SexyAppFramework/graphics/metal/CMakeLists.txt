@@ -3,13 +3,24 @@ if(CMAKE_SOURCE_DIR STREQUAL CMAKE_CURRENT_SOURCE_DIR)
     project(SexyFrameworkMetal LANGUAGES CXX OBJCXX)
 endif()
 if(NOT APPLE)
-    message(FATAL_ERROR "The native Metal renderer requires macOS")
+    message(FATAL_ERROR "The native Metal renderer requires an Apple platform")
 endif()
 enable_language(OBJCXX)
 find_program(PVZ_XCRUN xcrun REQUIRED)
 find_library(PVZ_METAL_FRAMEWORK Metal REQUIRED)
 find_library(PVZ_QUARTZCORE_FRAMEWORK QuartzCore REQUIRED)
 find_library(PVZ_FOUNDATION_FRAMEWORK Foundation REQUIRED)
+set(metalSdk macosx)
+set(metalTargetArgs)
+if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+    set(metalSdk iphoneos)
+    set(metalTarget "air64-apple-ios${CMAKE_OSX_DEPLOYMENT_TARGET}")
+    if(CMAKE_OSX_SYSROOT MATCHES "[Ss]imulator")
+        set(metalSdk iphonesimulator)
+        string(APPEND metalTarget "-simulator")
+    endif()
+    set(metalTargetArgs -target "${metalTarget}")
+endif()
 set(shaderDirectory "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 # Both animation definitions and particles use the resident GPU arenas.
 # Particle rendering has no CPU path, so this kernel is required on Metal.
@@ -23,14 +34,14 @@ foreach(source IN LISTS metalSources)
     set(object "${shaderDirectory}/${name}.air")
     add_custom_command(OUTPUT "${object}"
         COMMAND "${CMAKE_COMMAND}" -E make_directory "${shaderDirectory}"
-        COMMAND "${PVZ_XCRUN}" -sdk macosx metal -std=metal3.0 -fno-fast-math
+        COMMAND "${PVZ_XCRUN}" -sdk "${metalSdk}" metal ${metalTargetArgs} -std=metal3.0 -fno-fast-math
             -c "${source}" -o "${object}"
         DEPENDS "${source}" "${CMAKE_CURRENT_SOURCE_DIR}/MetalShaderTypes.h"
         VERBATIM)
     list(APPEND metalObjects "${object}")
 endforeach()
 add_custom_command(OUTPUT "${shaderDirectory}/game.metallib"
-    COMMAND "${PVZ_XCRUN}" -sdk macosx metallib ${metalObjects}
+    COMMAND "${PVZ_XCRUN}" -sdk "${metalSdk}" metallib ${metalObjects}
         -o "${shaderDirectory}/game.metallib"
     DEPENDS ${metalObjects}
     VERBATIM)
@@ -46,19 +57,4 @@ target_include_directories(sexy_metal PUBLIC
 target_link_libraries(sexy_metal PRIVATE
     "${PVZ_METAL_FRAMEWORK}" "${PVZ_QUARTZCORE_FRAMEWORK}" "${PVZ_FOUNDATION_FRAMEWORK}")
 add_dependencies(sexy_metal sexy_metal_shaders)
-add_library(sexy_metal_effects STATIC
-    ../../effect/ScaleEffectCompiler.cpp
-    ../../effect/ScaleEffectSizing.cpp
-    MetalScalePipeline.mm)
-target_compile_features(sexy_metal_effects PUBLIC cxx_std_23)
-target_compile_definitions(sexy_metal_effects PUBLIC SEXY_SCALE_EFFECT_AUTHORING=1)
-target_compile_options(sexy_metal_effects PRIVATE
-    "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
-target_link_libraries(sexy_metal_effects PRIVATE PVZ::MacShaderCompiler
-    "${PVZ_METAL_FRAMEWORK}" "${PVZ_FOUNDATION_FRAMEWORK}")
-target_link_libraries(sexy_metal PRIVATE sexy_metal_effects)
-target_include_directories(sexy_metal_effects PUBLIC
-    "${CMAKE_CURRENT_SOURCE_DIR}/../../effect")
-set_target_properties(sexy_metal sexy_metal_effects PROPERTIES
-    OBJCXX_STANDARD 23 OBJCXX_STANDARD_REQUIRED YES OBJCXX_EXTENSIONS NO
-    INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)
+set_target_properties(sexy_metal PROPERTIES INTERPROCEDURAL_OPTIMIZATION_RELEASE TRUE)

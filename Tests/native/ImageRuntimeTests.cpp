@@ -47,6 +47,7 @@
 #include "Lawn/Widget/SeedChooserScreen.h"
 #include "Lawn/Widget/ImitaterDialog.h"
 #include "Lawn/Widget/NewOptionsDialog.h"
+#include "widget/Checkbox.h"
 #include "Lawn/Widget/ZombatarItems.h"
 #include "Lawn/Widget/TitleScreen.h"
 #include "Lawn/Widget/CreditScreen.h"
@@ -125,6 +126,7 @@ bool gGardenRulesOnly=false;
 bool gIntroRulesOnly=false;
 bool gUiRulesOnly=false;
 bool gDialogBakingOnly=false;
+bool gAwardLightOnly=false, gColumnSquashOnly=false;
 bool gMenuTransitionOnly=false;
 bool gAwardRulesOnly=false;
 bool gAlmanacClockOnly=false;
@@ -2493,6 +2495,19 @@ void MinigameBehaviorRuntime(TestApp& app)
     profile.mLevel=11;profile.mCoins=0;profile.mFinishedAdventure=0;
     app.mPlayerInfo=&profile;app.mZenGarden=&garden;app.mGameMode=GAMEMODE_ADVENTURE;app.mGameScene=SCENE_PLAYING;
     Board board(&app);
+    {
+        const bool originalLayout = app.mLandscapeUI;
+        NewOptionsDialog options(&app, false);
+        options.Resize(0,0,400,450);
+        Require(options.mLandscapeCheckbox->mY < options.mFullscreenCheckbox->mY,
+            "Landscape UI must be above fullscreen");
+        const bool fullscreen = options.mFullscreenCheckbox->mChecked;
+        options.mLandscapeCheckbox->SetChecked(!originalLayout,true);
+        Require(app.mLandscapeUI != originalLayout && options.mFullscreenCheckbox->mChecked == fullscreen,
+            "Landscape preference changed fullscreen or failed to update");
+        options.mLandscapeCheckbox->SetChecked(originalLayout,true);
+        std::cout << "PASS independent landscape and fullscreen options\n";
+    }
     board.mLevel=11;board.mCurrentWave=6;board.mNumWaves=20;board.mTotalSpawnedWaves=0;
     board.mBackground=BACKGROUND_3_POOL;
     for(int row=0;row<MAX_GRID_SIZE_Y;++row)
@@ -2559,7 +2574,10 @@ void MinigameBehaviorRuntime(TestApp& app)
     const int localX=board.GridToPixelX(2,1)+60, localY=board.GridToPixelY(2,1)+60;
     int expectedX=-1,expectedY=-1;
     Require(challenge.BeghouledTwistSquareFromMouse(localX,localY,expectedX,expectedY),"Twist fixture missed its local square");
-    for(const int offset:{0,-220,100})
+    auto& twistRender = *app.mDDInterface->mRenderInterface;
+    std::unique_ptr<Image> twistTarget(twistRender.CreateRenderImage(800,600));
+    std::vector<unsigned> referenceArrow;
+    for(const int offset:{0,-80,100})
     {
         board.Move(offset,17);
         app.mWidgetManager->mLastMouseX=localX+offset;
@@ -2567,6 +2585,33 @@ void MinigameBehaviorRuntime(TestApp& app)
         challenge.UpdateBeghouled();
         Require(challenge.mChallengeGridX==expectedX && challenge.mChallengeGridY==expectedY,
             "Twist hover used global mouse coordinates instead of Board-local coordinates");
+        {
+            GpuImageDrawScope destination(twistRender,twistTarget.get());
+            Graphics g(twistTarget.get());
+            g.mColor=Color::Black;
+            g.FillRect(0,0,800,600);
+            g.Translate(offset,offset/2);
+            challenge.DrawBeghouled(&g);
+        }
+        twistRender.Flush();
+        const auto pixels=twistRender.ReadImagePixels(*twistTarget);
+        if (!offset) {
+            referenceArrow=pixels.pixels;
+            Require(std::any_of(referenceArrow.begin(),referenceArrow.end(),
+                [](unsigned p){return (p&0xffffff)!=0;}),"Twist arrow was invisible");
+        } else {
+            // Subpixel interpolation can round an edge channel differently
+            // after translation. Compare the visible arrow silhouette.
+            int changed=0, visible=0;
+            for (int y=80;y<500;++y) for (int x=100;x<680;++x) {
+                const bool expected=(referenceArrow[y*800+x]&0xffffff)!=0;
+                const bool actual=(pixels.pixels[(y+offset/2)*800+x+offset]&0xffffff)!=0;
+                changed += expected != actual;
+                visible += expected;
+            }
+            Require(visible>0 && changed<=visible/100,
+                "Twist rotation overlay did not follow the graphics translation");
+        }
     }
     board.mPlants.DataArrayFreeAll();board.RebuildPlantCellBucket();board.Move(0,0);
     std::cout<<"PASS actual Beghouled Twist hover: matching click coordinates across negative/positive Board offsets\n";
@@ -8716,6 +8761,174 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
         CheckBattleCardAtlas(app,[](LawnApp& a){static_cast<TestApp&>(a).ProcessSafeDeleteList();});
         FreeSceneAtlases();return;
     }
+#if defined(PVZ_GPU_VULKAN)
+    if (gColumnSquashOnly) {
+        app.mGameMode = GAMEMODE_MINIGAME_COLUMN;
+        app.mGameScene = SCENE_PLAYING;
+        auto& render = *app.mDDInterface->mRenderInterface;
+        Image* screen = app.mDDInterface->mScreenImage;
+        app.mGpuContext->resolution.height = 2400;
+        render.mRenderer->ResizeScene(screen->mWidth, screen->mHeight);
+        cache.mPlantImages[SEED_FLOWERPOT] = cache.MakeCachedPlantFrame(SEED_FLOWERPOT, VARIATION_NORMAL);
+        for (int round = 1; round <= 2; ++round) {
+            Board board(&app);
+            board.mBackground = BACKGROUND_5_ROOF;
+            board.mSeedBank->mNumPackets = 0;
+            Plant* squash[5]{};
+            Zombie* giants[5]{};
+            for (int row = 0; row < 5; ++row) {
+                board.mPlantRow[row] = PLANTROW_NORMAL;
+                board.NewPlant(3, row, SEED_FLOWERPOT, SEED_NONE);
+                squash[row] = board.NewPlant(3, row, SEED_SQUASH, SEED_NONE);
+                giants[row] = board.AddZombieInRow(ZOMBIE_GARGANTUAR, row, 0);
+                giants[row]->mX = squash[row]->mX + 40;
+                giants[row]->mRootBindingGeneration = 0;
+            }
+            using Clock = std::chrono::steady_clock;
+            auto ms = [](auto a, auto b) { return std::chrono::duration<double, std::milli>(b-a).count(); };
+            constexpr int64_t step = 10'000'000;
+            std::ofstream trace("column-squash-" + std::to_string(round) + ".csv");
+            trace << "tick,state,rising,hits,update_ms,draw_ms,wait_ms\n";
+            bool synchronized = false;
+            int hits = 0;
+            for (int tick = 1; tick <= 270; ++tick) {
+                auto start = Clock::now();
+                Sexy::ApplySimulationStep(step);
+                int64_t now = tick * step;
+                board.mLevelTimeNs = now;
+                effects.UpdateAt(now, now, now, step, step, step);
+                board.UpdateGameObjects(step);
+                auto updated = Clock::now();
+                int rising = 0;
+                hits = 0;
+                for (int row = 0; row < 5; ++row) {
+                    rising += squash[row]->mState == STATE_SQUASH_RISING;
+                    hits += giants[row]->mBodyHealth < giants[row]->mBodyMaxHealth;
+                }
+                synchronized |= rising == 5;
+                render.SelectDrawSurface(screen);
+                Graphics g(screen);
+                board.DrawGameObjects(&g);
+                render.Flush();
+                auto submitted = Clock::now();
+                app.mGpuContext->WaitForFrame();
+                trace << tick << ',' << int(squash[0]->mState) << ',' << rising << ',' << hits << ','
+                      << ms(start, updated) << ',' << ms(updated, submitted) << ',' << ms(submitted, Clock::now()) << '\n';
+            }
+            Require(synchronized && hits == 5, "Five synchronized squashes must rise and damage five giants");
+            effects.EffectSystemFreeAll();
+        }
+        return;
+    }
+    if (gAwardLightOnly) {
+        auto& render = *app.mDDInterface->mRenderInterface;
+        auto& gpu = *render.mRenderer;
+        Image* screen = app.mDDInterface->mScreenImage;
+        const int width = screen->mWidth, height = screen->mHeight;
+        VkPhysicalDeviceProperties device{};
+        vkGetPhysicalDeviceProperties(VulkanContext::physicalDevice, &device);
+        std::cout << "Award GPU: " << device.deviceName << "\n";
+        for (const int64_t now : {1850000000LL, 3500000000LL}) {
+            auto* lights = effects.mParticleHolder->AllocParticleSystem(
+                width * .45f, height * .48f, 0, PARTICLE_SEED_PACKET_PICKUP, 0);
+            constexpr int64_t step = 10000000;
+            for (int64_t t = step; t <= now; t += step) lights->Update(step, t, t - step);
+            int particles = 0;
+            for (int i = 0; i < lights->EmitterRosterCount(); ++i)
+                particles += lights->EmitterRosterEmitterAt(i)->ParticleRosterCount();
+            auto draw = [&](bool optimized) {
+                app.mGpuContext->WaitForFrame();
+                render.SelectDrawSurface(screen);
+                Graphics g(screen);
+                g.mColor = Color(24, 70, 32);
+                g.FillRect(0, 0, width, height);
+                if (optimized) lights->Draw(&g, now);
+                else for (int i = 0; i < lights->EmitterRosterCount(); ++i)
+                    lights->EmitterRosterEmitterAt(i)->Draw(&g, now);
+                render.Flush();
+            };
+            for (const int resolution : {600, 1200, 2400}) {
+                app.mGpuContext->resolution.height = resolution;
+                gpu.ResizeScene(width, height);
+                std::vector<unsigned> reference;
+                for (bool optimized : {false, true}) {
+                    draw(optimized);
+                    app.mGpuContext->WaitForFrame();
+                    const auto start = std::chrono::steady_clock::now();
+                    for (int frame = 0; frame < 16; ++frame) draw(optimized);
+                    app.mGpuContext->WaitForFrame();
+                    const auto ms = std::chrono::duration<double, std::milli>(
+                        std::chrono::steady_clock::now() - start).count() / 16;
+                    auto pixels = gpu.ReadScenePixels();
+                    const auto extent = gpu.SceneTargetExtent();
+                    std::cout << "Award " << extent.width << "x" << extent.height << " at " << now / 1000000 << "ms particles=" << particles
+                        << (optimized ? " optimized " : " original ") << ms << " ms/frame\n";
+                    if (!optimized) reference = std::move(pixels);
+                    else {
+                        Require(pixels.size() == reference.size(), "Award target size changed");
+                        Require(std::count(pixels.begin(), pixels.end(), pixels.front()) < int(pixels.size() * .99),
+                            "Award frame has no visible light");
+                        uint64_t total = 0, conspicuous = 0;
+                        for (size_t i = 0; i < pixels.size(); ++i) {
+                            int worst = 0;
+                            for (int shift : {0, 8, 16}) {
+                                const int error = abs(int((pixels[i] >> shift) & 255) -
+                                                      int((reference[i] >> shift) & 255));
+                                total += error;
+                                worst = std::max(worst, error);
+                            }
+                            conspicuous += worst > 12;
+                        }
+                        const double mean = double(total) / (3 * pixels.size());
+                        std::cout << "RGB mean error " << mean << ", pixels over 12: "
+                            << conspicuous << "/" << pixels.size() << "\n";
+                        Require(resolution != 600 || total == 0, "600p award path changed");
+                        Require(mean < 2 && conspicuous < pixels.size() / 50, "Award light composition diverged");
+                        Require(bool(effects.mParticleHolder->mData->mAwardLightBuffer) == (resolution > 600),
+                            "Wrong award light resolution path");
+                    }
+                }
+            }
+            lights->ParticleSystemDie();
+            Require(!effects.mParticleHolder->mData->mAwardLightBuffer, "Award retained its light buffer after death");
+        }
+        // Exercise the pickup attachment and board fade through their ordinary entry points.
+        app.mGameMode = GAMEMODE_ADVENTURE;
+        app.mGameScene = SCENE_PLAYING;
+        Board board(&app);
+        board.mLevel = 4;
+        board.mLevelTimeNs = 0;
+        auto* reward = board.AddCoin(360, 280, COIN_AWARD_MONEY_BAG, COIN_MOTION_FROM_SKY);
+        reward->Collect();
+        Require(reward->mIsBeingCollected && board.mBoardFadeOutCounter > 0,
+            "Collecting the reward did not start the board fade");
+        constexpr int64_t step = 10'000'000;
+        Sexy::ApplySimulationStep(step);
+        for (int frame = 1; frame <= 650 && !board.mLevelComplete; ++frame) {
+            board.mLevelTimeNs = frame * step;
+            effects.mReanimationHolder->mVisualTimeNs = board.mLevelTimeNs;
+            effects.mReanimationHolder->mBattleTimeNs = board.mLevelTimeNs;
+            reward->Update();
+            if (frame == 185) {
+                app.mGpuContext->WaitForFrame();
+                render.SelectDrawSurface(screen);
+                Graphics g(screen);
+                reward->Draw(&g);
+                board.DrawFadeOut(&g);
+                render.Flush();
+                Require(effects.mParticleHolder->mData->mAwardLightBuffer != nullptr,
+                    "Collected reward did not use the light pass");
+            }
+            board.UpdateLevelEndSequence();
+        }
+        Require(board.mLevelComplete, "Board fade did not reach completion");
+        reward->Die();
+        effects.ProcessDeleteQueue();
+        Require(!effects.mParticleHolder->mData->mAwardLightBuffer, "Reward teardown retained its buffer");
+        std::cout << "PASS real award collection, attached light draw, board fade completion and release\n";
+        return;
+    }
+#endif
     if(gVramOnly) {
 #if defined(PVZ_GPU_VULKAN)
         auto& render=*app.mDDInterface->mRenderInterface;
@@ -10130,7 +10343,9 @@ int main(int argc, char** argv)
 {
     gCardAtlasOnly=argc==3 && std::string_view(argv[2])=="card-atlas";
     gStepEventsOnly=argc==3 && std::string_view(argv[2])=="step-events";
-    gVramOnly=argc==3 && std::string_view(argv[2])=="gpu-memory";
+    gAwardLightOnly=argc==3 && std::string_view(argv[2])=="award-light";
+    gColumnSquashOnly=argc==3 && std::string_view(argv[2])=="column-squash";
+    gVramOnly=gColumnSquashOnly || gAwardLightOnly || (argc==3 && std::string_view(argv[2])=="gpu-memory");
     gPlantCatalogOnly=argc==3 && std::string_view(argv[2])=="plant-attacks";
     gIce3Only=argc==3 && std::string_view(argv[2])=="ice3";
     gZombieCatalogOnly=gIce3Only || (argc==3 && std::string_view(argv[2])=="zombie-behavior");
@@ -10199,7 +10414,7 @@ int main(int argc, char** argv)
             ReanimationAppearanceDefinitions(app);
             return 0;
         }
-        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly) {
+        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly&&!gMinigameRulesOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)

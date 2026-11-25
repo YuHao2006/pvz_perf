@@ -317,6 +317,10 @@ void TodParticleSystem::ParticleSystemDie()
 			mParticleHolder->mEmitters.DataArrayFree(aEmitter);
 		}
 	}
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL)
+    if (mEffectType == ParticleEffect::PARTICLE_SEED_PACKET_PICKUP && mParticleHolder)
+        mParticleHolder->mData->mAwardLightBuffer.reset();
+#endif
 	EmitterRosterClear();
 	mDead = true;
 }
@@ -1393,9 +1397,75 @@ void TodParticleEmitter::DrawParticle(Graphics* g, TodParticle* theParticle, Tod
 	}
 }
 
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL)
+namespace
+{
+// Accumulate consecutive additive lights at logical resolution. The flashes
+// use normal blending and must retain their position in the painter's order.
+void DrawAwardLights(TodParticleSystem& system, Graphics* g, std::int64_t nowNs)
+{
+    auto& render = *g->mDestImage->mRenderOwner;
+    const int width = g->mDestImage->mWidth, height = g->mDestImage->mHeight;
+    const Rect bounds(0, 0, width, height);
+    const int count = system.EmitterRosterCount();
+    for (int i = 0; i < count;)
+    {
+        const int first = i;
+        int particles = 0;
+        while (i < count)
+        {
+            auto* emitter = system.EmitterRosterEmitterAt(i);
+            if (!TestBit(emitter->mEmitterDef->mParticleFlags, int(ParticleFlags::PARTICLE_ADDITIVE)))
+                break;
+            particles += emitter->ParticleRosterCount();
+            ++i;
+        }
+        if (first == i)
+        {
+            system.EmitterRosterEmitterAt(i++)->Draw(g, nowNs);
+            continue;
+        }
+        if (particles < 8)
+        {
+            for (int j = first; j < i; ++j)
+                system.EmitterRosterEmitterAt(j)->Draw(g, nowNs);
+            continue;
+        }
+
+        render.SelectDrawSurface(g->mDestImage);
+        if (!render.PreDraw()) return;
+        auto& buffer = system.mParticleHolder->mData->mAwardLightBuffer;
+        if (!buffer || buffer->mWidth != width || buffer->mHeight != height)
+            buffer.reset(render.CreateRenderImage(width, height));
+        {
+            GpuImageDrawScope target(render, buffer.get());
+            Graphics light(*g);
+            light.mDestImage = buffer.get();
+            light.mClipRect = bounds;
+            render.FillRect(bounds, Color(0, 0, 0, 0), 2);
+            for (int j = first; j < i; ++j)
+                system.EmitterRosterEmitterAt(j)->Draw(&light, nowNs);
+        }
+        render.StretchBlt(buffer.get(), bounds, bounds, &g->mClipRect, Color::White,
+            Graphics::DRAWMODE_ADDITIVE, false, false);
+    }
+}
+}
+#endif
+
 //0x518370
 void TodParticleSystem::Draw(Graphics* g, std::int64_t nowNs)
 {
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_WEBGPU) || defined(PVZ_GPU_WEBGL)
+    if (mEffectType == ParticleEffect::PARTICLE_SEED_PACKET_PICKUP &&
+        g->mDestImage == gSexyAppBase->mDDInterface->mScreenImage &&
+        g->mDestImage->mRenderOwner->mTransformStack.empty() &&
+        gSexyAppBase->mGpuContext->resolution.height >= 1200)
+    {
+        DrawAwardLights(*this, g, nowNs);
+        return;
+    }
+#endif
 	const int aDrawCount = EmitterRosterCount();
 	for (int i = 0; i < aDrawCount; i++)
 		EmitterRosterEmitterAt(i)->Draw(g, nowNs);

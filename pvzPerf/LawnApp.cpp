@@ -168,7 +168,7 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.1.5";
+    mProductVersion = "4.1.6";
 	std::string aTitleName = "pvz_perf HD";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
@@ -1234,7 +1234,7 @@ bool LawnApp::KillNewOptionsDialog()
 	if (aNewOptionsDialog == nullptr)
 		return false;
 
-#if defined(__ANDROID__)
+#if defined(__ANDROID__) || defined(PVZ_IOS)
     const bool wantWindowed = mIsWindowed;
 #else
 	const bool wantWindowed = !aNewOptionsDialog->mFullscreenCheckbox->mChecked;

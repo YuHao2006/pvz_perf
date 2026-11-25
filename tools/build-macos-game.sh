@@ -20,6 +20,7 @@ cmake -S "$project_root" -B "$build" -G Ninja \
     "-DCMAKE_TOOLCHAIN_FILE=$vcpkg_root/scripts/buildsystems/vcpkg.cmake" \
     "-DVCPKG_INSTALLED_DIR=$project_root/out/macos-deps/vcpkg_installed" \
     "-DVCPKG_OVERLAY_PORTS=$project_root/vcpkg-overlay-ports" \
+    "-DPVZ_DEVTOOLS_BIN_DIR=${PVZ_DEVTOOLS_BIN_DIR:-$project_root/tools/bin/Darwin-arm64}" \
     -DVCPKG_TARGET_TRIPLET=arm64-osx \
     -DVCPKG_HOST_TRIPLET=arm64-osx \
     "-DVCPKG_MANIFEST_INSTALL=${VCPKG_MANIFEST_INSTALL:-ON}" \
@@ -37,7 +38,9 @@ cmake -S "$project_root" -B "$build" -G Ninja \
     -DBUILD_TESTING=ON \
     "-DPVZ_BASS_LIBRARY=$bass_library"
 cmake --build "$build" --config Release \
-    --target reanimc pvz_dat64_converter pvz_audio_voice_tests LawnProject \
+    --target pvz_audio_voice_tests LawnProject \
     --parallel "${CMAKE_BUILD_PARALLEL_LEVEL:-3}"
 ctest --test-dir "$build" -R '^pvz_audio_voice_lifetime$' --output-on-failure
-printf 'Experimental macOS game: %s/Release/pvz_perf\n' "$build"
+version=$(sed -n 's/.*mProductVersion = "\([0-9.]*\)";.*/\1/p' "$project_root/pvzPerf/LawnApp.cpp")
+test -n "$version"
+sh "$project_root/tools/package-macos-game.sh" "$build/Release" "$build/packages" "$version"

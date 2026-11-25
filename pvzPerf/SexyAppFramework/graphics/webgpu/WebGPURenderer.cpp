@@ -310,7 +310,7 @@ struct WebGPURenderer::Impl
                 pass.SetPipeline(pipeline);
                 previousPipeline = pipeline.Get();
             }
-            const auto &group = SourceGroup(batch.texture, batch.sampler & 2U);
+            const auto &group = SourceGroup(batch.texture, batch.sampler);
             if (group.Get() != previousGroup)
             {
                 pass.SetBindGroup(1, group);
@@ -658,7 +658,7 @@ void WebGPURenderer::PrepareLoadingPipelines()
     for (unsigned int i = 0; i < 4; i++)
     {
         SamplerDescriptor desc;
-        desc.minFilter = desc.magFilter = i == 1 ? FilterMode::Linear : FilterMode::Nearest;
+        desc.minFilter = desc.magFilter = (i & 1U) ? FilterMode::Linear : FilterMode::Nearest;
         desc.addressModeU = desc.addressModeV = (i & 2) ? AddressMode::Repeat : AddressMode::ClampToEdge;
         s.samplers[i] = d.CreateSampler(&desc);
     }

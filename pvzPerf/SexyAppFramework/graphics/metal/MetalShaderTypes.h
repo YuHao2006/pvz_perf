@@ -3,7 +3,7 @@
 // Shared by Objective-C++ and hand-written MSL. Scalar arrays deliberately avoid
 // float4/int4 alignment changing the existing packed CPU upload layouts.
 // Scene: vertices buffer(0), constants buffer(1), fragment images buffer(2).
-// Fragment samplers 0..3: nearest/clamp, linear/clamp, nearest/repeat, linear/repeat.
+// Fragment samplers 0..3: linear/clamp, linear/clamp, linear/repeat, linear/repeat.
 // images argument IDs 0..4095 require argument-buffer Tier 2. The encoder must
 // declare indirect texture residency with useResource(s) before drawing.
 // Compile with fast math disabled to retain byte-quantization boundaries.

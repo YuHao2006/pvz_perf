@@ -15,6 +15,9 @@
 #include "widget/WidgetLifetimeHold.h"
 #include "Sexy.TodLib/TodStringFile.h"
 #include "pvz/BuildConfig.h"
+#ifdef __EMSCRIPTEN__
+#include <emscripten.h>
+#endif
 
 using namespace Sexy;
 
@@ -61,17 +64,13 @@ NewOptionsDialog::NewOptionsDialog(LawnApp* theApp, bool theFromGameSelector) :
     mSfxVolumeSlider = new Slider(IMAGE_OPTIONS_SLIDERSLOT, IMAGE_OPTIONS_SLIDERKNOB2, NewOptionsDialog::NewOptionsDialog_SoundVolume, this);
     mSfxVolumeSlider->SetValue(theApp->mSfxVolume / 0.65);
 
-#if defined(__ANDROID__)
-    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, theApp->mLandscapeUI);
+#if defined(__ANDROID__) || defined(PVZ_IOS)
+    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog_Fullscreen, this, true);
+    mFullscreenCheckbox->mDisabled = true;
 #else
-    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
+    mFullscreenCheckbox = MakeNewCheckbox(NewOptionsDialog_Fullscreen, this, !theApp->mIsWindowed);
 #endif
-    constexpr bool canConfigureHdr = BuildConfig::Windows == BuildConfig::WindowsApi::Win10 &&
-        (BuildConfig::Graphics == BuildConfig::GraphicsApi::Vulkan ||
-            BuildConfig::Graphics == BuildConfig::GraphicsApi::D3d12);
-    mHdrCheckbox = MakeNewCheckbox(NewOptionsDialog::NewOptionsDialog_Hdr, this,
-        canConfigureHdr && theApp->mHdrRequested);
-    mHdrCheckbox->mDisabled = !canConfigureHdr;
+    mLandscapeCheckbox = MakeNewCheckbox(NewOptionsDialog_Landscape, this, theApp->mLandscapeUI);
 
     if (mFromGameSelector)
     {
@@ -113,7 +112,7 @@ NewOptionsDialog::~NewOptionsDialog()
     delete mMusicVolumeSlider;
     delete mSfxVolumeSlider;
     delete mFullscreenCheckbox;
-    delete mHdrCheckbox;
+    delete mLandscapeCheckbox;
     delete mAlmanacButton;
     delete mRestartButton;
     delete mBackToMainButton;
@@ -137,7 +136,7 @@ void NewOptionsDialog::AddedToManager(Sexy::WidgetManager* theWidgetManager)
     AddWidget(mMusicVolumeSlider);
     AddWidget(mSfxVolumeSlider);
     AddWidget(mFullscreenCheckbox);
-    AddWidget(mHdrCheckbox);
+    AddWidget(mLandscapeCheckbox);
     AddWidget(mBackToGameButton);
 }
 
@@ -149,7 +148,7 @@ void NewOptionsDialog::RemovedFromManager(Sexy::WidgetManager* theWidgetManager)
     RemoveWidget(mMusicVolumeSlider);
     RemoveWidget(mSfxVolumeSlider);
     RemoveWidget(mFullscreenCheckbox);
-    RemoveWidget(mHdrCheckbox);
+    RemoveWidget(mLandscapeCheckbox);
     RemoveWidget(mBackToMainButton);
     RemoveWidget(mBackToGameButton);
     RemoveWidget(mRestartButton);
@@ -167,10 +166,10 @@ void NewOptionsDialog::Resize(int theX, int theY, int theWidth, int theHeight)
     mBackToMainButton->Resize(mRestartButton->mX, mRestartButton->mY + 43, 209, 46);
     mBackToGameButton->Resize(30, 381, mBackToGameButton->mWidth, mBackToGameButton->mHeight);
 
-    mHdrCheckbox->Resize(283, 175, 46, 45);
+    mLandscapeCheckbox->Resize(283, 175, 46, 45);
     if (mFromGameSelector)
     {
-        mHdrCheckbox->mY += 15;
+        mLandscapeCheckbox->mY += 15;
         mMusicVolumeSlider->mY += 5;
         mSfxVolumeSlider->mY += 10;
         mFullscreenCheckbox->mY += 20;
@@ -200,9 +199,9 @@ void NewOptionsDialog::Draw(Sexy::Graphics* g)
 
     TodDrawString(g, ("Music"), 186, 140 + aMusicOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     TodDrawString(g, ("Sound FX"), 186, 167 + aSfxOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
-    TodDrawString(g, mHdrCheckbox->mDisabled ? "HDR" : "HDR (Restart)", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, mHdrCheckbox->mDisabled ? Color(150, 150, 150) : aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+    TodDrawString(g, "Landscape UI (Restart)", 274, 197 + (mFromGameSelector ? 15 : 0), FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
     if (mFullscreenCheckbox->mVisible)
-        TodDrawString(g, BuildConfig::System==BuildConfig::TargetSystem::Android ? "Landscape UI (Restart)" : gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
+        TodDrawString(g, gStr.OPTIONS_DISPLAY_MODE, 274, 229 + aFullScreenOffset, FONT_DWARVENTODCRAFT18, aTextColor, DrawStringJustification::DS_ALIGN_RIGHT);
 }
 
 //0x45CF50
@@ -231,16 +230,15 @@ void NewOptionsDialog::CheckboxChecked(int theId, bool checked)
 {
     switch (theId)
     {
-    case NewOptionsDialog::NewOptionsDialog_Hdr:
-        if (!mHdrCheckbox->mDisabled) {
-            mApp->mHdrRequested = checked;
-            mApp->WriteToRegistry();
-        }
+    case NewOptionsDialog::NewOptionsDialog_Landscape:
+        mApp->mLandscapeUI = checked;
+#ifdef __EMSCRIPTEN__
+        EM_ASM({ Module.pvzSetLandscapePreference?.(Boolean($0)); }, checked);
+#endif
+        mApp->WriteToRegistry();
         break;
     case NewOptionsDialog::NewOptionsDialog_Fullscreen:
-#if defined(__ANDROID__)
-        mApp->mLandscapeUI = checked;
-        mApp->WriteToRegistry();
+#if defined(__ANDROID__) || defined(PVZ_IOS)
         break;
 #else
         if (!checked && mApp->mForceFullscreen)

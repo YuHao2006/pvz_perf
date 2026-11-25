@@ -213,9 +213,6 @@ static float4 pvz_filter_source(texture2d<float> image, unsigned int slot,
     unsigned int samplerIndex, float2 uv, bool straight)
 {
     const int2 extent = int2(image.get_width(), image.get_height());
-    if ((samplerIndex & 1u) == 0u)
-        return pvz_filter_texel(image, int2(floor(uv * float2(extent))), extent,
-            slot, samplerIndex, straight);
     const float2 position = uv * float2(extent) - float2(0.5f);
     const int2 base = int2(floor(position));
     const float2 weight = fract(position);
@@ -254,38 +251,29 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
             float4(source.rgb * source.a, source.a) : source;
     }
     const bool generated = (slot & 0x80000000u) != 0u;
-    const bool linearFiltering = (samplerIndex & 1u) != 0u;
     if (scene.premultipliedOutput != 0u)
     {
         const bool independent = (slot & 0x40000000u) != 0u;
         if (kind != 0u || sandStraight)
         {
-            source = (linearFiltering || sandStraight) ?
-                pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, independent) :
-                pvz_filter_sample(source, slot, independent);
+            source = pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, independent);
             if (independent)
                 source.rgb *= source.a;
         }
         else if (independent)
         {
             if (generated)
-                source = linearFiltering ?
-                    pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, true) :
-                    float4(source.a > 0.0f ? source.rgb / source.a : float3(0.0f), source.a);
+                source = pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, true);
             source.rgb *= source.a;
         }
-        else if (!generated && linearFiltering)
-            source = pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, false);
         else if (!generated)
-            source.rgb *= source.a;
+            source = pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, false);
         return float4(source.rgb * input.color.rgb * input.color.a, source.a * input.color.a);
     }
     const bool filteredPremult = !generated && kind != 0u &&
         (slot & 0x40000000u) == 0u;
     if (kind != 0u || sandStraight)
-        source = (linearFiltering || sandStraight) ?
-            pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, !generated && !filteredPremult) :
-            pvz_filter_sample(source, slot, !generated && !filteredPremult);
+        source = pvz_filter_source(resources.images[index], slot, samplerIndex, input.uv, !generated && !filteredPremult);
     if (generated || filteredPremult)
         source.rgb = source.a > 0.0f ? source.rgb / source.a : float3(0.0f);
     return source * input.color;

@@ -48,3 +48,25 @@ export function provideBilibiliToy(){
   document.head.appendChild(script);
  });
 }
+
+// Toy app chrome belongs to the host. Serialize entry/exit so a late entry
+// response cannot leave the launch page in immersive mode after the game exits.
+let containerUpdate=Promise.resolve(),restoreChrome=false;
+export function setToyPlaying(playing,provideToy=provideBilibiliToy){
+ containerUpdate=containerUpdate.then(async()=>{
+  if(!playing&&!restoreChrome)return;
+  const toy=await provideToy();
+  if(typeof toy?.setContainerMode!=='function')return;
+  if(playing){
+   if(restoreChrome)return;
+   const state=await toy.getContainerState();
+   if(state?.immersive===true)return;
+   await toy.setContainerMode({immersive:true});
+   restoreChrome=true;
+  }else{
+   await toy.setContainerMode({immersive:false});
+   restoreChrome=false;
+  }
+ }).catch(()=>{}); // Standalone browsers and older app hosts do not implement this API.
+ return containerUpdate;
+}

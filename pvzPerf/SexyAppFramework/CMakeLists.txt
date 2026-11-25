@@ -331,12 +331,19 @@ if(APPLE)
     if(NOT macAppSources)
         message(FATAL_ERROR "The Cocoa platform sources must be integrated before building LawnProject")
     endif()
+    if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
+        list(FILTER macAppSources EXCLUDE REGEX "/(MacWindow|MacSystem)\\.mm$")
+        list(APPEND macAppSources "${CMAKE_CURRENT_SOURCE_DIR}/platform/ios/IosHost.mm")
+        set(appleUIFrameworks UIKit UniformTypeIdentifiers AVFoundation)
+    else()
+        set(appleUIFrameworks Cocoa AudioUnit)
+    endif()
     target_sources(${PROJECT_NAME} PRIVATE ${macAppSources})
     target_compile_options(${PROJECT_NAME} PRIVATE "$<$<COMPILE_LANGUAGE:OBJCXX>:-fobjc-arc>")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         SEXY_WINDOW_COCOA=1 SEXY_RENDER_GPU=1 PVZ_GPU_METAL=1
         "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
-    foreach(framework IN ITEMS Cocoa CoreGraphics Metal QuartzCore AudioUnit AudioToolbox CoreAudio)
+    foreach(framework IN ITEMS ${appleUIFrameworks} CoreGraphics Metal QuartzCore AudioToolbox CoreAudio)
         find_library(PVZ_MAC_${framework} NAMES ${framework} REQUIRED)
         target_link_libraries(${PROJECT_NAME} PRIVATE "${PVZ_MAC_${framework}}")
     endforeach()
@@ -451,18 +458,20 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
     file(GENERATE OUTPUT "$<TARGET_FILE_DIR:${PROJECT_NAME}>/start.cmd"
         INPUT "${CMAKE_SOURCE_DIR}/CMake/StartWslGame.cmd"
         NEWLINE_STYLE CRLF)
-    add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
-            "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
-            "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
-        VERBATIM)
-    include(GNUInstallDirs)
-    install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/applications" COMPONENT branding)
-    install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
-        DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
-        COMPONENT branding)
+    if(NOT PVZ_USE_CHECKED_IN_DEFINITIONS)
+        add_custom_command(TARGET ${PROJECT_NAME} POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
+                "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
+                "$<TARGET_FILE_DIR:${PROJECT_NAME}>"
+            VERBATIM)
+        include(GNUInstallDirs)
+        install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.desktop"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/applications" COMPONENT branding)
+        install(FILES "${CMAKE_SOURCE_DIR}/assets/branding/pvz_perf.png"
+            DESTINATION "${CMAKE_INSTALL_DATADIR}/icons/hicolor/256x256/apps"
+            COMPONENT branding)
+    endif()
 endif()
 
 ################################################################################

@@ -1,5 +1,6 @@
 #pragma once
 #include "SexyAppFramework/platform/NativeHandles.h"
+#include "SexyAppFramework/graphics/RenderResolution.h"
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -17,6 +18,7 @@ public:
     MetalContext(MetalContext&&) = delete;
     MetalContext& operator=(MetalContext&&) = delete;
 
+    RenderResolution resolution;
     uint32_t width = 0, height = 0;
     bool surfaceSuspended = false;
     uint64_t swapchainGeneration = 0;

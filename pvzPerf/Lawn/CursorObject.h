@@ -2,6 +2,8 @@
 #include "misc/TimeCounter.h"
 #include "GameObject.h"
 
+class Reanimation;
+
 class CursorObject : public GameObject
 {
 public:
@@ -18,7 +20,7 @@ public:
 
 public:
 	CursorObject();
-    void CreateHammerAnimation();
+    Reanimation& EnsureHammerAnimation();
 
 	void					Update();
     void Update(int x, int y); // Board-local pointer coordinates; also used by touch.

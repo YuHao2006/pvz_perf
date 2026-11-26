@@ -14,7 +14,7 @@
 <div class="launch-row top-actions"><div class="primary-actions"><button id="start" type="submit" disabled>开始游戏</button><a id="high-resolution" class="secondary" target="_blank" rel="noopener noreferrer" hidden>高清版</a></div><div class="load-state"><span id="status" role="status" aria-live="polite">正在加载程序和资源…</span><progress id="progress"></progress></div><strong id="cloud-upload-warning" role="status" aria-live="assertive" hidden>正在上传云端，请勿关闭或刷新页面。</strong><strong id="quit-save-warning">请通过游戏菜单选择 Quit 正常退出，并等待云端上传完成。不要直接杀进程、关闭或刷新页面，否则用户进度可能无法同步。</strong><strong id="level-save-cloud-warning">注意：关卡 DAT64 存档不会上传云端。关卡中的阵容、波次和未完成进度仅保存在当前浏览器，请在“高级选项”中导出备份。</strong><small id="cloud-status" role="status"></small><small id="lineup-cloud-status" role="status"></small></div>
 <div class="settings">
 
-<label class="field"><span>目标帧率</span><input id="target-fps" type="number" min="30" max="1000000000" step="1" value="100" required><small id="target-fps-info">最低 30 FPS；实际绘制受浏览器与屏幕限制。</small></label>
+<label class="field"><span>目标帧率</span><input id="target-fps" type="number" min="10" max="1000000000" step="1" value="100" required><small id="target-fps-info">最低 10 FPS；实际绘制受浏览器与屏幕限制。</small></label>
 
 <label class="check"><input id="auto-fps" type="checkbox" checked><span>自动跟随浏览器刷新节奏<small id="refresh-info">正在估算…</small></span></label>
 

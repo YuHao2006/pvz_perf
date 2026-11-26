@@ -37,7 +37,12 @@ unsigned long long TakeSimulationStep(unsigned long long& pendingNs,
     const auto quantumNs = requestedNs;
     phaseNs %= quantumNs;
     if (pendingNs < quantumNs - phaseNs) return 0;
+#ifdef SEXY_WINDOW_BROWSER
+    // Browser callbacks can be suspended for seconds. Discard excess game time on resume.
+    const auto stepNs = std::min(pendingNs, FrameTiming::MaxSimulationStepNs);
+#else
     const auto stepNs = pendingNs;
+#endif
     pendingNs = 0;
     phaseNs = (phaseNs + stepNs % quantumNs) % quantumNs;
     return stepNs;

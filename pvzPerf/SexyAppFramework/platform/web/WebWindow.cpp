@@ -29,7 +29,7 @@ extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_focus(int focused) {
     SDL_PushEvent(&event);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_refresh_rate(unsigned int rate) {
-    pendingRefreshRate = std::clamp(rate, 30U, 1000U);
+    pendingRefreshRate = std::clamp(rate, FrameTiming::MinimumTargetFps, 1000U);
 }
 extern "C" EMSCRIPTEN_KEEPALIVE void pvz_web_resize(int width, int height) {
     // DOM events only publish dimensions. Apply them in the normal event phase,

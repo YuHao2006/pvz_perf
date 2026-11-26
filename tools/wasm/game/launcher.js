@@ -94,7 +94,7 @@ let runtimeReady=false,running=false,formEdited=false,refreshRate=60,resizeSched
 function readPreferences(){try{return JSON.parse(localStorage.getItem(storageKey)||'{}')||{}}catch{return {}}}
 function normalizePreferences(value){
  const finite=(x,fallback)=>Number.isFinite(Number(x))?Number(x):fallback;
- return {targetFps:Math.max(30,Math.min(1000000000,Math.round(finite(value.targetFps,mobileUA?60:100)))),
+ return {targetFps:Math.max(10,Math.min(1000000000,Math.round(finite(value.targetFps,mobileUA?60:100)))),
   autoDetectFrameRate:!fixedMobileRate&&(typeof value.autoDetectFrameRate==='boolean'?value.autoDetectFrameRate:!mobileUA),landscapeUI:value.landscapeUI===true,showFps:value.showFps===true,unlockAllLevels:value.unlockAllLevels===true,
   sfxVolume:Math.max(0,Math.min(100,Math.round(finite(value.sfxVolume,100)))),
   musicVolume:Math.max(0,Math.min(100,Math.round(finite(value.musicVolume,100)))),
@@ -137,7 +137,7 @@ function showError(message){
 function updateControls(){
  autoFps.disabled=fixedMobileRate;fps.disabled=autoFps.checked;
  document.getElementById('volume-value').value=volume.value;document.getElementById('music-value').value=musicVolume.value;
- document.getElementById('target-fps-info').textContent=mobileUA?'手机建议值：60 FPS，可手动调整；实际绘制受浏览器与屏幕限制。':'最低 30 FPS；实际绘制受浏览器与屏幕限制。';
+ document.getElementById('target-fps-info').textContent=mobileUA?'手机建议值：60 FPS，可手动调整；实际绘制受浏览器与屏幕限制。':'最低 10 FPS；实际绘制受浏览器与屏幕限制。';
  document.getElementById('refresh-info').textContent=fixedMobileRate?'手机 B 站环境不检测刷新率；默认目标为 60 FPS。':`浏览器绘制节奏约 ${refreshRate} Hz（估算），自动跟随开启时在运行中更新。`;
  scheduleResize();
 }
@@ -252,7 +252,7 @@ window.visualViewport?.addEventListener('resize',scheduleResize);
 window.visualViewport?.addEventListener('scroll',scheduleResize);
 async function measureRefreshRate(){
  const samples=[];let previous;for(let i=0;i<25;i++)await new Promise(resolve=>requestAnimationFrame(time=>{if(previous!==undefined){const dt=time-previous;if(dt>=1&&dt<=100)samples.push(dt)}previous=time;resolve()}));
- if(samples.length>=12){samples.sort((a,b)=>a-b);const raw=1000/samples[Math.floor(samples.length/2)];const rates=[30,48,50,60,72,75,90,100,120,144,165,180,200,240,360,480];const nearest=rates.reduce((a,b)=>Math.abs(b-raw)<Math.abs(a-raw)?b:a);refreshRate=Math.max(30,Math.round(Math.abs(nearest-raw)/raw<.035?nearest:raw))}
+ if(samples.length>=12){samples.sort((a,b)=>a-b);const raw=1000/samples[Math.floor(samples.length/2)];const rates=[10,15,20,24,30,48,50,60,72,75,90,100,120,144,165,180,200,240,360,480];const nearest=rates.reduce((a,b)=>Math.abs(b-raw)<Math.abs(a-raw)?b:a);refreshRate=Math.max(10,Math.round(Math.abs(nearest-raw)/raw<.035?nearest:raw))}
  Module.pvzRefreshRate=refreshRate;updateControls();return refreshRate;
 }
 function loadNativeSettings(){try{return JSON.parse(Module.FS.readFile(saveRoot+'/settings.json',{encoding:'utf8'}))||{}}catch{return {}}}

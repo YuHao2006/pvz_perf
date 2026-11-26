@@ -378,6 +378,18 @@ function startupDeadline(promise,phase,milliseconds=30000){
  setStartupPhase(phase);let timer;
  return Promise.race([promise,new Promise((_,reject)=>{timer=setTimeout(()=>reject(Error(phase+'超时，请重新加载；若持续失败，请复制错误信息反馈。')),milliseconds)})]).finally(()=>clearTimeout(timer));
 }
+async function setBrowserFullscreen(enabled){
+ // A host may reject, throw synchronously, or implement a return value without a Promise.
+ try{
+  if(enabled){
+   if(!document.fullscreenElement&&document.fullscreenEnabled!==false)
+    await document.documentElement.requestFullscreen?.();
+  }else if(document.fullscreenElement){
+   await document.exitFullscreen?.();
+  }
+ }catch(error){console.warn('浏览器未允许全屏',error)}
+}
+document.addEventListener('fullscreenchange',scheduleSettledResize);
 async function returnToSettings(){
  diagnostics?.quit();
  Module.pvzMusic.close();Module.pvzMusic.context?.suspend().catch(console.warn);
@@ -385,7 +397,7 @@ async function returnToSettings(){
  document.getElementById('game-fps').hidden=true;
  Module.pvzTextInput.hide();cancelPointers();
  try{await syncSaves();document.getElementById('local-save-status').textContent='本地存档已写入浏览器'}catch(error){document.getElementById('local-save-status').textContent='本地保存失败：'+error.message+'。请重试保存或导出 DAT64，不要刷新页面。'}
- if(document.fullscreenElement)await document.exitFullscreen().catch(console.warn);
+ void setBrowserFullscreen(false);
  running=false;if(!webConfig.bypassBilibiliChecks)void import('./rewards.js').then(m=>m.setToyPlaying(false));document.body.classList.remove('playing','portrait-game');stage.classList.remove('running');
  await synchronizeProgress();
 
@@ -404,7 +416,7 @@ var Module={canvas,pvzSetLandscapePreference(enabled){
  try{localStorage.setItem(storageKey,JSON.stringify(preferences()))}catch{}
 },locateFile:name=>'./'+name,pvzRefreshRate:60,pvzMobileInput:mobileInput,
  pvzStartupPhase:setStartupPhase,
- pvzSetFullscreen:enabled=>{if(enabled&&!document.documentElement.requestFullscreen){console.warn('当前浏览器不支持 Fullscreen API');return}const change=enabled?document.documentElement.requestFullscreen():document.fullscreenElement?document.exitFullscreen():Promise.resolve();change.catch(error=>console.warn('浏览器未允许全屏',error))},
+ pvzSetFullscreen:enabled=>{void setBrowserFullscreen(enabled)},
  pvzOnQuit:()=>returnToSettings().catch(showError),
  print:message=>console.log(message),printErr:message=>console.error(message),onAbort:showError,pvzOnError:showError,
  monitorRunDependencies:left=>{statusText.textContent=left?'正在准备资源与存档…':'加载完成';startupPhase=statusText.textContent},
@@ -425,9 +437,9 @@ form.addEventListener('submit',async event=>{
  }
  diagnostics?.start();
  try{
-  const full=p.fullscreen&&document.documentElement.requestFullscreen?document.documentElement.requestFullscreen().catch(error=>console.warn('浏览器未允许全屏',error)):Promise.resolve();
+  if(p.fullscreen)void setBrowserFullscreen(true);
   const audio=Module.pvzMusic.unlock();
-  await startupDeadline(Promise.all([audio,textInputReady,full]),'初始化音频与输入');
+  await startupDeadline(Promise.all([audio,textInputReady]),'初始化音频与输入');
   document.documentElement.classList.add('playing');document.body.classList.add('playing');window.scrollTo(0,0);fitCanvas();
   await synchronizeProgress();
   await startupDeadline(saveSettings(p),'保存启动设置');

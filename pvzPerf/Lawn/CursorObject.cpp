@@ -25,14 +25,17 @@ CursorObject::CursorObject()
     mReanimCursorID = ReanimationID::REANIMATIONID_NULL;
     mHammerDownCounter = 0;
     
-    if (mApp->IsWhackAZombieLevel()) CreateHammerAnimation();
+    if (mApp->IsWhackAZombieLevel()) EnsureHammerAnimation();
 
     mWidth = 80;
     mHeight = 80;
 }
 
-void CursorObject::CreateHammerAnimation()
+Reanimation& CursorObject::EnsureHammerAnimation()
 {
+    if (auto* animation = mApp->ReanimationTryToGet(mReanimCursorID))
+        return *animation;
+
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_HAMMER, true);
     Reanimation* animation = mApp->AddReanimation(-25.0f, 16.0f, 0,
         ReanimationType::REANIM_HAMMER, mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs,
@@ -41,6 +44,7 @@ void CursorObject::CreateHammerAnimation()
     animation->PlayReanim(ReanimTrackId::anim_whack_zombie, ReanimLoopType::REANIM_PLAY_ONCE_AND_HOLD, 0, 24.0f);
     animation->Seek(1000);
     mReanimCursorID = mApp->ReanimationGetID(animation);
+    return *animation;
 }
 
 //0x438780
@@ -63,7 +67,9 @@ void CursorObject::Update(int x, int y)
         return;
     }
 
-    Reanimation* aCursorReanim = mApp->ReanimationTryToGet(mReanimCursorID);
+    // Canceling a held card can restore the hammer during an active touch.
+    Reanimation* aCursorReanim = mCursorType == CURSOR_TYPE_HAMMER
+        ? &EnsureHammerAnimation() : mApp->ReanimationTryToGet(mReanimCursorID);
     if (aCursorReanim)
     {
         aCursorReanim->UpdateAt(mApp->mEffectSystem->mReanimationHolder->mVisualTimeNs, Sexy::gUpdateIntervalNs);
@@ -160,7 +166,8 @@ void CursorObject::Draw(Graphics* g, int x, int y)
     // 原 case CURSOR_TYPE_HAMMER
     [](CursorObject& c, Graphics* g)
     {
-    c.mApp->ReanimationGet(c.mReanimCursorID)->Draw(g);
+    if (auto* animation = c.mApp->ReanimationTryToGet(c.mReanimCursorID))
+        animation->Draw(g);
     },  // 7 CURSOR_TYPE_HAMMER
     // 原 case CURSOR_TYPE_COBCANNON_TARGET
     [](CursorObject& c, Graphics* g)

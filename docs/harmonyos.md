@@ -2,6 +2,8 @@
 
 鸿蒙使用根目录 CMake 的 `LawnProject` 和共享 Vulkan 目标。N-API 入口、窗口输入和 OHAudio 位于 `pvzPerf/SexyAppFramework/platform/harmonyos/`。ArkTS 界面在 `harmonyos/`，打包时将原生输出和本地素材放入临时 DevEco 工程。
 
+**发行范围**　鸿蒙正式发行仅提供普通版 600p。高清分支保留 1200p 和 2400p 的鸿蒙本地构建支持，供有兼容设备的用户自行构建和测试。
+
 ## 原生库和着色器
 
 需要 DevEco Studio 的 HarmonyOS Native SDK、CMake 3.25 或更新版、Ninja、Vulkan SDK 的 `glslc` 和 `spirv-val`。用同一个 Native SDK 分别构建 x86_64 和 arm64-v8a，依赖按 ABI 构建。构建参数如下。

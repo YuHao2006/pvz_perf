@@ -38,7 +38,7 @@ public:
     GLTexture* CopyTextureRegion(GLTexture* source, int x, int y, int width, int height);
     GLTexture* ProcessImage(GLTexture* source, const GpuImageProcessing& processing);
     GLTexture* ComposeAlphaRaw(GLTexture* base, GLTexture* alpha,
-        unsigned int color, bool colorOnly);
+        unsigned int color, bool colorOnly, bool fixTransparentEdges = false);
     GLTexture* AdoptComposedTexture(GLTexture* texture);
     GLTexture* ComposeAlpha(GLTexture* base, GLTexture* alpha,
         unsigned int color, bool colorOnly);

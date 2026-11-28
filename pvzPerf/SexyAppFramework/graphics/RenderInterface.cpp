@@ -342,13 +342,21 @@ GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& imag
 	{
 		GpuTexture* base=TrackCompositionScratch(renderer,scratch,
 			renderer.CreateRawTexture(image.mWidth,image.mHeight,bits,image.mWidth*4));
-		if(image.mColorFromAlpha)
+		const auto compose = [&](GpuTexture* mask, unsigned int color, bool colorOnly,
+			[[maybe_unused]] bool finalLayer) {
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL)
+			return renderer.ComposeAlphaRaw(base,mask,color,colorOnly,fixTransparentEdges && finalLayer);
+#else
+			return renderer.ComposeAlphaRaw(base,mask,color,colorOnly);
+#endif
+		};
+		if (image.mColorFromAlpha)
 			base=TrackCompositionScratch(renderer,scratch,
-				renderer.ComposeAlphaRaw(base,base,*image.mColorFromAlpha,true));
-		for(const auto* layer:image.mAlphaLayers) {
-			GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer,scratch);
+				compose(base,*image.mColorFromAlpha,true,image.mAlphaLayers.empty()));
+		for (size_t i=0; i<image.mAlphaLayers.size(); ++i) {
+			auto* alphaMask=UploadDecodedRaw(renderer,*image.mAlphaLayers[i],scratch);
 			base=TrackCompositionScratch(renderer,scratch,
-				renderer.ComposeAlphaRaw(base,alphaMask,0,false));
+				compose(alphaMask,0,false,i+1==image.mAlphaLayers.size()));
 		}
 		// GL/DX9 adoption destroys the other raw handles on success; the
 		// non-owning list must never be visited again after this returns.
@@ -641,7 +649,7 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 	image->mTexture=texture;
 	image->mRenderTarget=false;
 	image->mRenderOwner=this;
-#if defined(PVZ_GPU_METAL)
+#if defined(PVZ_GPU_METAL) || defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL)
 	if (fixTransparentEdges)
 		image->mGpuSamplingFlags &= ~GpuVertex::kAlphaEdgeFilter;
 #endif

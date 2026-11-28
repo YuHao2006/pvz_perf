@@ -2,9 +2,7 @@
 
 基于 [PvZ-Portable](https://github.com/wszqkzqk/PvZ-Portable) 修改，继续优化《植物大战僵尸》的 CPU 热路径、资源装载、图形提交和跨平台输入。游戏行为以零售 1073 为主要核对依据。
 
-**普通版主线源码版本为 v4.0.7。** 主菜单 Options、Help、Quit 使用确认后的六张普通态和悬停态字图。
-
-**上一版下载：[v4.0.6](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.6)。**
+**当前发行版 [v4.0.10](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.10)。**
 
 ## 图片素材与版权说明
 
@@ -12,7 +10,7 @@
 
 资源定义、图集布局缓存，以及资源编译器生成的 C++／头文件继续保留。重新编译资源时，需要自行提供有权使用的本地素材；直接克隆仓库并不包含完整游戏图片。详细规则见[仓库素材管理规则](docs/repository-artwork-policy.md)。
 
-这项清理针对 Git 源码仓库及其历史。GitHub Release 提供程序、调试符号、完美存档和无资源网页包。网盘完整运行包包含游戏资源。
+这项清理针对 Git 源码仓库及其历史。GitHub Release 提供无内置游戏资源的程序包。网盘完整运行包包含游戏资源。
 
 上述清理用于减少素材分发风险，不表示已取得游戏素材授权，也不保证排除所有版权争议；游戏名称、角色及素材的权利仍归各自权利人。
 
@@ -20,17 +18,19 @@
 
 ## 下载与运行
 
-| 发行包 | 系统和图形要求 |
+| 平台 | 运行方式 |
 | --- | --- |
-| `x64-win10-vulkan1.3` | Windows 10 x64、Vulkan 1.3 及所需 descriptor indexing 能力 |
-| `x64-win7-openGL3.3` | Windows 7 x64、OpenGL 3.3 |
-| `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
-| `arm64-android7-vulkan1.0` | Android 7、Armv8-A、Vulkan 1.0；传统纹理绑定 |
-| `wasm-web` | 包含 wasm64 WebGPU、wasm64 WebGL 2 和 wasm32 WebGL 2 三个运行时，按浏览器能力选择 |
+| Windows | x64／ARM64，Vulkan 1.3。ARM64 需要 Windows 11。双击 `start.cmd`。 x64 可用 `start-OpenGL.cmd` 启动 Windows 7 OpenGL 3.3 兼容版。 |
+| Linux | x64／ARM64，Vulkan 1.3、X11。从目录内运行 `sh start.sh`。 |
+| macOS | Apple Silicon，使用 Metal。解压后打开 `pvz_perf.app`。 |
+| iOS | ARM64，使用 Metal。IPA 需适合目标设备的侧载签名。 |
+| Android | 一个 APK 同时支持 `arm64-v8a` 和 `x86_64`。启动器可选择 Vulkan 1.0 或 1.3，并提供存档工具。 |
+| 鸿蒙 600p | 单 HAP，包含 `arm64-v8a` 和 `x86_64`。GitHub 提供未签名测试包。PC 直接启动，手机和平板使用启动器及存档工具。 |
+| 网页版 | 600p。按浏览器能力使用 wasm64 WebGPU、wasm64 WebGL 2 或 wasm32 WebGL 2。 |
 
-下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。网盘 Windows ZIP 完整解压到可写目录后运行 `pvz_perf.exe`，需要兼容的 VC++ x64 运行库。GitHub Windows ZIP 需在 EXE 旁放入同版本的 `main.pak64`。Android 请使用网盘的完整 APK 直接安装。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
+[GitHub v4.0.10 下载](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.0.10)。GitHub 附件需要配套资源。Windows 按包内说明将 `main.pak64` 放入 `resources/600p/`，Linux 同样使用 `resources/600p/`。macOS 将资源放在 `pvz_perf.app` 旁，移动端按启动界面导入。网页版将同版 `pvz-perf.data` 放在 `index.html` 旁。
 
-GitHub 附件另提供完美用户档、无尽基准和两种 Windows 构建的 PDB。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
+Windows 和 Linux 的网盘版提供可直接使用的裸文件夹。网页版在 Bilibili Toy 提供 600p。
 
 **v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.0.6.md)。
 
@@ -39,7 +39,7 @@ GitHub 附件另提供完美用户档、无尽基准和两种 Windows 构建的 
 - Windows：程序目录的 `data/`。
 - Android：通常为 `Android/media/com.openpvz.perf/`，无需额外存储权限。
 - 网页：当前网站来源的 IndexedDB，游戏虚拟目录 `/persist/development-v331/`；不是系统文件夹。设置页部分选项和自定义阵型列表另存 localStorage。不同浏览器／网站不共享，清除网站数据会删除进度；可在“自定义无尽”中导出 DAT64。
-- Linux 源码目标：遵循 `PVZ_APPDATA_DIR` 或 XDG 数据目录，详见[资产与运行边界](docs/ASSETS.md)。
+- Linux：遵循 `PVZ_APPDATA_DIR` 或 XDG 数据目录，详见[资产与运行边界](docs/ASSETS.md)。
 
 `settings.json` 首次创建时自动跟随刷新率；Windows 默认桌面 UI，Android 默认横板 UI。已有配置保留，目标帧率最低 30。横板 UI 在画幅不足时回退桌面布局。音量按滑条值保存并钳制在 0～100。退出时通过游戏菜单保存，安装覆盖或强退不会替未保存的关卡回写进度。
 
@@ -71,8 +71,8 @@ Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。�
 | Windows DX12 | `tools/build-d3d12-game.ps1` |
 | Windows 7 DX9 | `tools/build-win7-opengl.ps1 -RenderBackend D3D9` |
 | Android | NDK 原生构建后用 `tools/build-android-apk.ps1 -BuildDirectory <tree> -Sign` 打包，详见[Android](docs/android-port.md) |
-| Linux Vulkan 源码目标 | `sh tools/build-linux-game.sh x11` 或 `wayland`；不是本次四个发行附件之一 |
-| 网页版（WebGPU／WebGL 2） | `tools/build-web-toy.ps1`；[构建与本地运行说明](tools/wasm/README.md)，v3.3.3 提供双后端 ZIP |
+| Linux Vulkan 源码目标 | `sh tools/build-linux-game.sh x11` 或 `wayland` |
+| 网页版（WebGPU／WebGL 2） | `tools/build-web-toy.ps1`；[构建与本地运行说明](tools/wasm/README.md) |
 
 Android 不需要安装 Android Studio；可使用命令行 SDK、NDK、JDK、CMake 和 Ninja。兼容包使用 `PVZ_VULKAN_LEGACY=ON`，必须配套 Android API 24 原生构建；现代包与兼容包不得交叉混用 `.so`、PAK 和 shader。
 

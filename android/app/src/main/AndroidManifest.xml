@@ -4,8 +4,23 @@
             android:resizeableActivity="true"
             android:enableOnBackInvokedCallback="false"
             android:windowSoftInputMode="stateHidden|adjustNothing"
-            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden" android:exported="true">
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden" android:exported="false"
+            android:process=":game_vk13">
             <meta-data android:name="android.app.lib_name" android:value="pvz_perf" />
+        </activity>
+        <activity android:name=".CompatibilityActivity" android:enabled="${pvzVulkanCompatibility}" android:screenOrientation="sensorLandscape"
+            android:resizeableActivity="true"
+            android:enableOnBackInvokedCallback="false"
+            android:windowSoftInputMode="stateHidden|adjustNothing"
+            android:configChanges="orientation|screenSize|smallestScreenSize|screenLayout|keyboard|keyboardHidden" android:exported="false"
+            android:process=":game_vk10">
+            <meta-data android:name="android.app.lib_name" android:value="pvz_perf_vk10" />
+        </activity>
+        <provider android:name=".SaveShareProvider" android:authorities="${applicationId}.save-share"
+            android:exported="false" android:grantUriPermissions="true" />
+        <activity android:name=".SaveEditorActivity" android:exported="false"
+            android:configChanges="orientation|screenSize|smallestScreenSize|keyboard|keyboardHidden" />
+        <activity android:name=".LauncherActivity" android:resizeableActivity="true" android:exported="true">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />

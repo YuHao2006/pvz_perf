@@ -38,7 +38,8 @@ class WebGPURenderer final
     void SetRenderImage(WebGPUTexture *texture);
     WebGPUTexture *CopyTextureRegion(WebGPUTexture *source, int x, int y, int width, int height);
     WebGPUTexture *ProcessImage(WebGPUTexture *source, const GpuImageProcessing &processing);
-    WebGPUTexture *ComposeAlphaRaw(WebGPUTexture *base, WebGPUTexture *alpha, unsigned int color, bool colorOnly);
+    WebGPUTexture *ComposeAlphaRaw(WebGPUTexture *base, WebGPUTexture *alpha, unsigned int color,
+                                   bool colorOnly, bool fixTransparentEdges = false);
     WebGPUTexture *AdoptComposedTexture(WebGPUTexture *texture);
     WebGPUTexture *ComposeAlpha(WebGPUTexture *base, WebGPUTexture *alpha, unsigned int color, bool colorOnly);
     void RenderFontAtlas(WebGPUTexture *target, WebGPUTexture *source, std::span<const GpuFontGlyph> glyphs,

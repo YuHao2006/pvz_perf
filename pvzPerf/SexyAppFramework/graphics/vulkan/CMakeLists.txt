@@ -121,10 +121,9 @@ endif()
 add_custom_target(sexy_vulkan_shaders DEPENDS ${nativeShaders})
 add_dependencies(sexy_vulkan sexy_vulkan_shaders)
 
-# User-authored scaling effects compile once while loading configuration.
-# Android ships precompiled SPIR-V and has no DXC host dependency.
+# DXC is optional for offline scaling effect authoring.
 if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-find_package(directx-dxc CONFIG REQUIRED GLOBAL)
+    find_package(directx-dxc CONFIG QUIET GLOBAL)
 endif()
 add_library(sexy_vulkan_effects STATIC
     VulkanEffectPrograms.cpp
@@ -142,7 +141,7 @@ elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
 endif()
 
 # Authoring parsers/DXC are available only in the explicitly offline asset tool.
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
+if(TARGET Microsoft::DirectXShaderCompiler)
 add_executable(compile_numeric_scale EXCLUDE_FROM_ALL
     "${CMAKE_SOURCE_DIR}/tools/compile-numeric-scale.cpp"
     ../../effect/ScaleEffectCompiler.cpp)
@@ -198,10 +197,12 @@ if(BUILD_TESTING AND NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
     target_link_libraries(sexy_vulkan_scale_compile_tests PRIVATE sexy_vulkan_effects)
     target_compile_definitions(sexy_vulkan_scale_compile_tests PRIVATE
         PVZ_EFFECTS_DIR="${PVZ_TEST_EFFECTS_DIR}")
-    add_custom_command(TARGET sexy_vulkan_scale_compile_tests POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" -E copy_if_different
-            "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
-            "$<TARGET_FILE_DIR:sexy_vulkan_scale_compile_tests>")
+    if(TARGET Microsoft::DirectXShaderCompiler)
+        add_custom_command(TARGET sexy_vulkan_scale_compile_tests POST_BUILD
+            COMMAND "${CMAKE_COMMAND}" -E copy_if_different
+                "$<TARGET_FILE:Microsoft::DirectXShaderCompiler>"
+                "$<TARGET_FILE_DIR:sexy_vulkan_scale_compile_tests>")
+    endif()
     add_test(NAME sexy_vulkan_scale_compile COMMAND sexy_vulkan_scale_compile_tests)
     set_tests_properties(sexy_vulkan_scale_compile PROPERTIES TIMEOUT 180)
     if(WIN32)

@@ -56,6 +56,11 @@ int main()
         const auto composedPixels = renderer.ReadTexturePixels(composed).pixels;
         Check(composedPixels[0] == 0x10ff0000 && composedPixels[1] == 0x8000ff00 && composedPixels[2] == 0xff0000ff,
               "alpha composition");
+        auto *edgeMask = renderer.CreateRawTexture(2, 2, mask, 8);
+        auto *repaired = renderer.AdoptComposedTexture(renderer.ComposeAlphaRaw(source, edgeMask, 0, false, true));
+        Check(renderer.ReadTexturePixels(repaired).pixels ==
+                  std::vector<unsigned int>{0x10ff0000, 0x8000ff00, 0xff0000ff, 0x007f7f00},
+              "alpha composition with transparent edge repair");
         auto *target = renderer.CreateRenderImage(8, 8);
         const unsigned int red = 0xffff0000, blue = 0xff0000ff;
         auto *r = renderer.CreateTexture(1, 1, &red, 4);
@@ -144,7 +149,7 @@ int main()
             {
                 Module.pvzGpuProbe = {};
                 Module.pvzGpuProbe.ok = true;
-                Module.pvzGpuProbe.checks = 9;
+                Module.pvzGpuProbe.checks = 10;
                 Module.pvzGpuProbe.dualSource = !!$0;
                 Module.pvzGpuProbe.framesInFlight = 2;
             },

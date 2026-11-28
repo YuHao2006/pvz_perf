@@ -96,7 +96,7 @@ public:
         std::span<const VulkanFontGlyph> glyphs,uint32_t samplingFlags,bool forceWhite);
     VulkanTexture* CreateRawTexture(int width,int height,const void* bgra,int pitch);
     VulkanTexture* ComposeAlphaRaw(VulkanTexture* base,VulkanTexture* alpha,
-        uint32_t color,bool colorOnly);
+        uint32_t color,bool colorOnly, bool fixTransparentEdges = false);
     VulkanTexture* AdoptComposedTexture(VulkanTexture* composed);
     VulkanTexture* ComposeAlpha(VulkanTexture* base,VulkanTexture* alpha,
         uint32_t color,bool colorOnly);

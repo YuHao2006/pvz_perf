@@ -6570,6 +6570,73 @@ void LateLifecycleRuntime(TestApp& app)
     std::cout<<"PASS actual late lifecycle: eight Boss damage/death routes and eight real Garden sale confirmations\n";
 }
 
+void WhackGraveBusterTouchRuntime(TestApp& app)
+{
+    PlayerInfo profile; ZenGarden garden; PoolEffect pool;
+    profile.mId=54; profile.mLevel=15;
+    pool.PoolEffectInitialize();
+    auto* oldPlayer=app.mPlayerInfo; auto* oldGarden=app.mZenGarden; auto* oldPool=app.mPoolEffect;
+    struct Restore { TestApp& app; PlayerInfo* player; ZenGarden* garden; PoolEffect* pool;
+        ~Restore(){ app.KillBoard(); app.ProcessSafeDeleteList(); app.mPlayerInfo=player; app.mZenGarden=garden; app.mPoolEffect=pool; }
+    } restore{app,oldPlayer,oldGarden,oldPool};
+    app.mPlayerInfo=&profile; app.mZenGarden=&garden; app.mPoolEffect=&pool;
+    auto& clocks=*app.mEffectSystem->mReanimationHolder;
+    clocks.mVisualTimeNs=123'456'789'000; clocks.mBattleTimeNs=0;
+    Sexy::gLegacyTickPhaseNs=0; Sexy::ApplySimulationStep(10'000'000); Sexy::SRand(0x6A8E5);
+    app.PreNewGame(GAMEMODE_ADVENTURE,false); app.KillSeedChooserScreen(); app.StartPlaying();
+    auto& board=*app.mBoard;
+    auto tick=[&]() { clocks.mVisualTimeNs+=10'000'000; board.Update(); board.ProcessDeleteQueue(); app.mEffectSystem->ProcessDeleteQueue(); };
+    Require(board.mLevel==15&&app.IsWhackAZombieLevel(),"Missing 2-5 adventure setup");
+    for(int frame=0;frame<4000&&board.mZombies.mSize==0;++frame) tick();
+    Zombie* zombie=nullptr;
+    Require(board.IterateZombies(zombie),"2-5 did not spawn a zombie");
+    for(int frame=0;frame<100&&!zombie->IsDeadOrDying()&&zombie->mZombiePhase==PHASE_RISING_FROM_GRAVE;++frame) tick();
+    const auto rect=zombie->GetZombieRect();
+    const TouchEvent whack{101,rect.mX+rect.mWidth/2,rect.mY+rect.mHeight/2+20};
+    board.TouchBegan(whack); board.TouchEnded(whack);
+    Require(zombie->IsDeadOrDying(),"Touch did not whack the first enemy");
+    std::cout<<"hit first zombie\n";
+    board.mSunMoney=500; board.RefreshHudLayout();
+    auto& card=board.mSeedBank->mSeedPackets[1];
+    Require(card.mPacketType==SEED_GRAVEBUSTER&&card.CanPickUp(),"Grave Buster card cannot be picked up");
+    const int seedBankX = static_cast<int>(board.mSeedBank->mX - board.mX);
+    const int seedBankY = static_cast<int>(board.mSeedBank->mY - board.mY);
+    const TouchEvent choose{102, seedBankX + static_cast<int>(card.mX) + 20, seedBankY + static_cast<int>(card.mY) + 30};
+    board.TouchBegan(choose); board.TouchEnded(choose);
+    auto& cursor=*board.mTouchState->selection->cursor;
+    Require(cursor.mType==SEED_GRAVEBUSTER,"Touch did not retain Grave Buster selection");
+    auto& unavailable=board.mSeedBank->mSeedPackets[0];
+    unavailable.mActive=false; unavailable.mRefreshing=true;
+    const TouchEvent switchCard{104, seedBankX + static_cast<int>(unavailable.mX) + 20, choose.y};
+    board.TouchBegan(switchCard);
+    std::cout<<"unavailable card press: cursor="<<int(cursor.mCursorType)<<" reanim="<<int(cursor.mReanimCursorID)<<"\n";
+    Require(cursor.mCursorType==CURSOR_TYPE_HAMMER &&
+        app.ReanimationTryToGet(cursor.mReanimCursorID),"Returning to the hammer left it without an animation");
+    const auto hammerId=cursor.mReanimCursorID;
+    const TouchEvent moved{104,420,440};
+    board.TouchMoved(moved); tick();
+    Require(cursor.mReanimCursorID==hammerId,"Moving the hammer reallocated its animation");
+    auto& render=*app.mDDInterface->mRenderInterface;
+    auto* target=render.CreateRenderImage(800,600);
+    { GpuImageDrawScope scope(render,target); Graphics g(target); board.DrawTouchCursors(&g); }
+    render.Flush(); delete target;
+    board.TouchEnded(switchCard);
+    board.TouchBegan(choose); board.TouchEnded(choose);
+    Require(cursor.mType==SEED_GRAVEBUSTER, "Could not reselect Grave Buster after switching cards");
+    GridItem* grave=nullptr;
+    while(board.IterateGridItems(grave)&&grave->mGridItemType!=GRIDITEM_GRAVESTONE){}
+    Require(grave&&grave->mGridItemType==GRIDITEM_GRAVESTONE,"Could not find initial grave");
+    const int col=grave->mGridX, row=grave->mGridY;
+    const TouchEvent plant{103,board.GridToPixelX(col,row)+40,board.GridToPixelY(col,row)+35};
+    board.TouchBegan(plant); tick(); board.TouchEnded(plant);
+    std::cout<<"placed plant, selected="<<int(cursor.mCursorType)<<"\n";
+    for(int frame=0;frame<650&&board.GetGraveStoneAt(col,row);++frame) tick();
+    Require(board.GetGraveStoneAt(col,row)==nullptr&&board.mGravesCleared==1,"Grave Buster did not eat the grave");
+    std::cout<<"grave was eaten normally\n";
+
+    std::cout<<"PASS 2-5 touch whack, select, plant, consume grave and switch to an unavailable slot\n";
+}
+
 void GraveSpawnRulesRuntime(TestApp& app)
 {
     auto& clocks=*app.mEffectSystem->mReanimationHolder;
@@ -8987,7 +9054,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
         ImageLib::FixTransparentEdges(*decoded); // Match the original ResourceManager upload preparation.
         Image frame;frame.SetBits(decoded->mBits,decoded->mWidth,decoded->mHeight);delete decoded;
         gTouchFrameReference=&frame;
-        TouchInputRuntime(app);TouchAquariumRuntime(app);TouchGardenRuntime(app);gTouchFrameReference=nullptr;return;
+        TouchInputRuntime(app);TouchAquariumRuntime(app);TouchGardenRuntime(app);WhackGraveBusterTouchRuntime(app);gTouchFrameReference=nullptr;return;
     }
     if(gPlantCatalogOnly) {PlantAttackCatalogRuntime(app);return;}
     if(gZombieCatalogOnly) {ZombieBehaviorCatalogRuntime(app);return;}

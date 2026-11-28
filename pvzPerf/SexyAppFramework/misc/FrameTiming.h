@@ -9,7 +9,12 @@ namespace Sexy
 struct FrameTiming
 {
     static constexpr unsigned int DefaultTargetFps = 100;
+#ifdef SEXY_WINDOW_BROWSER
+    static constexpr unsigned int MinimumTargetFps = 10;
+    static constexpr unsigned long long MaxSimulationStepNs = 100'000'000ULL;
+#else
     static constexpr unsigned int MinimumTargetFps = 30;
+#endif
     static constexpr unsigned long long NanosecondsPerSecond = 1'000'000'000ULL;
     static constexpr unsigned long long LegacyTickNs = 10'000'000ULL;
 

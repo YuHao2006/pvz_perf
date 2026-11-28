@@ -24,11 +24,12 @@ python3 - "$app/Info.plist" "$version" "$edition" "${IPHONEOS_DEPLOYMENT_TARGET:
 import plistlib,sys
 with open(sys.argv[1],"wb") as f:
     hd=sys.argv[3]=="hd"
-    plistlib.dump(dict(CFBundleExecutable="pvz_perf",CFBundleName="PvZ Perf HD" if hd else "PvZ Perf",
+    plistlib.dump(dict(CFBundleExecutable="pvz_perf",CFBundleName="pvz_perf",CFBundleDisplayName="pvz_perf",
         CFBundleIdentifier="io.github.yuhao2006.pvzperf"+(".hd" if hd else ""),
         CFBundlePackageType="APPL",CFBundleVersion=sys.argv[2],CFBundleShortVersionString=sys.argv[2],
         MinimumOSVersion=sys.argv[4],CFBundleSupportedPlatforms=["iPhoneOS"],LSRequiresIPhoneOS=True,
         UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UILaunchScreen={},UIFileSharingEnabled=True,
+        CADisableMinimumFrameDurationOnPhone=True,
         LSSupportsOpeningDocumentsInPlace=True,UISupportedInterfaceOrientations=[
         "UIInterfaceOrientationLandscapeLeft","UIInterfaceOrientationLandscapeRight"]),f)
 PY

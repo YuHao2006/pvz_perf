@@ -33,6 +33,13 @@ void HostYield() {
         browserFrameReady = false;
     }
 }
+void HostRunMainLoop(SexyAppBase& app)
+{
+    RunApplicationLoop(app, [](SexyAppBase& current) { current.UpdateApp(); });
+}
+std::string HostResourceArchivePath() { return "main.pak64"; }
+std::string HostInstanceLockPath() { return GetAppDataFolder() + ".instance.lock"; }
+
 void HostStartLoading(SexyAppBase& app, void (*entry)(void*)) {
     EM_ASM({ Module.pvzStartupPhase?.('加载游戏资源'); });
     emscripten_sleep(0);

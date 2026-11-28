@@ -42,7 +42,7 @@ static int gGpuCurrentDrawMode = 0;
 static int gGpuSceneWidth = 800;
 static int gGpuSceneHeight = 600;
 
-// Framework-local primitive topology, expanded to native Vulkan triangle lists.
+// Framework-local topology for solid primitive submission.
 enum PrimitiveType
 {
 	PRIMITIVE_TRIANGLELIST = 0,
@@ -52,13 +52,6 @@ enum PrimitiveType
 
 namespace
 {
-struct ScreenVertex
-{
-	float sx, sy, sz, rhw;
-	DWORD color;
-	float tu, tv;
-};
-
 #define RGBA_MAKE(r, g, b, a) (((DWORD)(a) << 24) | ((DWORD)(r) << 16) | ((DWORD)(g) << 8) | (DWORD)(b))
 
 }  // namespace
@@ -328,7 +321,8 @@ GpuTexture* UploadDecodedRaw(GpuRenderer& renderer,const ImageLib::Image& image,
 	return base;
 }
 
-GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,bool opaque)
+GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,bool opaque,
+	[[maybe_unused]] bool fixTransparentEdges)
 {
 	RequireImageDimensions(&renderer,image.mWidth,image.mHeight);
 	// 2026-10-11 用户裁决：只有最终可绘制结果进全局纹理表。合成链的底图/
@@ -341,17 +335,29 @@ GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& imag
 	{
 		GpuTexture* base=TrackCompositionScratch(renderer,scratch,
 			renderer.CreateRawTexture(image.mWidth,image.mHeight,bits,image.mWidth*4));
-		if(image.mColorFromAlpha)
+		const auto compose = [&](GpuTexture* mask, unsigned int color, bool colorOnly,
+			[[maybe_unused]] bool finalLayer) {
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU)
+			return renderer.ComposeAlphaRaw(base,mask,color,colorOnly,fixTransparentEdges && finalLayer);
+#else
+			return renderer.ComposeAlphaRaw(base,mask,color,colorOnly);
+#endif
+		};
+		if (image.mColorFromAlpha)
 			base=TrackCompositionScratch(renderer,scratch,
-				renderer.ComposeAlphaRaw(base,base,*image.mColorFromAlpha,true));
-		for(const auto* layer:image.mAlphaLayers) {
-			GpuTexture* alphaMask=UploadDecodedRaw(renderer,*layer,scratch);
+				compose(base,*image.mColorFromAlpha,true,image.mAlphaLayers.empty()));
+		for (size_t i=0; i<image.mAlphaLayers.size(); ++i) {
+			auto* alphaMask=UploadDecodedRaw(renderer,*image.mAlphaLayers[i],scratch);
 			base=TrackCompositionScratch(renderer,scratch,
-				renderer.ComposeAlphaRaw(base,alphaMask,0,false));
+				compose(alphaMask,0,false,i+1==image.mAlphaLayers.size()));
 		}
 		// GL/DX9 adoption destroys the other raw handles on success; the
 		// non-owning list must never be visited again after this returns.
+#if defined(PVZ_GPU_METAL)
+		return renderer.AdoptComposedTexture(base,fixTransparentEdges);
+#else
 		return renderer.AdoptComposedTexture(base);
+#endif
 	}
 	catch (...)
 	{
@@ -418,98 +424,75 @@ static void SubmitTextureTriangleBatch(size_t triangleCount,VertexAt vertexAt,
 	SubmitNativeTriangles(std::span<const GpuVertex>(vertices,count),texture,gLinearFilter,-1,clip);
 }
 
-static void SubmitGpuTriangles(
-	const ScreenVertex* theVertices,
-	int theNumVertices,
-	PrimitiveType theType,
-	GpuTexture* theSRV,
-	bool theLinearFilter,
-	int theDrawMode,
-	const Rect* theClipRect)
+struct SolidPoint { float x, y; };
+
+template<PrimitiveType Type>
+static void SubmitSolidTriangles(std::span<const SolidPoint> points, const Color& color,
+    int drawMode, const Rect* clip = nullptr)
 {
-	if (gGpuRenderer == NULL || theNumVertices <= 0)
-		return;
-	int aDrawMode = theDrawMode < 0 ? gGpuCurrentDrawMode : theDrawMode;
-
-	// Bound the stack frame for general triangle batches; large batches use
-	// dynamic storage. Uniform image quads bypass this conversion entirely.
-	GpuVertex aLocal[192];
-	const size_t aRequired = theType == PRIMITIVE_TRIANGLELIST ? size_t(theNumVertices) :
-		size_t(std::max(0, theNumVertices - 2)) * 3;
-	std::vector<GpuVertex> aLarge;
-	if (aRequired > std::size(aLocal)) aLarge.resize(aRequired);
-	GpuVertex* aConverted = aLarge.empty() ? aLocal : aLarge.data();
-	int aCount = 0;
-	const uint32_t aSlot = GpuRenderer::SlotOf(theSRV) | CombinedImageSamplingFlags();
-	// 采样器索引同法逐顶点携带（bit0=线性 bit1=重复），消除描述符重绑
-	const uint32_t aSampler = (gLinearFilter ? 1u : 0u) | (RenderInterface::sSamplerAddressWrap ? 2u : 0u);
-
-	auto ConvertVertex = [&](const ScreenVertex& theVertex)
-	{
-		GpuVertex& aOut = aConverted[aCount++];
-		aOut.x = theVertex.sx;
-		aOut.y = theVertex.sy;
-		aOut.r = ((theVertex.color >> 16) & 0xFF) / 255.0f;
-		aOut.g = ((theVertex.color >> 8) & 0xFF) / 255.0f;
-		aOut.b = (theVertex.color & 0xFF) / 255.0f;
-		aOut.a = ((theVertex.color >> 24) & 0xFF) / 255.0f;
-		aOut.u = theVertex.tu;
-		aOut.v = theVertex.tv;
-		aOut.slot = aSlot;
-		aOut.sampler = aSampler;
-	};
-
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || (defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU))
-    if (theNumVertices==4 && theType!=PRIMITIVE_TRIANGLELIST) {
-        if (theType==PRIMITIVE_TRIANGLESTRIP)
-            for (int i=0;i<4;++i) ConvertVertex(theVertices[i]);
-        else
-            for (int i : {1,2,0,3}) ConvertVertex(theVertices[i]);
-    } else
-#endif
-	if (theType == PRIMITIVE_TRIANGLESTRIP)
-	{
-		for (int i = 0; i + 2 < theNumVertices; i++)
-		{
-			ConvertVertex(theVertices[i]);
-			ConvertVertex(theVertices[i + 1]);
-			ConvertVertex(theVertices[i + 2]);
-		}
-	}
-	else if (theType == PRIMITIVE_TRIANGLEFAN)
-	{
-		for (int i = 1; i + 1 < theNumVertices; i++)
-		{
-			ConvertVertex(theVertices[0]);
-			ConvertVertex(theVertices[i]);
-			ConvertVertex(theVertices[i + 1]);
-		}
-	}
-	else
-	{
-		for (int i = 0; i < theNumVertices; i++)
-			ConvertVertex(theVertices[i]);
-	}
-
-    if (theClipRect && (theClipRect->mWidth <= 0 || theClipRect->mHeight <= 0)) return;
-    GpuClip nativeClip{};
-    if(theClipRect) nativeClip={theClipRect->mX,theClipRect->mY,theClipRect->mWidth,theClipRect->mHeight};
-    const auto aBlend = aDrawMode == 1 ? GpuBlend::Additive :
-        aDrawMode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
-#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || (defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU))
-    if (aCount==4) {
-        gGpuRenderer->SubmitQuads(std::span<const GpuVertex>(aConverted,aCount),theSRV,
-            gLinearFilter,RenderInterface::sSamplerAddressWrap,aBlend,theClipRect ? &nativeClip : nullptr);
+    if (!gGpuRenderer || points.size() < 3 || (clip && (clip->mWidth <= 0 || clip->mHeight <= 0)))
         return;
+
+    auto* white = gGpuRenderer->whiteTexture;
+    const DWORD tint = RGBA_MAKE(color.mRed, color.mGreen, color.mBlue, color.mAlpha);
+    const GpuVertex uniform{0, 0, ((tint >> 16) & 0xff) / 255.0f,
+        ((tint >> 8) & 0xff) / 255.0f, (tint & 0xff) / 255.0f, ((tint >> 24) & 0xff) / 255.0f,
+        0, 0, GpuRenderer::SlotOf(white) | CombinedImageSamplingFlags(),
+        (gLinearFilter ? 1u : 0u) | (RenderInterface::sSamplerAddressWrap ? 2u : 0u)};
+    const auto vertex = [&](size_t index) {
+        auto result = uniform;
+        result.x = points[index].x;
+        result.y = points[index].y;
+        return result;
+    };
+
+#if defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_D3D12) || defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU)
+    if constexpr (Type != PRIMITIVE_TRIANGLELIST)
+    {
+        if (points.size() == 4)
+        {
+            constexpr size_t order[] = {Type == PRIMITIVE_TRIANGLEFAN ? 1u : 0u,
+                Type == PRIMITIVE_TRIANGLEFAN ? 2u : 1u, Type == PRIMITIVE_TRIANGLEFAN ? 0u : 2u, 3};
+            const GpuVertex quad[] = {vertex(order[0]), vertex(order[1]), vertex(order[2]), vertex(order[3])};
+            const int mode = drawMode < 0 ? gGpuCurrentDrawMode : drawMode;
+            const auto blend = mode == 1 ? GpuBlend::Additive : mode == 2 ? GpuBlend::Opaque : GpuBlend::Normal;
+            GpuClip nativeClip{};
+            if (clip)
+                nativeClip = {clip->mX, clip->mY, clip->mWidth, clip->mHeight};
+            gGpuRenderer->SubmitQuads(quad, white, gLinearFilter, RenderInterface::sSamplerAddressWrap,
+                blend, clip ? &nativeClip : nullptr);
+            return;
+        }
     }
 #endif
-    gGpuRenderer->SubmitTriangles(
-        std::span<const GpuVertex>(aConverted, aCount), theSRV,
-        gLinearFilter, RenderInterface::sSamplerAddressWrap, aBlend, theClipRect ? &nativeClip : nullptr);
+
+    GpuVertex local[192];
+    auto* output = local;
+    const size_t count = Type == PRIMITIVE_TRIANGLELIST ? points.size() : (points.size() - 2) * 3;
+    if (count > std::size(local))
+    {
+        // Submission copies the vertex span before returning.
+        static thread_local std::vector<GpuVertex> scratch;
+        scratch.resize(count);
+        output = scratch.data();
+    }
+    if constexpr (Type == PRIMITIVE_TRIANGLELIST)
+    {
+        for (size_t i = 0; i < count; ++i)
+            output[i] = vertex(i);
+    }
+    else
+    {
+        for (size_t i = 0; i + 2 < points.size(); ++i)
+        {
+            output[i * 3] = vertex(Type == PRIMITIVE_TRIANGLEFAN ? 0 : i);
+            output[i * 3 + 1] = vertex(i + 1);
+            output[i * 3 + 2] = vertex(i + 2);
+        }
+    }
+    SubmitNativeTriangles({output, count}, white, gLinearFilter, drawMode, clip);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 static void SubmitTextureQuad(const SexyVector2 (&points)[4], const TextureRegion& source,
 	const Color& color, GpuTexture* texture, const Rect* clip)
 {
@@ -621,7 +604,10 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 	const auto& decoded=*image->mPendingDecoded;
 	if (decoded.mWidth!=image->mWidth || decoded.mHeight!=image->mHeight)
 		throw std::logic_error("Image loading payload dimensions differ");
-	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans);
+	const bool fixTransparentEdges=decoded.HasComposition() &&
+		(image->mGpuSamplingFlags & GpuVertex::kAlphaEdgeFilter) != 0;
+	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans,
+		fixTransparentEdges);
 	if (!texture)
 		throw std::runtime_error("Image upload returned no GPU texture");
 	try
@@ -633,6 +619,10 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 	image->mTexture=texture;
 	image->mRenderTarget=false;
 	image->mRenderOwner=this;
+#if defined(PVZ_GPU_METAL) || defined(PVZ_GPU_VULKAN) || defined(PVZ_GPU_OPENGL) || defined(PVZ_GPU_WEBGL) || defined(PVZ_GPU_WEBGPU)
+	if (fixTransparentEdges)
+		image->mGpuSamplingFlags &= ~GpuVertex::kAlphaEdgeFilter;
+#endif
 	image->PurgeBits();
 	return texture;
 }
@@ -985,7 +975,6 @@ void RenderInterface::DrawLine(double theStartX, double theStartY, double theEnd
 	gGpuCurrentDrawMode = theDrawMode;
 
 	float x1, y1, x2, y2;
-	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
 
 	if (!mTransformStack.empty())
 	{
@@ -1015,21 +1004,11 @@ void RenderInterface::DrawLine(double theStartX, double theStartY, double theEnd
 	float aPx = -aDy / aLen * 0.5f;
 	float aPy = aDx / aLen * 0.5f;
 
-	ScreenVertex aVertex[6] =
-	{
-		{ x1 + aPx, y1 + aPy, 0, 1, aColor, 0, 0 },
-		{ x2 + aPx, y2 + aPy, 0, 1, aColor, 0, 0 },
-		{ x2 - aPx, y2 - aPy, 0, 1, aColor, 0, 0 },
-		{ x1 + aPx, y1 + aPy, 0, 1, aColor, 0, 0 },
-		{ x2 - aPx, y2 - aPy, 0, 1, aColor, 0, 0 },
-		{ x1 - aPx, y1 - aPy, 0, 1, aColor, 0, 0 }
-	};
-	SubmitGpuTriangles(aVertex, 6, PRIMITIVE_TRIANGLELIST,
-		gGpuRenderer->whiteTexture, false, theDrawMode, NULL);
+    const SolidPoint points[] = {{x1 + aPx, y1 + aPy}, {x2 + aPx, y2 + aPy},
+        {x2 - aPx, y2 - aPy}, {x1 + aPx, y1 + aPy}, {x2 - aPx, y2 - aPy}, {x1 - aPx, y1 - aPy}};
+    SubmitSolidTriangles<PRIMITIVE_TRIANGLELIST>(points, theColor, theDrawMode);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 void RenderInterface::FillRect(const Rect& theRect, const Color& theColor, int theDrawMode)
 {
 	if (!PreDraw())
@@ -1037,37 +1016,23 @@ void RenderInterface::FillRect(const Rect& theRect, const Color& theColor, int t
 
 	gGpuCurrentDrawMode = theDrawMode;
 
-	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
-	float x = theRect.mX;
-	float y = theRect.mY;
-	float aWidth = theRect.mWidth;
-	float aHeight = theRect.mHeight;
-
-	ScreenVertex aVertex[4] =
-	{
-		{ x, y, 0, 1, aColor, 0, 0 },
-		{ x, y + aHeight, 0, 1, aColor, 0, 0 },
-		{ x + aWidth, y, 0, 1, aColor, 0, 0 },
-		{ x + aWidth, y + aHeight, 0, 1, aColor, 0, 0 }
-	};
-
-	if (!mTransformStack.empty())
-	{
-		SexyVector2 p[4] = { SexyVector2(x, y), SexyVector2(x, y+aHeight), SexyVector2(x+aWidth, y), SexyVector2(x+aWidth, y+aHeight) };
-		for (int i=0; i<4; i++)
-		{
-			p[i] = mTransformStack.back()*p[i];
-			aVertex[i].sx = p[i].x;
-			aVertex[i].sy = p[i].y;
-		}
-	}
-
-	SubmitGpuTriangles(aVertex, 4, PRIMITIVE_TRIANGLESTRIP,
-		gGpuRenderer->whiteTexture, false, theDrawMode, NULL);
+    const float x = theRect.mX;
+    const float y = theRect.mY;
+    const float right = x + theRect.mWidth;
+    const float bottom = y + theRect.mHeight;
+    SolidPoint points[] = {{x, y}, {x, bottom}, {right, y}, {right, bottom}};
+    if (!mTransformStack.empty())
+    {
+        const auto& transform = mTransformStack.back();
+        for (auto& point : points)
+        {
+            const auto transformed = transform * SexyVector2(point.x, point.y);
+            point = {transformed.x, transformed.y};
+        }
+    }
+    SubmitSolidTriangles<PRIMITIVE_TRIANGLESTRIP>(points, theColor, theDrawMode);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 void RenderInterface::FillScanLinesWithCoverage(const Span* spans,int spanCount,const Color& color,int drawMode,
     const BYTE* coverage,int coverX,int coverY,int coverWidth,int coverHeight)
 {
@@ -1121,60 +1086,42 @@ void RenderInterface::FillScanLinesWithCoverage(const Span* spans,int spanCount,
     mRenderer->DestroyTexture(mask);
 }
 
-void RenderInterface::DrawTriangle(const TriVertex &p1, const TriVertex &p2, const TriVertex &p3, const Color &theColor, int theDrawMode)
+void RenderInterface::DrawTriangle(const TriVertex& p1, const TriVertex& p2, const TriVertex& p3,
+    const Color& theColor, int theDrawMode)
 {
-	if (!PreDraw())
-		return;
-
-	gGpuCurrentDrawMode = theDrawMode;
-	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
-
-	ScreenVertex aVertex[3] =
-	{
-		{ p1.x, p1.y, 0, 1, aColor, 0, 0 },
-		{ p2.x, p2.y, 0, 1, aColor, 0, 0 },
-		{ p3.x, p3.y, 0, 1, aColor, 0, 0 }
-	};
-	SubmitGpuTriangles(aVertex, 3, PRIMITIVE_TRIANGLESTRIP,
-		gGpuRenderer->whiteTexture, false, theDrawMode, NULL);
+    if (!PreDraw())
+        return;
+    gGpuCurrentDrawMode = theDrawMode;
+    const SolidPoint points[] = {{p1.x, p1.y}, {p2.x, p2.y}, {p3.x, p3.y}};
+    SubmitSolidTriangles<PRIMITIVE_TRIANGLELIST>(points, theColor, theDrawMode);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
-void RenderInterface::FillPoly(const Point theVertices[], int theNumVertices, const Rect *theClipRect, const Color &theColor, int theDrawMode, int tx, int ty)
+void RenderInterface::FillPoly(const Point theVertices[], int theNumVertices, const Rect* theClipRect,
+    const Color& theColor, int theDrawMode, int tx, int ty)
 {
-	if (theNumVertices < 3)
-		return;
+    if (theNumVertices < 3 || !PreDraw())
+        return;
+    gGpuCurrentDrawMode = theDrawMode;
 
-	if (!PreDraw())
-		return;
-
-	gGpuCurrentDrawMode = theDrawMode;
-	DWORD aColor = RGBA_MAKE(theColor.mRed, theColor.mGreen, theColor.mBlue, theColor.mAlpha);
-
-	ScreenVertex local[100];
-	std::vector<ScreenVertex> large;
-	if (theNumVertices > int(std::size(local))) large.resize(theNumVertices);
-	ScreenVertex* vertices = large.empty() ? local : large.data();
-	for (int i=0; i<theNumVertices; i++)
-	{
-		ScreenVertex vert = { theVertices[i].mX + (float)tx, theVertices[i].mY + (float)ty, 0, 1, aColor, 0, 0 };
-		if (!mTransformStack.empty())
-		{
-			SexyVector2 v(vert.sx, vert.sy);
-			v = mTransformStack.back()*v;
-			vert.sx = v.x;
-			vert.sy = v.y;
-		}
-		vertices[i] = vert;
-	}
-
-	SubmitGpuTriangles(vertices, theNumVertices, PRIMITIVE_TRIANGLEFAN,
-		gGpuRenderer->whiteTexture, false, theDrawMode, theClipRect);
+    SolidPoint local[100];
+    auto* points = local;
+    const auto count = static_cast<size_t>(theNumVertices);
+    if (count > std::size(local))
+    {
+        static thread_local std::vector<SolidPoint> scratch;
+        scratch.resize(count);
+        points = scratch.data();
+    }
+    const auto* transform = mTransformStack.empty() ? nullptr : &mTransformStack.back();
+    for (size_t i = 0; i < count; ++i)
+    {
+        const SexyVector2 point(theVertices[i].mX + float(tx), theVertices[i].mY + float(ty));
+        const auto result = transform ? *transform * point : point;
+        points[i] = {result.x, result.y};
+    }
+    SubmitSolidTriangles<PRIMITIVE_TRIANGLEFAN>({points, count}, theColor, theDrawMode, theClipRect);
 }
 
-///////////////////////////////////////////////////////////////////////////////
-///////////////////////////////////////////////////////////////////////////////
 void RenderInterface::DrawTriangleTex(const TriVertex &p1, const TriVertex &p2, const TriVertex &p3, const Color &theColor, int theDrawMode, Image *theTexture, bool blend)
 {
 	TriVertex aVertices[1][3] = {{p1, p2, p3}};

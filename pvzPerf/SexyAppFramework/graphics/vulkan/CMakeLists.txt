@@ -121,11 +121,6 @@ endif()
 add_custom_target(sexy_vulkan_shaders DEPENDS ${nativeShaders})
 add_dependencies(sexy_vulkan sexy_vulkan_shaders)
 
-# User-authored scaling effects compile once while loading configuration.
-# Android ships precompiled SPIR-V and has no DXC host dependency.
-if(NOT ANDROID AND NOT CMAKE_SYSTEM_NAME STREQUAL "Android")
-find_package(directx-dxc CONFIG REQUIRED GLOBAL)
-endif()
 add_library(sexy_vulkan_effects STATIC
     VulkanEffectPrograms.cpp
     VulkanScaleDds.cpp

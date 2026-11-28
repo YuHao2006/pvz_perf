@@ -2,6 +2,9 @@
 
 #if defined(_M_X64) || defined(__x86_64__)
 #include <xmmintrin.h>
+#elif defined(_M_ARM64)
+#include <intrin.h>
+#include <arm64intr.h>
 #endif
 
 void Sexy::EnableDenormalFlushForCurrentThread() noexcept
@@ -11,6 +14,9 @@ void Sexy::EnableDenormalFlushForCurrentThread() noexcept
     // Preserve rounding, exception masks and status. This is thread state,
     // not a per-update operation and not a request for fast-math rewrites.
     _mm_setcsr(_mm_getcsr() | 0x8040u);
+#elif defined(_M_ARM64)
+    _WriteStatusReg(ARM64_FPCR, _ReadStatusReg(ARM64_FPCR) | (1LL << 24));
+    __isb(_ARM64_BARRIER_SY);
 #elif defined(__aarch64__)
     // Under the default ARM floating-point behavior, FZ covers FP32/FP64
     // subnormal inputs and results. FP16 is not used by CPU game logic.

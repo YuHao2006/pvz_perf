@@ -1,5 +1,8 @@
 name: Native iOS IPA
-on: workflow_dispatch
+on:
+  push:
+    branches: [build/v4.1.10]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:

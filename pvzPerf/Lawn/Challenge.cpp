@@ -1277,7 +1277,7 @@ int Challenge::UpdateToolTip(int theX, int theY)
 //0x421B10
 void Challenge::MouseDownWhackAZombie(int theX, int theY)
 {
-	mApp->ReanimationTryToGet(mBoard->mCursorObject->mReanimCursorID)->Seek(200);
+	mBoard->mCursorObject->EnsureHammerAnimation().Seek(200);
 	mApp->PlayFoley(FOLEY_SWING);
 
 	Zombie* aZombie = nullptr;

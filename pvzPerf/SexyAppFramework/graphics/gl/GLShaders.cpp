@@ -391,6 +391,21 @@ uint BilinearLookup(uint u, uint v)
 }
 
 
+vec4 composeAt(ivec2 position)
+{
+    vec4 value = texelFetch(sourceImage, sourceRect.xy + position, 0);
+    uint alpha = uint(round(texelFetch(alphaImage,
+        alphaRect.xy + position, 0).b * 255.0));
+    if (colorOnly) {
+        uint combinedColor = packedColor | (alpha << 24u);
+        value = vec4(float((combinedColor >> 16u) & 255u), float((combinedColor >> 8u) & 255u),
+            float(combinedColor & 255u), float(combinedColor >> 24u)) / 255.0;
+    } else {
+        value.a = float(alpha) / 255.0;
+    }
+    return value;
+}
+
 void main()
 {
     ivec2 position = ivec2(gl_FragCoord.xy);
@@ -411,16 +426,27 @@ void main()
         return;
     }
     if (any(greaterThanEqual(position, rectangle.zw))) discard;
-    if (operation == 2) {
-        vec4 value = texelFetch(sourceImage, sourceRect.xy + position, 0);
-        uint alpha = uint(round(texelFetch(alphaImage,
-            alphaRect.xy + position, 0).b * 255.0));
-        if (colorOnly) {
-            uint combinedColor = packedColor | (alpha << 24u);
-            value = vec4(float((combinedColor >> 16u) & 255u), float((combinedColor >> 8u) & 255u),
-                float(combinedColor & 255u), float(combinedColor >> 24u)) / 255.0;
-        } else {
-            value.a = float(alpha) / 255.0;
+    if (operation == 2 || operation == 4) {
+        vec4 value = composeAt(position);
+        bool fixTransparentEdges = operation == 4;
+        if (fixTransparentEdges && value.a == 0.0) {
+            uvec3 sum = uvec3(0u);
+            uint count = 0u;
+            // Match ImageLib::FixTransparentEdges, which excludes the current row.
+            for (int dy = -1; dy <= 1; dy += 2) {
+                for (int dx = -1; dx <= 1; ++dx) {
+                    ivec2 neighbor = position + ivec2(dx, dy);
+                    if (any(lessThan(neighbor, ivec2(0))) ||
+                        any(greaterThanEqual(neighbor, sourceRect.zw)))
+                        continue;
+                    vec4 sampleValue = composeAt(neighbor);
+                    if (sampleValue.a > 0.0) {
+                        sum += uvec3(round(sampleValue.rgb * 255.0));
+                        ++count;
+                    }
+                }
+            }
+            value.rgb = count != 0u ? vec3(sum / count) / 255.0 : vec3(0.0);
         }
         outColor = value;
         return;

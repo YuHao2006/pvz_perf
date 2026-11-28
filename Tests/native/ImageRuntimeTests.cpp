@@ -1211,6 +1211,52 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     struct CatalogCleanup {
         ~CatalogCleanup() { ReanimatorFreeDefinitions(); DefinitionFreeAtlasImages(); }
     } catalogCleanup;
+    ReanimatorEnsureDefinitionLoaded(REANIM_SNOWPEA, false);
+    const auto& snowPea = gReanimatorDefArray[REANIM_SNOWPEA];
+    const auto* snowPeaTracks = snowPea.mTracks.tracks;
+    const auto* snowPeaTrackEnd = snowPeaTracks + snowPea.mTracks.count;
+    const auto* mouth = std::find_if(snowPeaTracks, snowPeaTrackEnd,
+        [](const auto& track) { return track.mTrackId == ReanimTrackId::SnowPea_mouth; });
+    Require(snowPea.mTracks.count == 20 && mouth != snowPeaTrackEnd &&
+        mouth->mTransforms.count == 104, "Baked Snow Pea mouth changed the save track layout");
+    const auto mouthSlot = mouth->mTransforms.mTransforms[29].mImageSlot;
+    Require(mouthSlot > 0 && mouthSlot < snowPea.mImageSlotCount,
+        "Snow Pea mouth has no atlas region");
+    const auto& rect = snowPea.mImageRects[mouthSlot];
+    Require(rect.mWidth == 33 && rect.mHeight == 49 && rect.mTrimWidth == 0,
+        "Snow Pea mouth changed its logical canvas");
+    for (int frame = 0; frame < mouth->mTransforms.count; ++frame)
+    {
+        const auto& keyframe = mouth->mTransforms.mTransforms[frame];
+        if (frame < 29)
+        {
+            Require(keyframe.mFrame < 0, "Baked mouth became visible in the body-only clip");
+            continue;
+        }
+        Require(keyframe.mFrame == 0 && keyframe.mImageSlot == mouthSlot,
+            "Snow Pea mouth switched atlas regions during animation");
+    }
+    for (const auto type : {REANIM_SUNFLOWER, REANIM_MARIGOLD})
+    {
+        const auto saved = std::find_if(std::begin(ReanimAppearanceSaveCatalog::Definitions),
+            std::end(ReanimAppearanceSaveCatalog::Definitions), [type](const auto& entry) {
+                return entry.type == type;
+            });
+        Require(saved != std::end(ReanimAppearanceSaveCatalog::Definitions),
+            "Merged-stem plant missing from the save catalog");
+        ReanimatorEnsureDefinitionLoaded(type, false);
+        const auto& tracks = gReanimatorDefArray[type].mTracks;
+        Require(tracks.count == static_cast<int>(saved->trackCount),
+            "Merged-stem plant changed the DAT64 track count");
+        const int index = LevelSaveFormat::MissingHdStemTrack(type, saved->trackCount - 1);
+        Require(index >= 0 && tracks.tracks[index].mTrackId == ReanimTrackId::stalk_top,
+            "Merged-stem plant changed the DAT64 stem track index");
+        const auto& frames = tracks.tracks[index].mTransforms;
+        Require(frames.count > 0 && frames.count == tracks.tracks[0].mTransforms.count &&
+            std::all_of(frames.mTransforms,
+            frames.mTransforms + frames.count, [](const auto& frame) { return frame.mFrame < 0; }),
+            "Retired stem track drew over the merged stem");
+    }
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_GARLIC,false);
     Reanimation first,second;
     first.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC, 0);
@@ -2856,8 +2902,28 @@ void PlantSpecialCatalogRuntime(TestApp& app)
             Require(target->mBodyHealth<1000000 && (1000000-target->mBodyHealth)%20==0 && !plant->mDead,
                 "Spike ground damage did not reach the overlapping zombie");break;
         case SEED_TORCHWOOD:
+        {
             Require(cold->mProjectileType==PROJECTILE_PEA && warm->mProjectileType==PROJECTILE_FIREBALL,
-                "Torchwood did not thaw snow peas and ignite peas exactly once");break;
+                "Torchwood did not thaw snow peas and ignite peas exactly once");
+            constexpr int impactOrder=123456;
+            auto* fireball=board.AddProjectile(static_cast<int>(target->mX),static_cast<int>(target->mY),impactOrder,row,PROJECTILE_PEA);
+            fireball->ConvertToFireball(3);
+            fireball->DoImpact(target);
+            Reanimation* impact=nullptr;
+            Reanimation* animation=nullptr;
+            while(clocks.mReanimations.IterateNext(animation))
+            {
+                if(animation->mDead || animation->mReanimationType!=REANIM_JALAPENO_FIRE || animation->mRenderOrder!=impactOrder+1)
+                    continue;
+                impact=animation;
+                break;
+            }
+            Require(impact!=nullptr,"Fire pea impact did not spawn its flame");
+            Require(impact->mFrameStart==3 && impact->mFrameCount==10 && impact->mAnimRate==24.0f &&
+                impact->mLoopType==REANIM_PLAY_ONCE,"Fire pea impact escaped the one-shot fade-out segment");
+            std::cout<<"PASS fire pea impact fade-out only, Hz="<<hz<<'\n';
+            break;
+        }
         case SEED_PLANTERN:
             Require(!plant->mDead && app.ParticleTryToGet(plant->mParticleID),
                 "Plantern lost its persistent shine particle");break;
@@ -6403,6 +6469,73 @@ void LateLifecycleRuntime(TestApp& app)
     std::cout<<"PASS actual late lifecycle: eight Boss damage/death routes and eight real Garden sale confirmations\n";
 }
 
+void WhackGraveBusterTouchRuntime(TestApp& app)
+{
+    PlayerInfo profile; ZenGarden garden; PoolEffect pool;
+    profile.mId=54; profile.mLevel=15;
+    pool.PoolEffectInitialize();
+    auto* oldPlayer=app.mPlayerInfo; auto* oldGarden=app.mZenGarden; auto* oldPool=app.mPoolEffect;
+    struct Restore { TestApp& app; PlayerInfo* player; ZenGarden* garden; PoolEffect* pool;
+        ~Restore(){ app.KillBoard(); app.ProcessSafeDeleteList(); app.mPlayerInfo=player; app.mZenGarden=garden; app.mPoolEffect=pool; }
+    } restore{app,oldPlayer,oldGarden,oldPool};
+    app.mPlayerInfo=&profile; app.mZenGarden=&garden; app.mPoolEffect=&pool;
+    auto& clocks=*app.mEffectSystem->mReanimationHolder;
+    clocks.mVisualTimeNs=123'456'789'000; clocks.mBattleTimeNs=0;
+    Sexy::gLegacyTickPhaseNs=0; Sexy::ApplySimulationStep(10'000'000); Sexy::SRand(0x6A8E5);
+    app.PreNewGame(GAMEMODE_ADVENTURE,false); app.KillSeedChooserScreen(); app.StartPlaying();
+    auto& board=*app.mBoard;
+    auto tick=[&]() { clocks.mVisualTimeNs+=10'000'000; board.Update(); board.ProcessDeleteQueue(); app.mEffectSystem->ProcessDeleteQueue(); };
+    Require(board.mLevel==15&&app.IsWhackAZombieLevel(),"Missing 2-5 adventure setup");
+    for(int frame=0;frame<4000&&board.mZombies.mSize==0;++frame) tick();
+    Zombie* zombie=nullptr;
+    Require(board.IterateZombies(zombie),"2-5 did not spawn a zombie");
+    for(int frame=0;frame<100&&!zombie->IsDeadOrDying()&&zombie->mZombiePhase==PHASE_RISING_FROM_GRAVE;++frame) tick();
+    const auto rect=zombie->GetZombieRect();
+    const TouchEvent whack{101,rect.mX+rect.mWidth/2,rect.mY+rect.mHeight/2+20};
+    board.TouchBegan(whack); board.TouchEnded(whack);
+    Require(zombie->IsDeadOrDying(),"Touch did not whack the first enemy");
+    std::cout<<"hit first zombie\n";
+    board.mSunMoney=500; board.RefreshHudLayout();
+    auto& card=board.mSeedBank->mSeedPackets[1];
+    Require(card.mPacketType==SEED_GRAVEBUSTER&&card.CanPickUp(),"Grave Buster card cannot be picked up");
+    const int seedBankX = static_cast<int>(board.mSeedBank->mX - board.mX);
+    const int seedBankY = static_cast<int>(board.mSeedBank->mY - board.mY);
+    const TouchEvent choose{102, seedBankX + static_cast<int>(card.mX) + 20, seedBankY + static_cast<int>(card.mY) + 30};
+    board.TouchBegan(choose); board.TouchEnded(choose);
+    auto& cursor=*board.mTouchState->selection->cursor;
+    Require(cursor.mType==SEED_GRAVEBUSTER,"Touch did not retain Grave Buster selection");
+    auto& unavailable=board.mSeedBank->mSeedPackets[0];
+    unavailable.mActive=false; unavailable.mRefreshing=true;
+    const TouchEvent switchCard{104, seedBankX + static_cast<int>(unavailable.mX) + 20, choose.y};
+    board.TouchBegan(switchCard);
+    std::cout<<"unavailable card press: cursor="<<int(cursor.mCursorType)<<" reanim="<<int(cursor.mReanimCursorID)<<"\n";
+    Require(cursor.mCursorType==CURSOR_TYPE_HAMMER &&
+        app.ReanimationTryToGet(cursor.mReanimCursorID),"Returning to the hammer left it without an animation");
+    const auto hammerId=cursor.mReanimCursorID;
+    const TouchEvent moved{104,420,440};
+    board.TouchMoved(moved); tick();
+    Require(cursor.mReanimCursorID==hammerId,"Moving the hammer reallocated its animation");
+    auto& render=*app.mDDInterface->mRenderInterface;
+    auto* target=render.CreateRenderImage(800,600);
+    { GpuImageDrawScope scope(render,target); Graphics g(target); board.DrawTouchCursors(&g); }
+    render.Flush(); delete target;
+    board.TouchEnded(switchCard);
+    board.TouchBegan(choose); board.TouchEnded(choose);
+    Require(cursor.mType==SEED_GRAVEBUSTER, "Could not reselect Grave Buster after switching cards");
+    GridItem* grave=nullptr;
+    while(board.IterateGridItems(grave)&&grave->mGridItemType!=GRIDITEM_GRAVESTONE){}
+    Require(grave&&grave->mGridItemType==GRIDITEM_GRAVESTONE,"Could not find initial grave");
+    const int col=grave->mGridX, row=grave->mGridY;
+    const TouchEvent plant{103,board.GridToPixelX(col,row)+40,board.GridToPixelY(col,row)+35};
+    board.TouchBegan(plant); tick(); board.TouchEnded(plant);
+    std::cout<<"placed plant, selected="<<int(cursor.mCursorType)<<"\n";
+    for(int frame=0;frame<650&&board.GetGraveStoneAt(col,row);++frame) tick();
+    Require(board.GetGraveStoneAt(col,row)==nullptr&&board.mGravesCleared==1,"Grave Buster did not eat the grave");
+    std::cout<<"grave was eaten normally\n";
+
+    std::cout<<"PASS 2-5 touch whack, select, plant, consume grave and switch to an unavailable slot\n";
+}
+
 void GraveSpawnRulesRuntime(TestApp& app)
 {
     auto& clocks=*app.mEffectSystem->mReanimationHolder;
@@ -9038,7 +9171,7 @@ void StorePauseClockRuntime(TestApp& app, DecodeOnlySoundManager& sounds)
         ImageLib::FixTransparentEdges(*decoded); // Match the original ResourceManager upload preparation.
         Image frame;frame.SetBits(decoded->mBits,decoded->mWidth,decoded->mHeight);delete decoded;
         gTouchFrameReference=&frame;
-        TouchInputRuntime(app);TouchAquariumRuntime(app);TouchGardenRuntime(app);gTouchFrameReference=nullptr;return;
+        TouchInputRuntime(app);TouchAquariumRuntime(app);TouchGardenRuntime(app);WhackGraveBusterTouchRuntime(app);gTouchFrameReference=nullptr;return;
     }
     if(gPlantCatalogOnly) {PlantAttackCatalogRuntime(app);return;}
     if(gZombieCatalogOnly) {ZombieBehaviorCatalogRuntime(app);return;}
@@ -10414,7 +10547,7 @@ int main(int argc, char** argv)
             ReanimationAppearanceDefinitions(app);
             return 0;
         }
-        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly&&!gMinigameRulesOnly) {
+        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly&&!gMinigameRulesOnly&&!gPlantCatalogOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)

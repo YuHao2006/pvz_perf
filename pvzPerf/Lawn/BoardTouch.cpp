@@ -462,8 +462,7 @@ void Board::TouchBegan(const Sexy::TouchEvent& event)
         if (mApp->IsWhackAZombieLevel() && !HasLevelAwardDropped() &&
             (contact.cursor->mCursorType == CURSOR_TYPE_NORMAL || contact.cursor->mCursorType == CURSOR_TYPE_HAMMER))
         {
-            if (contact.cursor->mReanimCursorID == REANIMATIONID_NULL)
-                contact.cursor->CreateHammerAnimation();
+            contact.cursor->EnsureHammerAnimation();
             contact.cursor->mCursorType = CURSOR_TYPE_HAMMER;
         }
         {

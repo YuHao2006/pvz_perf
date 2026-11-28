@@ -1,18 +1,26 @@
 #import <UIKit/UIKit.h>
 #import <UniformTypeIdentifiers/UniformTypeIdentifiers.h>
 #import <QuartzCore/CAMetalLayer.h>
+#import <QuartzCore/CADisplayLink.h>
+#include <algorithm>
 #import <Metal/Metal.h>
 #import <AVFAudio/AVFAudio.h>
 #include "../macos/MacWindow.h"
 #include "../macos/MacSystem.h"
 #include "SexyAppFramework/SexyAppBase.h"
+#include "SexyAppFramework/platform/ApplicationHost.h"
 #include "SexyAppFramework/paklib/PakInterface.h"
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include "SexyAppFramework/widget/EditWidget.h"
 #include "SexyAppFramework/misc/KeyCodes.h"
 #include <exception>
 
-void PvzIosUpdateFrame(Sexy::SexyAppBase& app){@autoreleasepool{app.UpdateApp();}}
+void Sexy::HostRunMainLoop(SexyAppBase& app)
+{
+    RunApplicationLoop(app, [](SexyAppBase& current) {
+        @autoreleasepool { current.UpdateApp(); }
+    });
+}
 int PvzIosRun(int argc,char** argv);
 using namespace Sexy;
 static MacWindow* gameWindow;
@@ -26,8 +34,39 @@ static NSURL* gameArchive() {
     return bundled ?: [documents() URLByAppendingPathComponent:@"main.pak64"];
 }
 @interface GameView : UIView <UIKeyInput>
+- (UIScreen*)gameScreen;
+- (void)updateDisplayPreference:(float)target focused:(BOOL)focused;
+- (void)stopDisplayLink;
 @end
-@implementation GameView
+@implementation GameView {
+    CADisplayLink* displayLink;
+}
+- (UIScreen*)gameScreen {
+    return self.window.windowScene.screen ?: self.window.screen ?: UIScreen.mainScreen;
+}
+- (void)displayTick:(CADisplayLink*)link {
+    // The native loop paces simulation and submits Metal frames independently.
+    // Keep an active display link to communicate its desired cadence to iOS.
+    (void)link;
+}
+- (void)updateDisplayPreference:(float)target focused:(BOOL)focused {
+    const float rate = std::min(target, static_cast<float>(self.gameScreen.maximumFramesPerSecond));
+    if (!focused || rate <= 60.0f) {
+        displayLink.paused = YES;
+        return;
+    }
+    if (!displayLink) {
+        displayLink = [CADisplayLink displayLinkWithTarget:self selector:@selector(displayTick:)];
+        [displayLink addToRunLoop:NSRunLoop.mainRunLoop forMode:NSRunLoopCommonModes];
+    }
+    if (displayLink.preferredFrameRateRange.preferred != rate)
+        displayLink.preferredFrameRateRange = CAFrameRateRangeMake(60.0f, rate, rate);
+    displayLink.paused = NO;
+}
+- (void)stopDisplayLink {
+    [displayLink invalidate];
+    displayLink = nil;
+}
 + (Class)layerClass { return CAMetalLayer.class; }
 - (void)layoutSubviews {
     [super layoutSubviews];
@@ -67,7 +106,11 @@ MacWindow::MacWindow(const MacWindowConfig& c):impl_(std::make_unique<Impl>()){
     impl_->view=v; [controller.view addSubview:v]; metalLayer=(__bridge void*)v.layer;
     RefreshGeometry();Focused=true;Visible=true;
 }
-MacWindow::~MacWindow(){gameWindow=nullptr;[impl_->view removeFromSuperview];}
+MacWindow::~MacWindow(){
+    gameWindow=nullptr;
+    [impl_->view stopDisplayLink];
+    [impl_->view removeFromSuperview];
+}
 void* IosMetalLayer(NativeWindowHandle w){return w->metalLayer;}
 void MacWindow::RefreshGeometry(){
     auto* view=impl_->view;auto* layer=(CAMetalLayer*)view.layer;
@@ -82,6 +125,8 @@ void MacWindow::PumpEvents(){
     @autoreleasepool {
         CFRunLoopRunInMode(kCFRunLoopDefaultMode,0.0001,true);
         auto* app=gSexyAppBase;
+        if (app)
+            [impl_->view updateDisplayPreference:static_cast<float>(app->mFrameTiming.mTargetFps) focused:Focused];
         const bool edit=app&&app->mWidgetManager&&dynamic_cast<EditWidget*>(app->mWidgetManager->mFocusWidget);
         if(edit&&!impl_->view.isFirstResponder)[impl_->view becomeFirstResponder];
         if(!edit&&impl_->view.isFirstResponder)[impl_->view resignFirstResponder];
@@ -98,7 +143,7 @@ void MacWindow::ApplyCursor(MacCursor){}
 MacPointerState MacWindow::SamplePointer()const{return {};}
 bool MacWindow::BeginMouseSample(std::uint32_t){return false;}
 bool MacWindow::Minimized()const{return !Focused;}
-double MacWindow::RefreshRate()const{return impl_->view.window.screen.maximumFramesPerSecond;}
+double MacWindow::RefreshRate()const{return [impl_->view gameScreen].maximumFramesPerSecond;}
 void MacWindow::UpdatePresentation(){RefreshGeometry();}
 std::string MacClipboard(const std::string* in){if(in)UIPasteboard.generalPasteboard.string=[NSString stringWithUTF8String:in->c_str()];return UIPasteboard.generalPasteboard.string.UTF8String ?: "";}
 std::string MacExecutableDirectory(){return NSBundle.mainBundle.bundlePath.fileSystemRepresentation;}

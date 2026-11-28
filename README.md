@@ -4,23 +4,24 @@
 
 **高清分支说明：当前高清版（2×／4×）尚未实现按场景动态加载、卸载高清纹理，不属于已完成低显存适配的版本。** 本分支专属的加载策略、显存计算与4×／2×包定位见[高清资源加载与显存说明](docs/high-resolution/resource-loading.md)；该说明不适用于普通版 `main`。
 
-**高清主线源码版本为 v4.1.5。** Zombatar 与主菜单共用天空，木牌悬停字样和三个花盆按钮已更新。
-
-**上一版 [v4.1.4](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.4) 提供 Windows 10 与 Android 14 的 Vulkan 1.3 完整包（各有 1200p 和 2400p）、高清网页包和完美存档。普通版见 main 分支。**
+**当前发行版 [v4.1.10](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.10)。**
 
 版本号采用三段规则：**第一个数表示破坏性更新，第二个数表示功能更新，第三个数表示 bug 修复**。兼容性以各版发行说明为准。
 
 ## 下载与运行
 
-| 发行包 | 系统和图形要求 |
+| 平台 | 运行方式 |
 | --- | --- |
-| `x64-win10-vulkan1.3` | Windows 10 x64、Vulkan 1.3 及所需 descriptor indexing 能力 |
-| `arm64-android14-vulkan1.3` | Android 14、Armv9-A、Vulkan 1.3 及所需 descriptor indexing 能力；不要求 SVE/SVE2 |
-| 高清网页版 | 1200p；提供 wasm64 WebGPU、wasm64 WebGL 2 和 wasm32 WebGL 2 |
+| Windows | x64／ARM64，Vulkan 1.3。ARM64 需要 Windows 11。双击 `start.cmd`。 |
+| Linux | x64／ARM64，Vulkan 1.3、X11。从目录内运行 `sh start.sh`。 |
+| macOS | Apple Silicon，使用 Metal。解压后打开 `pvz_perf.app`。 |
+| iOS | ARM64，使用 Metal。IPA 需适合目标设备的侧载签名。 |
+| Android | 一个 APK 同时支持 `arm64-v8a` 和 `x86_64`。启动器使用 Vulkan 1.3 并提供存档工具。 |
+| 网页版 | 1200p。按浏览器能力使用 wasm64 WebGPU、wasm64 WebGL 2 或 wasm32 WebGL 2。 |
 
-下载入口：[GitHub Releases](https://github.com/YuHao2006/pvz_perf/releases)。GitHub 程序包需要配套的高清资源。网盘提供四个完整包。完整 Windows ZIP 解压到可写目录后运行 `pvz_perf.exe`；需要兼容的 VC++ x64 运行库。网盘 Android APK 已包含资源，不需要另拷数据包或在手机安装 Java。设备满足系统版本还不够，CPU、驱动和所需图形格式也必须满足对应要求。
+[GitHub v4.1.10 下载](https://github.com/YuHao2006/pvz_perf/releases/tag/v4.1.10)。GitHub 附件需要配套资源。Windows 和 Linux 将同版本的 `main.pak64` 放在启动脚本旁。macOS 将资源放在 `pvz_perf.app` 旁，移动端按启动界面导入。网页版将同版 `pvz-perf.data` 放在 `index.html` 旁。
 
-GitHub 另附完美用户档、无尽基准和 Windows 调试符号。完美档包含坚果包扎术。不要用个人进度覆盖仓库的性能基准。
+原生网盘版分别提供 1200p 和 2400p。Windows 和 Linux 使用裸文件夹，各带一份 `main.pak64`，放在启动脚本旁。游戏从资源里的 `compiled/render-height.txt` 读取分辨率。网页版在 Bilibili Toy 提供 1200p。
 
 **v4.0.0 是破坏性更新，当前存档格式为 DAT64 v5.1 / schema `0x10747`。** 原生版与网页版通过独立的 DataFixerUpper（DFU）模块自动升级历史 DAT64 v4，并修复已确认的旧植物攻击动画卡死。正确的 v5.1 不执行旧植物动画修复扫描；v4.0.2 在读档冷路径恢复已确认的生存换轮卡档，不改变格式。原版 DAT 可用附带转换器手动转换；未发布的 v3、v5.0 中间格式不支持。程序、DFU、shader、PAK64 必须成套更新。见[存档转换](docs/DAT-DAT64-CONVERSION.md)与[发行说明](docs/releases/v4.1.4.md)。
 
@@ -29,13 +30,13 @@ GitHub 另附完美用户档、无尽基准和 Windows 调试符号。完美档�
 - Windows：程序目录的 `data/`。
 - Android：通常为 `Android/media/com.openpvz.perf/`，无需额外存储权限。
 - 网页：当前网站来源的 IndexedDB，游戏虚拟目录 `/persist/development-v331/`；不是系统文件夹。设置页部分选项和自定义阵型列表另存 localStorage。不同浏览器／网站不共享，清除网站数据会删除进度；可在“自定义无尽”中导出 DAT64。
-- Linux 源码目标：遵循 `PVZ_APPDATA_DIR` 或 XDG 数据目录，详见[资产与运行边界](docs/ASSETS.md)。
+- Linux：遵循 `PVZ_APPDATA_DIR` 或 XDG 数据目录，详见[资产与运行边界](docs/ASSETS.md)。
 
 `settings.json` 首次创建时自动跟随刷新率；Windows 默认桌面 UI，Android 默认横板 UI。已有配置保留，目标帧率最低 30。横板 UI 在画幅不足时回退桌面布局。音量按滑条值保存并钳制在 0～100。退出时通过游戏菜单保存，安装覆盖或强退不会替未保存的关卡回写进度。
 
 `settings.json` 可设置 `"unlockAllLevels": true`，临时开放全部已实现的小游戏、解谜、生存关卡，并在小游戏选择页显示 Limbo 入口；默认为 `false`。修改后重启生效，不修改用户进度；改回 `false` 后恢复按用户存档解锁。未实现的“自制关卡”占位始终隐藏。
 
-Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。高清版在 `settings.json` 的 `resolution` 中设置内部渲染范围。默认下限为 800×600，1200p 档的上限为 2800×1200，2400p 档为 5600×2400。窗口和交换链跟随实际显示尺寸；游戏画面超过任一上限时，按比例渲染到上限，再用双线性放大上屏。安卓菜单的横板 UI 在重启后生效，各后端支持范围见[GPU 提交](docs/gpu-submission.md)。
+Android HDR 当前禁用。高清版以资源声明的分辨率确定渲染范围，窗口和交换链跟随显示尺寸。各后端支持范围见[GPU 提交](docs/gpu-submission.md)。
 
 ## 性能与实现
 
@@ -61,8 +62,8 @@ Android HDR 当前禁用，设置项保留但不可启用；Win7 使用 SDR。�
 | Windows DX12 | `tools/build-d3d12-game.ps1` |
 | Windows 7 DX9 | `tools/build-win7-opengl.ps1 -RenderBackend D3D9` |
 | Android | NDK 原生构建后用 `tools/build-android-apk.ps1 -BuildDirectory <tree> -Sign` 打包，详见[Android](docs/android-port.md) |
-| Linux Vulkan 源码目标 | `sh tools/build-linux-game.sh x11` 或 `wayland`；不是本次四个发行附件之一 |
-| 网页版（WebGPU／WebGL 2） | `tools/build-web-toy.ps1`；[构建与本地运行说明](tools/wasm/README.md)，v3.3.3 提供双后端 ZIP |
+| Linux Vulkan 源码目标 | `sh tools/build-linux-game.sh x11` 或 `wayland` |
+| 网页版（WebGPU／WebGL 2） | `tools/build-web-toy.ps1`；[构建与本地运行说明](tools/wasm/README.md) |
 
 Android 不需要安装 Android Studio；可使用命令行 SDK、NDK、JDK、CMake 和 Ninja。兼容包使用 `PVZ_VULKAN_LEGACY=ON`，必须配套 Android API 24 原生构建；现代包与兼容包不得交叉混用 `.so`、PAK 和 shader。
 

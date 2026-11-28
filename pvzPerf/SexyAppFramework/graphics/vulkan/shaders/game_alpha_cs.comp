@@ -7,20 +7,47 @@ layout(push_constant) uniform Params {
     int width;
     int height;
     uint color;
-    uint colorOnly;
+    uint flags;
 } params;
-void main()
+vec4 composeAt(ivec2 position)
 {
-    const ivec2 position=ivec2(gl_GlobalInvocationID.xy);
-    if(position.x>=params.width || position.y>=params.height) return;
     vec4 value=texelFetch(baseImage,position,0);
     const uint alpha=uint(round(texelFetch(alphaImage,position,0).b*255.0));
-    if(params.colorOnly!=0u) {
+    if ((params.flags & 1u) != 0u) {
         const uint packed=params.color|(alpha<<24u);
         value=vec4(float((packed>>16u)&255u),float((packed>>8u)&255u),
             float(packed&255u),float(packed>>24u))/255.0;
     } else {
         value.a=float(alpha)/255.0;
+    }
+    return value;
+}
+
+void main()
+{
+    const ivec2 position=ivec2(gl_GlobalInvocationID.xy);
+    const ivec2 extent=ivec2(params.width,params.height);
+    if (any(greaterThanEqual(position,extent))) return;
+    vec4 value=composeAt(position);
+    const bool fixTransparentEdges=(params.flags & 2u) != 0u;
+    if (fixTransparentEdges && value.a == 0.0) {
+        uvec3 sum = uvec3(0u);
+        uint count = 0u;
+        // Match ImageLib::FixTransparentEdges, which excludes the current row.
+        for (int dy = -1; dy <= 1; dy += 2) {
+            for (int dx = -1; dx <= 1; ++dx) {
+                ivec2 neighbor = position + ivec2(dx, dy);
+                if (any(lessThan(neighbor, ivec2(0))) ||
+                    any(greaterThanEqual(neighbor, extent)))
+                    continue;
+                vec4 sampleValue = composeAt(neighbor);
+                if (sampleValue.a > 0.0) {
+                    sum += uvec3(round(sampleValue.rgb * 255.0));
+                    ++count;
+                }
+            }
+        }
+        value.rgb = count != 0u ? vec3(sum / count) / 255.0 : vec3(0.0);
     }
     imageStore(target,position,value);
 }

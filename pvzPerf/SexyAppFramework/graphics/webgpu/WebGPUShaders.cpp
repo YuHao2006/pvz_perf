@@ -169,6 +169,15 @@ fn lookup(u: u32, v: u32) -> u32 {
     return ((f0*g1/65536u)*blue(x,y+1u)/65536u)+((f1*g1/65536u)*blue(x+1u,y+1u)/65536u)+
         ((f0*g0/65536u)*blue(x,y)/65536u)+((f1*g0/65536u)*blue(x+1u,y)/65536u);
 }
+fn composeAt(xy: vec2i) -> vec4f {
+    let alpha = u32(round(textureLoad(alphaImage, xy, 0).b * 255.0));
+    if (p.colorOnly != 0u) {
+        let color = p.color | (alpha << 24u);
+        return vec4f(f32((color >> 16u) & 255u), f32((color >> 8u) & 255u),
+            f32(color & 255u), f32(color >> 24u)) / 255.0;
+    }
+    return vec4f(textureLoad(image, xy, 0).rgb, f32(alpha) / 255.0);
+}
 @fragment fn fragment(@builtin(position) position: vec4f) -> @location(0) vec4f {
     let xy = vec2i(position.xy);
     if (p.operation == 3u) {
@@ -179,13 +188,29 @@ fn lookup(u: u32, v: u32) -> u32 {
         if (a >= 160u) { alpha = 255u-2u*(a-160u); } else if (a >= 128u) { alpha = 5u*(a-128u); }
         return vec4f(1.0,1.0,1.0,f32(alpha/3u)/255.0);
     }
-    if (p.operation == 2u) {
-        var value = textureLoad(image,xy,0); let a = u32(round(textureLoad(alphaImage,xy,0).b*255.0));
-        if (p.colorOnly != 0u) {
-            let color = p.color | (a<<24u);
-            return vec4f(f32((color>>16u)&255u),f32((color>>8u)&255u),f32(color&255u),f32(color>>24u))/255.0;
+    if (p.operation == 2u || p.operation == 4u) {
+        var value = composeAt(xy);
+        if (p.operation == 4u && value.a == 0.0) {
+            let size = vec2i(textureDimensions(image));
+            var sum = vec3u(0);
+            var count = 0u;
+            // Match ImageLib::FixTransparentEdges, which excludes the current row.
+            for (var dy = -1; dy <= 1; dy += 2) {
+                for (var dx = -1; dx <= 1; dx++) {
+                    let neighbor = xy + vec2i(dx, dy);
+                    if (any(neighbor < vec2i(0)) || any(neighbor >= size)) {
+                        continue;
+                    }
+                    let sampleValue = composeAt(neighbor);
+                    if (sampleValue.a > 0.0) {
+                        sum += vec3u(round(sampleValue.rgb * 255.0));
+                        count++;
+                    }
+                }
+            }
+            value = vec4f(vec3f(sum / max(count, 1u)) / 255.0, value.a);
         }
-        value.a = f32(a)/255.0; return value;
+        return value;
     }
     let pos = xy+p.origin;
     if (any(pos < vec2i(0)) || any(pos >= vec2i(textureDimensions(image)))) { return vec4f(0); }

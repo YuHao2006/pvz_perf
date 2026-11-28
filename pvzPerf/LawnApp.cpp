@@ -168,8 +168,8 @@ LawnApp::LawnApp()
 	mDebugKeysEnabled = false;
 	mFullCompanyName = "PopCap Games";
 	mProdName = "PopCap\\PlantsVsZombies";
-    mProductVersion = "4.1.9";
-	std::string aTitleName = "pvz_perf HD";
+    mProductVersion = "4.1.10";
+	std::string aTitleName = "pvz_perf";
 #ifdef _DEBUG
 	aTitleName += " BETA ";
 	aTitleName += mProductVersion;
@@ -1930,11 +1930,6 @@ void LawnApp::FastLoad(GameMode theGameMode)
 
 void LawnApp::LoadingThreadCompleted()
 {
-#if defined(__ANDROID__)
-	// 装载期编译的全部管线（含 12 条几何着色器）落盘，二次启动免重编
-	if (mDDInterface && mDDInterface->mRenderInterface && mDDInterface->mRenderInterface->mRenderer)
-		mDDInterface->mRenderInterface->mRenderer->SavePipelineCache();
-#endif
 	mReanimatorCache->PrebuildCacheFrames();
 	// Cached-frame draws must finish before compute-owned pool resources are created.
 	mDDInterface->mRenderInterface->Flush();
@@ -2449,19 +2444,7 @@ bool LawnApp::UpdateApp()
 	//	LoadingThreadCompleted();
 	//}
 
-	bool updated = SexyAppBase::UpdateApp();
-#if defined(__ANDROID__)
-    if (mTitleScreen && mLoaded && mCacheFramesPrebuilt && std::getenv("PVZ_ANDROID_GPU_FIXTURE")) {
-        unsetenv("PVZ_ANDROID_GPU_FIXTURE");
-        LoadingCompleted();
-        KillGameSelector();
-        PreNewGame(GameMode::GAMEMODE_SURVIVAL_ENDLESS_STAGE_3, true);
-        if (!mBoard || !GetDialog(Dialogs::DIALOG_CONTINUE))
-            throw std::runtime_error("GPU benchmark failed to restore the paused fixture");
-    }
-#endif
-
-	return updated;
+	return SexyAppBase::UpdateApp();
 }
 
 //0x453A70

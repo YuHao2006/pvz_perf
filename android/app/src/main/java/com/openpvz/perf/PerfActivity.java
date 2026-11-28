@@ -28,10 +28,13 @@ import android.widget.LinearLayout;
 import java.nio.charset.StandardCharsets;
 
 /** Keeps NativeActivity's input view eligible for explicit keyboard requests. */
-public final class PerfActivity extends NativeActivity implements InputManager.InputDeviceListener {
+public class PerfActivity extends NativeActivity implements InputManager.InputDeviceListener {
     // NativeActivity's native dlopen does not register JNI lookup with ART's
     // application ClassLoader. Associate this library before Java callbacks run.
-    static { System.loadLibrary("pvz_perf"); }
+    protected String nativeLibrary() {
+        return "pvz_perf";
+    }
+    private AndroidSaveFiles saveAccess;
     private LinearLayout inputBar;
     private Dialog inputDialog;
     private EditText textInput;
@@ -50,11 +53,22 @@ public final class PerfActivity extends NativeActivity implements InputManager.I
         }
         return accepted == null ? null : accepted.toString();
     };
+    // Called by android_main before migration or access to player data.
+    public String androidSaveDirectory() {
+        return saveAccess == null ? null : saveAccess.directory.getAbsolutePath();
+    }
+
     private static native void nativeTextChanged(long session, byte[] text, boolean done);
     private static native void nativeSurfaceOriginChanged(int left, int top);
 
     @Override
     protected void onCreate(Bundle state) {
+        try {
+            saveAccess = AndroidSaveFiles.open(this);
+        } catch (java.io.IOException e) {
+            android.widget.Toast.makeText(this, e.getMessage(), android.widget.Toast.LENGTH_LONG).show();
+        }
+        System.loadLibrary(nativeLibrary());
         super.onCreate(state);
         if (BuildConfig.HDR_DEVICE_TEST && Build.VERSION.SDK_INT >= 26) {
             getWindow().setColorMode(android.content.pm.ActivityInfo.COLOR_MODE_HDR);
@@ -265,6 +279,9 @@ public final class PerfActivity extends NativeActivity implements InputManager.I
     protected void onDestroy() {
         ((InputManager)getSystemService(Context.INPUT_SERVICE)).unregisterInputDeviceListener(this);
         super.onDestroy();
+        if (saveAccess != null) {
+            try { saveAccess.close(); } catch (java.io.IOException ignored) {}
+        }
         // NativeActivity.onDestroy waits for native_app_glue to finish. At
         // this point the game has saved and released audio/GPU resources.
         // Explicit Quit must not leave an empty cached game process behind.

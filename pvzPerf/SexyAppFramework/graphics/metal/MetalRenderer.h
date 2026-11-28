@@ -42,7 +42,7 @@ public:
     MetalTexture* ProcessImage(MetalTexture* source, const GpuImageProcessing& processing);
     MetalTexture* ComposeAlphaRaw(MetalTexture* base, MetalTexture* alpha,
         uint32_t color, bool colorOnly);
-    MetalTexture* AdoptComposedTexture(MetalTexture* composed);
+    MetalTexture* AdoptComposedTexture(MetalTexture* composed, bool fixTransparentEdges = false);
     MetalTexture* ComposeAlpha(MetalTexture* base, MetalTexture* alpha,
         uint32_t color, bool colorOnly);
     void RenderFontAtlas(MetalTexture* target, MetalTexture* source,

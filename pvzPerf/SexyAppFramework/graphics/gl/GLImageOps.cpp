@@ -121,14 +121,14 @@ GLTexture* GLRenderer::CopyTextureRegion(GLTexture* source, int x, int y, int w,
     return target;
 }
 GLTexture* GLRenderer::ComposeAlphaRaw(GLTexture* base, GLTexture* alpha,
-    unsigned int color, bool colorOnly)
+    unsigned int color, bool colorOnly, bool fixTransparentEdges)
 {
     auto& s = *impl_;
     if (!base || !alpha || !s.textures.contains(base) || !s.textures.contains(alpha) ||
         alpha->width != base->width || alpha->height != base->height)
         throw std::invalid_argument("Invalid OpenGL alpha composition dimensions");
     auto* target = s.Allocate(base->width, base->height, GL_RGBA8, false);
-    try { s.ImagePass(target, base, alpha, 2, nullptr, color, colorOnly); }
+    try { s.ImagePass(target, base, alpha, fixTransparentEdges ? 4 : 2, nullptr, color, colorOnly); }
     catch (...) { DestroyTexture(target); throw; }
     return target;
 }

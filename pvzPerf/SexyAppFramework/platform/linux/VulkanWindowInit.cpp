@@ -32,6 +32,8 @@ void SexyAppBase::MakeWindow()
     // Android：NativeWindowHandle 是裸 ANativeWindow*，由 android_main 在
     // APP_CMD_INIT_WINDOW 挂接；窗口本体归 native_app_glue 所有，不可重建。
     mHWnd = AttachedAndroidNativeWindow();
+#elif defined(__OHOS__)
+    mHWnd = static_cast<OHNativeWindow*>(mNativeWindow->SurfaceHandles().surface);
 #else
     mHWnd = mNativeWindow.get(); // NativeWindowHandle, never a Win32 HWND.
 #endif

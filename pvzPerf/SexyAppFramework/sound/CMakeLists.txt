@@ -1,3 +1,8 @@
+if(PVZ_HARMONY)
+    target_sources(${PROJECT_NAME} PRIVATE BassMusicInterface.cpp)
+    return()
+endif()
+
 target_sources(${PROJECT_NAME} PRIVATE
     "SoundDecode.h"
     "SoundDecode.cpp"

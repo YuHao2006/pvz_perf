@@ -107,7 +107,23 @@ struct Buffer {
             VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
         VK_REQUIRE(vkAllocateMemory(VulkanContext::device, &alloc, nullptr, &memory));
         VK_REQUIRE(vkBindBufferMemory(VulkanContext::device, buffer, memory, 0));
-        if (host) VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, size, 0, &mapped));
+        if (host) {
+#if defined(__OHOS__) && defined(__x86_64__) && defined(PVZ_VULKAN_LEGACY)
+            VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, VK_WHOLE_SIZE, 0, &mapped));
+#else
+            VK_REQUIRE(vkMapMemory(VulkanContext::device, memory, 0, size, 0, &mapped));
+#endif
+        }
+    }
+
+    void FlushHostWritesForHarmonyEmulator() const {
+#if defined(__OHOS__) && defined(__x86_64__) && defined(PVZ_VULKAN_LEGACY)
+        if (!mapped) return;
+        // The PC emulator needs an explicit flush even for coherent mappings.
+        const VkMappedMemoryRange range{VK_STRUCTURE_TYPE_MAPPED_MEMORY_RANGE,nullptr,
+            memory,0,VK_WHOLE_SIZE};
+        VK_REQUIRE(vkFlushMappedMemoryRanges(VulkanContext::device,1,&range));
+#endif
     }
 };
 
@@ -905,6 +921,14 @@ struct VulkanRenderer::Impl {
     }
 
     void RecordTextureUploads(VkCommandBuffer cmd) {
+#if defined(__OHOS__) && defined(__x86_64__) && defined(PVZ_VULKAN_LEGACY)
+        std::array<bool,kStagingRingSize> flushed{};
+        for (const auto& upload:pendingUploads) {
+            if (flushed[upload.arena]) continue;
+            stagingRing[upload.arena]->FlushHostWritesForHarmonyEmulator();
+            flushed[upload.arena]=true;
+        }
+#endif
         for (const auto& upload:pendingUploads) {
             const auto& image=*upload.texture;
             // An updated resident image can have earlier fragment reads or a
@@ -1147,6 +1171,7 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     auto* quad=table+65536;
     for (unsigned int i=0;i<65536;i+=4)
         for (unsigned int corner : {0u,1u,2u,1u,2u,3u}) *quad++=static_cast<unsigned short>(i+corner);
+    staticIndices.FlushHostWritesForHarmonyEmulator();
 #if defined(PVZ_VULKAN_SPRITE_EXPERIMENT)
     generateIndexPrefixExperiment=VulkanRenderer::benchmarkGenerateIndexPrefix;
     presentCopyExperiment=VulkanRenderer::benchmarkPresentCopy;
@@ -1406,6 +1431,15 @@ void VulkanRenderer::Impl::Initialize(const std::string& vsPath, const std::stri
     RefreshPresentPipeline();
 }
 
+// The HarmonyOS compatibility path also serves drivers without RGBA16F storage.
+#if defined(__OHOS__) && defined(PVZ_VULKAN_LEGACY)
+static constexpr VkFormat kRenderImageFormat = VK_FORMAT_R8G8B8A8_UNORM;
+static constexpr const char* kRenderImageFormatName = "RGBA8";
+#else
+static constexpr VkFormat kRenderImageFormat = VK_FORMAT_R16G16B16A16_SFLOAT;
+static constexpr const char* kRenderImageFormatName = "RGBA16F";
+#endif
+
 void VulkanRenderer::Impl::InitImagePass() {
     if (imagePass) return;
     constexpr VkFormatFeatureFlags required = VK_FORMAT_FEATURE_COLOR_ATTACHMENT_BIT |
@@ -1418,14 +1452,15 @@ void VulkanRenderer::Impl::InitImagePass() {
     constexpr VkImageUsageFlags usage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
         VK_IMAGE_USAGE_TRANSFER_SRC_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT |
         VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_STORAGE_BIT;
-    constexpr VkFormat format = VK_FORMAT_R16G16B16A16_SFLOAT;
+    constexpr VkFormat format = kRenderImageFormat;
     VkFormatProperties properties{};
     vkGetPhysicalDeviceFormatProperties(window.physicalDevice, format, &properties);
     VkImageFormatProperties imageProperties{};
     if ((properties.optimalTilingFeatures & required) != required ||
         vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice, format,
             VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &imageProperties) != VK_SUCCESS)
-        throw std::runtime_error("GPU render images require RGBA16F attachment, blend, sampling, linear filtering, storage and transfers");
+        throw std::runtime_error(std::string("GPU render images require ") + kRenderImageFormatName +
+            " attachment, blend, sampling, linear filtering, storage and transfers");
     VkAttachmentDescription attachment{};
     attachment.format = format;
     attachment.samples = VK_SAMPLE_COUNT_1_BIT;
@@ -1472,13 +1507,13 @@ std::unique_ptr<VulkanTexture> VulkanRenderer::Impl::RenderImage(int w, int h) {
         VK_IMAGE_USAGE_STORAGE_BIT;
     VkImageFormatProperties properties{};
     VK_REQUIRE(vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice,
-        VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
+        kRenderImageFormat, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
     if (uint32_t(w) > std::min(properties.maxExtent.width, deviceProperties.limits.maxFramebufferWidth) ||
         uint32_t(h) > std::min(properties.maxExtent.height, deviceProperties.limits.maxFramebufferHeight) ||
         uint32_t(w) > deviceProperties.limits.maxViewportDimensions[0] ||
         uint32_t(h) > deviceProperties.limits.maxViewportDimensions[1])
         throw std::invalid_argument("GPU render image exceeds device image/framebuffer limits");
-    auto image = Image(w, h, usage, false, VK_FORMAT_R16G16B16A16_SFLOAT);
+    auto image = Image(w, h, usage, false, kRenderImageFormat);
     image->generated = true;
     VkFramebufferCreateInfo framebuffer{VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO};
     framebuffer.renderPass = imagePass;
@@ -1614,6 +1649,10 @@ void VulkanRenderer::Impl::FinishImageBatch() {
     if (VulkanRenderer::benchmarkQueries)
         vkCmdWriteTimestamp(imageCommand,VK_PIPELINE_STAGE_BOTTOM_OF_PIPE_BIT,VulkanRenderer::benchmarkQueries,1);
 #endif
+    if (const auto* stream=drawStreams[frame.resourceIndex]) {
+        if (stream->vertices.used) stream->vertices.FlushHostWritesForHarmonyEmulator();
+        if (stream->indices.used) stream->indices.FlushHostWritesForHarmonyEmulator();
+    }
     VK_REQUIRE(vkEndCommandBuffer(imageCommand));
     VK_REQUIRE(vkResetFences(device, 1, &imageFence));
     VkCommandBufferSubmitInfo commands{VK_STRUCTURE_TYPE_COMMAND_BUFFER_SUBMIT_INFO};
@@ -2937,6 +2976,10 @@ void VulkanRenderer::EndSceneAndPresent() try {
     );
     s.FlushPendingRun(s.frame.cmd);  // P5：present 四边形入令后冲刷
     s.FlushTextureUploads(); // Includes textures first encountered during this scene.
+    if (const auto* stream=s.drawStreams[s.frame.resourceIndex]) {
+        if (stream->vertices.used) stream->vertices.FlushHostWritesForHarmonyEmulator();
+        if (stream->indices.used) stream->indices.FlushHostWritesForHarmonyEmulator();
+    }
     s.window.EndFrame();
     s.frame = {};
     s.sceneInitialized = true;
@@ -3185,6 +3228,18 @@ ImagePixels VulkanRenderer::ReadTexturePixels(VulkanTexture* handle) {
         }
     } else {
         std::memcpy(result.pixels.data(),readback.mapped,result.pixels.size()*4);
+        if (texture.generated) {
+            // Export needs straight alpha even when the compatibility target stores bytes.
+            for (auto& pixel : result.pixels) {
+                const uint32_t alpha = pixel >> 24;
+                const auto unpremultiply = [&](unsigned shift) {
+                    const uint32_t channel = (pixel >> shift) & 255u;
+                    return alpha ? std::min((channel * 255u + alpha / 2u) / alpha, 255u) : 0u;
+                };
+                pixel = (alpha << 24) | (unpremultiply(16) << 16) |
+                    (unpremultiply(8) << 8) | unpremultiply(0);
+            }
+        }
     }
     if(swizzle) // RGBA8 源转 ImagePixels 的 BGRA 字节序契约
         for(auto& pixel:result.pixels)

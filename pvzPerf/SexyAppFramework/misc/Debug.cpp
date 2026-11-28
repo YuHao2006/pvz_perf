@@ -6,7 +6,14 @@
 
 #include <time.h>
 #include <cstdint>
+#if defined(__OHOS__)
+#define FMT_HEADER_ONLY
+#include <fmt/format.h>
+namespace debug_format = fmt;
+#else
 #include <format>
+namespace debug_format = std;
+#endif
 #include <memory>
 
 #include "memmgr.h"
@@ -182,13 +189,13 @@ static void SexyDumpUnfreed()
 		return;
 
 	time_t aTime = time(NULL);
-	const std::string aHeader = std::format("Memory Leak Report for {}\n", asctime(localtime(&aTime)));
+	const std::string aHeader = debug_format::format("Memory Leak Report for {}\n", asctime(localtime(&aTime)));
 	fputs(aHeader.c_str(), f);
 	DebugOutput("\n");
 	DebugOutput(aHeader.c_str());
 	for(i = gSexyAllocMap.begin(); i != gSexyAllocMap.end(); i++) 
 	{
-		const std::string aLine = std::format("{}({}) : Leak {} byte{}\n",
+		const std::string aLine = debug_format::format("{}({}) : Leak {} byte{}\n",
 			i->second.file, i->second.line, i->second.size, i->second.size>1?"s":"");
 		DebugOutput(aLine.c_str());
 		fputs(aLine.c_str(), f);
@@ -204,7 +211,7 @@ static void SexyDumpUnfreed()
 			
 			if (count == 0)
 				aHexDump += '\t';
-			aHexDump += std::format("{:02X} ", (unsigned int)_c);
+			aHexDump += debug_format::format("{:02X} ", (unsigned int)_c);
 		
 			if ((_c < 32) || (_c > 126))
 				_c = '.';
@@ -253,7 +260,7 @@ static void SexyDumpUnfreed()
 	const char* aSeparator = "-----------------------------------------------------------\n";
 	fputs(aSeparator, f);
 	DebugOutput(aSeparator);
-	const std::string aTotal = std::format("Total Unfreed: {} bytes ({}KB)\n\n", totalSize, totalSize / 1024);
+	const std::string aTotal = debug_format::format("Total Unfreed: {} bytes ({}KB)\n\n", totalSize, totalSize / 1024);
 	DebugOutput(aTotal.c_str());
 	fputs(aTotal.c_str(), f);
 }

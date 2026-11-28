@@ -99,7 +99,11 @@ bool RenderInterface::InitGPU()
 
 	RenderInterface::sSamplerAddressWrap = false;
 
-	const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders/";
+#if defined(__OHOS__) && defined(PVZ_VULKAN_LEGACY)
+    const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders-legacy/";
+#else
+    const std::string shaderDir = AddTrailingSlash(GetExecutableDirectory(), true) + "shaders/";
+#endif
 	const GpuHdrParams hdr{gSexyAppBase->mScaleHDRPaperWhite,gSexyAppBase->mScaleHDRMaxNits,
         gSexyAppBase->mScaleHDRReinhardPaperNits,gSexyAppBase->mScaleHDRStrength};
     mRenderer = GpuBackendDetail::CreateRenderer<BuildConfig::Graphics, GpuRenderer>(

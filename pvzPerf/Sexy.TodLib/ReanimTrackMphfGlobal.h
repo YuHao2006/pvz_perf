@@ -15,11 +15,10 @@
 #include <cstdint>
 
 // keys=2560 buckets=2048 slots=4096 (padding 1536 x {key=0})
-inline constexpr int MphfLookupGlobal(const std::uint32_t theType, const std::uint32_t theTrackId)
-{
+namespace ReanimMphfTable {
     struct MphfGlobalSlot { std::uint64_t key; std::uint16_t index; };
-    static constexpr std::uint32_t kBuckets = 2048;
-    static constexpr std::uint16_t kDisp[kBuckets] = {
+    inline constexpr std::uint32_t kBuckets = 2048;
+    inline constexpr std::uint16_t kDisp[kBuckets] = {
         1, 0, 4, 0, 2, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0,
         0, 0, 2, 0, 2, 0, 0, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0,
         0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 2, 0, 0, 0, 0, 2,
@@ -107,8 +106,8 @@ inline constexpr int MphfLookupGlobal(const std::uint32_t theType, const std::ui
         1, 1, 2, 2, 0, 0, 0, 0, 1, 0, 1, 2, 1, 0, 1, 0, 0, 0, 2, 0, 0, 0, 0, 0,
         0, 0, 0, 0, 0, 0, 0, 0,
     };
-    static constexpr std::uint32_t kSlotCount = 4096;
-    static constexpr MphfGlobalSlot kSlots[kSlotCount] = {
+    inline constexpr std::uint32_t kSlotCount = 4096;
+    inline constexpr MphfGlobalSlot kSlots[kSlotCount] = {
         {0x0ull, 0}, {0x41000000f7ull, 1}, {0x0ull, 0}, {0x8f00000010ull, 110},
         {0x0ull, 0}, {0x59000004dfull, 10}, {0x0ull, 0}, {0x59000004d8ull, 1},
         {0x81000002f6ull, 34}, {0x0ull, 0}, {0x17000004b3ull, 19}, {0x0ull, 0},
@@ -1134,6 +1133,10 @@ inline constexpr int MphfLookupGlobal(const std::uint32_t theType, const std::ui
         {0x1e00000046ull, 0}, {0x41000005e1ull, 29}, {0x31000004b0ull, 4}, {0x0ull, 0},
         {0x6d0000050cull, 2}, {0xd0000020cull, 6}, {0x5d0000030bull, 11}, {0x0ull, 0},
     };
+}
+inline constexpr int MphfLookupGlobal(const std::uint32_t theType, const std::uint32_t theTrackId)
+{
+    using namespace ReanimMphfTable;
     const std::uint64_t aKey = (static_cast<std::uint64_t>(theType) << 32) | theTrackId;
     const std::uint64_t aMixed1 = aKey * 0x9E3779B97F4A7C15ull;
     const std::uint32_t aBucket = static_cast<std::uint32_t>((aMixed1 ^ (aMixed1 >> 31)) & (kBuckets - 1));

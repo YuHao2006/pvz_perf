@@ -38,6 +38,8 @@ std::string Sexy::GetExecutableDirectory()
 {
 #if defined(__APPLE__)
     return AddTrailingSlash(MacExecutableDirectory(), true);
+#elif defined(__OHOS__)
+    return AddTrailingSlash(GetCurDir(), true);
 #elif defined(_WIN32)
 	std::vector<char> aPath(MAX_PATH, '\0');
 	for (;;)

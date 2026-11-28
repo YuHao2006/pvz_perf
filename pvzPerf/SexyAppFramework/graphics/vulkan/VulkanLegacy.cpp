@@ -69,8 +69,12 @@ VkResult VKAPI_CALL Submit(VkQueue queue, unsigned int count, const VkSubmitInfo
         }
         for (unsigned int i=0;i<in.commandBufferInfoCount;++i)
             commands[i]=in.pCommandBufferInfos[i].commandBuffer;
-        const VkSubmitInfo out{VK_STRUCTURE_TYPE_SUBMIT_INFO,nullptr,in.waitSemaphoreInfoCount,
-            wait.data(),stages.data(),in.commandBufferInfoCount,commands.data(),in.signalSemaphoreInfoCount,signal.data()};
+        const VkSubmitInfo out{
+            VK_STRUCTURE_TYPE_SUBMIT_INFO, nullptr,
+            in.waitSemaphoreInfoCount, in.waitSemaphoreInfoCount ? wait.data() : nullptr,
+            in.waitSemaphoreInfoCount ? stages.data() : nullptr,
+            in.commandBufferInfoCount, in.commandBufferInfoCount ? commands.data() : nullptr,
+            in.signalSemaphoreInfoCount, in.signalSemaphoreInfoCount ? signal.data() : nullptr};
         const auto result=vkQueueSubmit(queue,1,&out,n+1==count?fence:VK_NULL_HANDLE);
         if (result!=VK_SUCCESS) return result;
     }

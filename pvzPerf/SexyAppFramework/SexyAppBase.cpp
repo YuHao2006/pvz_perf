@@ -91,9 +91,6 @@ extern char** environ;
 #endif
 
 using namespace Sexy;
-#ifdef PVZ_IOS
-void PvzIosUpdateFrame(Sexy::SexyAppBase& app);
-#endif
 
 namespace
 {
@@ -3454,55 +3451,9 @@ bool SexyAppBase::Process(bool allowSleep)
 	return true;
 }
 
-/*void SexyAppBase::DoMainLoop()
-{
-	Dialog* aDialog = NULL;
-	if (theModalDialogId != -1)
-	{
-		aDialog = GetDialog(theModalDialogId);
-		DBG_ASSERTE(aDialog != NULL);
-		if (aDialog == NULL)
-			return;
-	}
-
-	while (!mShutdown)
-	{		
-		MSG msg;
-		while ((PeekMessage(&msg, NULL, 0, 0, PM_REMOVE)) && (!mShutdown))
-		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
-		}
-
-		ProcessDemo();		
-		ProcessDeferredMessages();
-
-		if ((aDialog != NULL) && (aDialog->mResult != -1))
-			return;
-
-		if (!mShutdown)
-		{
-			//++aCount;
-			Process();
-		}		
-	}
-}*/
-
 void SexyAppBase::DoMainLoop()
 {
-	// A cancelled/failed load must leave the loop before resource cleanup.
-	// Start joins the loader; LawnApp then performs its full Shutdown path.
-	while (!mShutdown && !mLoadingFailed)
-	{
-		if (mExitToTop)
-			mExitToTop = false;
-#if defined(PVZ_IOS)
-		PvzIosUpdateFrame(*this);
-#else
-		UpdateApp();
-#endif
-        HostYield();
-	}
+    HostRunMainLoop(*this);
 }
 
 bool SexyAppBase::UpdateAppStep(bool* updated)
@@ -4056,21 +4007,7 @@ void SexyAppBase::Init()
 
 	// The x64 build has exactly one packaged-resource format: the converter's
 	// plain main.pak64.  Never mount the official 32-bit/XOR main.pak here.
-	std::filesystem::path archive = "main.pak64";
-#if defined(PVZ_IOS)
-    if(const char* imported = std::getenv("PVZ_IOS_PAK")) archive=imported;
-#elif defined(__APPLE__)
-	// An independently distributed PAK can sit beside the signed app bundle.
-	if (!std::filesystem::exists(archive)) {
-		const auto executable = std::filesystem::path(GetExecutableDirectory()).lexically_normal();
-		const auto macOS = executable.filename().empty() ? executable.parent_path() : executable;
-		const auto contents = macOS.parent_path();
-		const auto bundle = contents.parent_path();
-		if (macOS.filename() == "MacOS" && contents.filename() == "Contents" && bundle.extension() == ".app")
-			archive = bundle.parent_path() / "main.pak64";
-	}
-#endif
-	if (!gPakInterface->AddPakFile(archive.string()))
+	if (!gPakInterface->AddPakFile(HostResourceArchivePath()))
 	{
 		throw std::runtime_error("missing or invalid plain x64 resource archive: main.pak64");
 	}
@@ -4078,9 +4015,9 @@ void SexyAppBase::Init()
 
 	// Create a message we can use to talk to ourselves inter-process
 #ifdef _WIN32
-	mNotifyGameMessage = RegisterWindowMessageA("pvz_perf.HD.Notify");
+	mNotifyGameMessage = RegisterWindowMessageA("pvz_perf.Notify");
 
-	std::string instanceName="pvz_perf.HD.SingleInstance";
+	std::string instanceName="pvz_perf.SingleInstance";
 	::SetLastError(ERROR_SUCCESS);
 	mMutex = ::CreateMutexA(NULL, TRUE, instanceName.c_str());
 	const DWORD aMutexError = ::GetLastError();
@@ -4097,16 +4034,10 @@ void SexyAppBase::Init()
 	// flock lifetime follows the descriptor; a crash releases it automatically.
 	if (mOnlyAllowOneCopyToRun)
 	{
-#if defined(__ANDROID__)
-		// Shared Android/media supports data files but not reliable flock.
-		// Runtime synchronization belongs to the private native runtime folder.
-		const auto path = GetExecutableDirectory() + ".instance.lock";
-#else
-		const auto path = GetAppDataFolder() + ".instance.lock";
-#endif
+        const auto path = HostInstanceLockPath();
 		mInstanceLockFd = open(path.c_str(), O_RDWR | O_CREAT | O_CLOEXEC, 0600);
 		if (mInstanceLockFd < 0)
-			throw std::runtime_error("Cannot open Linux instance lock: " + path);
+			throw std::runtime_error("Cannot open instance lock: " + path);
 		if (flock(mInstanceLockFd, LOCK_EX | LOCK_NB) != 0)
 		{
 			if (errno != EWOULDBLOCK && errno != EAGAIN)
@@ -4194,12 +4125,7 @@ void SexyAppBase::HandleGameAlreadyRunning()
 			PostMessage(HWND_BROADCAST, mNotifyGameMessage, 0, 0);
 		DoExit(0);
 #else
-#if defined(__ANDROID__)
-		throw std::runtime_error("Another game process holds " + GetExecutableDirectory() + ".instance.lock");
-#else
-		throw std::runtime_error("Another game process holds " + GetAppDataFolder() +
-			".instance.lock; close that game before starting another window backend");
-#endif
+        throw std::runtime_error("Another game process holds " + HostInstanceLockPath());
 #endif
 	}
 }

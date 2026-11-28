@@ -1,11 +1,32 @@
 plugins { id 'com.android.application' }
+def stagingDir = providers.gradleProperty('pvzStagingDir')
+if (stagingDir.isPresent()) layout.buildDirectory.set(file(stagingDir.get() + '/build'))
+
+def gameRoot = rootProject.projectDir.parentFile
+def saveEditorAssets = layout.buildDirectory.dir('generated/pvz-save-assets')
+def stageSaveEditor = tasks.register('stageSaveEditor', Exec) {
+    def stageScript = new File(gameRoot, 'tools/stage-android-save-editor.py')
+    inputs.file(stageScript)
+    inputs.dir(new File(gameRoot, 'tools/bin/web'))
+    inputs.dir(file('src/main/save-editor'))
+    outputs.dir(saveEditorAssets)
+    def python = System.getProperty('os.name').startsWith('Windows') ? 'python' : 'python3'
+    commandLine python, stageScript, saveEditorAssets.get().dir('save-editor').asFile
+}
+
 android { namespace 'com.openpvz.perf'; compileSdk 35
+    ndkVersion '27.2.12479018'
     lint { checkReleaseBuilds false }
     buildFeatures { buildConfig true }
     defaultConfig {
         applicationId 'com.openpvz.perf'
         minSdk providers.gradleProperty('pvzMinSdk').getOrElse('34').toInteger()
         targetSdk 35
+        ndk { abiFilters 'arm64-v8a', 'x86_64' }
+        def compatibility = providers.gradleProperty('pvzVulkanCompatibility').getOrElse('false')
+        buildConfigField 'boolean', 'VULKAN_COMPATIBILITY', compatibility
+        buildConfigField 'boolean', 'BUNDLED_PAK', providers.gradleProperty('pvzBundledPak').getOrElse('true')
+        manifestPlaceholders = [pvzVulkanCompatibility: compatibility]
         versionCode 39
         versionName '4.1.10'
         buildConfigField 'boolean', 'HDR_DEVICE_TEST', providers.gradleProperty('pvzHdrTest').getOrElse('false')
@@ -20,7 +41,11 @@ android { namespace 'com.openpvz.perf'; compileSdk 35
             assets.srcDirs = [staging + '/assets']
             jniLibs.srcDirs = [staging + '/jniLibs']
         } else { jniLibs.srcDirs = ['src/main/jniLibs'] }
+        assets.srcDir(saveEditorAssets)
     } }
     packaging { jniLibs { useLegacyPackaging true }; resources { excludes += ['META-INF/*'] } }
     aaptOptions { noCompress 'pak64' }
 }
+
+
+tasks.named('preBuild').configure { dependsOn(stageSaveEditor) }

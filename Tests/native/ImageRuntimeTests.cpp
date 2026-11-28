@@ -1211,6 +1211,52 @@ void ReanimationAppearanceDefinitions(SexyAppBase& app)
     struct CatalogCleanup {
         ~CatalogCleanup() { ReanimatorFreeDefinitions(); DefinitionFreeAtlasImages(); }
     } catalogCleanup;
+    ReanimatorEnsureDefinitionLoaded(REANIM_SNOWPEA, false);
+    const auto& snowPea = gReanimatorDefArray[REANIM_SNOWPEA];
+    const auto* snowPeaTracks = snowPea.mTracks.tracks;
+    const auto* snowPeaTrackEnd = snowPeaTracks + snowPea.mTracks.count;
+    const auto* mouth = std::find_if(snowPeaTracks, snowPeaTrackEnd,
+        [](const auto& track) { return track.mTrackId == ReanimTrackId::SnowPea_mouth; });
+    Require(snowPea.mTracks.count == 20 && mouth != snowPeaTrackEnd &&
+        mouth->mTransforms.count == 104, "Baked Snow Pea mouth changed the save track layout");
+    const auto mouthSlot = mouth->mTransforms.mTransforms[29].mImageSlot;
+    Require(mouthSlot > 0 && mouthSlot < snowPea.mImageSlotCount,
+        "Snow Pea mouth has no atlas region");
+    const auto& rect = snowPea.mImageRects[mouthSlot];
+    Require(rect.mWidth == 33 && rect.mHeight == 49 && rect.mTrimWidth == 0,
+        "Snow Pea mouth changed its logical canvas");
+    for (int frame = 0; frame < mouth->mTransforms.count; ++frame)
+    {
+        const auto& keyframe = mouth->mTransforms.mTransforms[frame];
+        if (frame < 29)
+        {
+            Require(keyframe.mFrame < 0, "Baked mouth became visible in the body-only clip");
+            continue;
+        }
+        Require(keyframe.mFrame == 0 && keyframe.mImageSlot == mouthSlot,
+            "Snow Pea mouth switched atlas regions during animation");
+    }
+    for (const auto type : {REANIM_SUNFLOWER, REANIM_MARIGOLD})
+    {
+        const auto saved = std::find_if(std::begin(ReanimAppearanceSaveCatalog::Definitions),
+            std::end(ReanimAppearanceSaveCatalog::Definitions), [type](const auto& entry) {
+                return entry.type == type;
+            });
+        Require(saved != std::end(ReanimAppearanceSaveCatalog::Definitions),
+            "Merged-stem plant missing from the save catalog");
+        ReanimatorEnsureDefinitionLoaded(type, false);
+        const auto& tracks = gReanimatorDefArray[type].mTracks;
+        Require(tracks.count == static_cast<int>(saved->trackCount),
+            "Merged-stem plant changed the DAT64 track count");
+        const int index = LevelSaveFormat::MissingHdStemTrack(type, saved->trackCount - 1);
+        Require(index >= 0 && tracks.tracks[index].mTrackId == ReanimTrackId::stalk_top,
+            "Merged-stem plant changed the DAT64 stem track index");
+        const auto& frames = tracks.tracks[index].mTransforms;
+        Require(frames.count > 0 && frames.count == tracks.tracks[0].mTransforms.count &&
+            std::all_of(frames.mTransforms,
+            frames.mTransforms + frames.count, [](const auto& frame) { return frame.mFrame < 0; }),
+            "Retired stem track drew over the merged stem");
+    }
     ReanimatorEnsureDefinitionLoaded(ReanimationType::REANIM_GARLIC,false);
     Reanimation first,second;
     first.ReanimationInitializeType(0,0,ReanimationType::REANIM_GARLIC, 0);
@@ -2856,8 +2902,28 @@ void PlantSpecialCatalogRuntime(TestApp& app)
             Require(target->mBodyHealth<1000000 && (1000000-target->mBodyHealth)%20==0 && !plant->mDead,
                 "Spike ground damage did not reach the overlapping zombie");break;
         case SEED_TORCHWOOD:
+        {
             Require(cold->mProjectileType==PROJECTILE_PEA && warm->mProjectileType==PROJECTILE_FIREBALL,
-                "Torchwood did not thaw snow peas and ignite peas exactly once");break;
+                "Torchwood did not thaw snow peas and ignite peas exactly once");
+            constexpr int impactOrder=123456;
+            auto* fireball=board.AddProjectile(static_cast<int>(target->mX),static_cast<int>(target->mY),impactOrder,row,PROJECTILE_PEA);
+            fireball->ConvertToFireball(3);
+            fireball->DoImpact(target);
+            Reanimation* impact=nullptr;
+            Reanimation* animation=nullptr;
+            while(clocks.mReanimations.IterateNext(animation))
+            {
+                if(animation->mDead || animation->mReanimationType!=REANIM_JALAPENO_FIRE || animation->mRenderOrder!=impactOrder+1)
+                    continue;
+                impact=animation;
+                break;
+            }
+            Require(impact!=nullptr,"Fire pea impact did not spawn its flame");
+            Require(impact->mFrameStart==3 && impact->mFrameCount==10 && impact->mAnimRate==24.0f &&
+                impact->mLoopType==REANIM_PLAY_ONCE,"Fire pea impact escaped the one-shot fade-out segment");
+            std::cout<<"PASS fire pea impact fade-out only, Hz="<<hz<<'\n';
+            break;
+        }
         case SEED_PLANTERN:
             Require(!plant->mDead && app.ParticleTryToGet(plant->mParticleID),
                 "Plantern lost its persistent shine particle");break;
@@ -10481,7 +10547,7 @@ int main(int argc, char** argv)
             ReanimationAppearanceDefinitions(app);
             return 0;
         }
-        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly&&!gMinigameRulesOnly) {
+        if(!gStepEventsOnly&&!gVramOnly&&!gCardAtlasOnly&&!zombatarPanOnly&&!gMinigameRulesOnly&&!gPlantCatalogOnly) {
         WrappedTextMeasurements();
         PoolGpuChecks::Run(*app.mDDInterface->mRenderInterface->mRenderer,
 #if defined(PVZ_GPU_VULKAN)

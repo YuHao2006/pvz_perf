@@ -384,6 +384,7 @@ elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux")
         "platform/linux/TabletCaret.cpp")
     target_compile_definitions(${PROJECT_NAME} PRIVATE
         SEXY_RENDER_GPU=1
+        SEXY_WINDOW_LINUX=1
         "$<$<NOT:$<CONFIG:Release>>:SEXY_DISABLE_MODVAL=1>")
     if(PVZ_WINDOW_BACKEND STREQUAL "WAYLAND")
         target_compile_definitions(${PROJECT_NAME} PRIVATE SEXY_WINDOW_WAYLAND=1)

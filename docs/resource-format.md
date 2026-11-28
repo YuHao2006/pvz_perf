@@ -112,12 +112,19 @@ Each `compiled/particle-runtime/<root>.compiled` contains:
 
 | Section | Layout |
 | --- | --- |
-| Header | six u32: `PTC1` (`0x31435450`), emitter-name count, emitter-name registry hash, emitter count, variant count, slots per variant |
+| Header | six u32: `PTC1` (`0x31435450`) or `PTC2` (`0x32435450`), emitter-name count, emitter-name registry hash, emitter count, variant count, slots per variant |
 | Emitter header | nine words: u32 region offset/count; i32 image frames, animated, flags; u32 emitter type, name ID, duration-target index, render-track mask. Target `0xffffffff` means none |
 | Emitter tracks and fields | 22 system tracks, particle-field array, system-field array, then 16 particle tracks in `TodEmitterDefinition` declaration order |
 | Track | u32 node count followed by `{f64 time; f32 low,high; u32 curve,distribution}` nodes, 24 bytes each |
 | Field array | u32 count followed by `{u32 type; Track x; Track y}` records; at most four |
 | Each variant | u32 atlas width, height and UTF-8 path byte count; path bytes with no terminator; then one `{f32 U0,V0,U1,V1; i32 width,height}` per slot |
+
+PTC2 appends four signed 32-bit integers to each slot: the retained rectangle's
+left, top, width and height on the original logical canvas. Zero crop dimensions
+denote a full cel. UVs cover only packed pixels. Spin and clip curves use the
+original canvas, including when several appearances share an atlas.
+The 2400p layout uses a four-texel grid and four texels of padding on each side.
+Whole-page 1200p and 600p derivatives share the same normalized UVs.
 
 Defaults are filled offline. Authored time fractions are converted to double
 once during compilation, preserving values such as `1/3` without decimal

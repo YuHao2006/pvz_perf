@@ -1,10 +1,13 @@
 #include "ApplicationHost.h"
+#include "UserDirectories.h"
 #include "Common.h"
 #include "SexyAppBase.h"
 #include "sound/BassMusicInterface.h"
 #include "sound/DummyMusicInterface.h"
 #include "Sexy.TodLib/TodCommon.h"
 #include <thread>
+#include <filesystem>
+#include <cstdlib>
 #if defined(__ANDROID__)
 #include "android/AndroidSaveUpgrade.h"
 #elif defined(_WIN32)
@@ -85,6 +88,45 @@ void HostSleepFor(unsigned int milliseconds) {
 }
 void HostSleepUntil(FrameDeadline::TimePoint deadline) { std::this_thread::sleep_until(deadline); }
 void HostYield() {}
+
+#if !defined(PVZ_IOS)
+void HostRunMainLoop(SexyAppBase& app)
+{
+    RunApplicationLoop(app, [](SexyAppBase& current) { current.UpdateApp(); });
+}
+#endif
+
+std::string HostResourceArchivePath()
+{
+    constexpr auto defaultArchive = "main.pak64";
+#if defined(PVZ_IOS)
+    if (const char* selected = std::getenv("PVZ_IOS_PAK"))
+        return selected;
+#elif defined(__APPLE__)
+    if (!std::filesystem::exists(defaultArchive))
+    {
+        const auto executable = std::filesystem::path(GetExecutableDirectory()).lexically_normal();
+        const auto macOS = executable.filename().empty() ? executable.parent_path() : executable;
+        const auto contents = macOS.parent_path();
+        const auto bundle = contents.parent_path();
+        if (macOS.filename() == "MacOS" && contents.filename() == "Contents" && bundle.extension() == ".app")
+            return (bundle.parent_path() / defaultArchive).string();
+    }
+#endif
+    return defaultArchive;
+}
+
+std::string HostInstanceLockPath()
+{
+#if defined(__ANDROID__)
+    // Player data may live on shared storage, where flock is unreliable.
+    return GetExecutableDirectory() + ".instance.lock";
+#elif defined(SEXY_WINDOW_LINUX)
+    return LinuxInstanceLockPath();
+#else
+    return GetAppDataFolder() + ".instance.lock";
+#endif
+}
 bool HostUpgradeLevelSaveFile(const std::string& path) {
 #if defined(__ANDROID__)
     return AndroidUpgradeLevelSaveFile(path);

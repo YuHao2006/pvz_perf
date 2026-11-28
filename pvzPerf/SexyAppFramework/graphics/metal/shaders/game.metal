@@ -202,3 +202,21 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
         return float4(source.rgb * input.color.rgb * input.color.a, source.a * input.color.a);
     return source * input.color;
 }
+
+struct MetalPresentVaryings
+{
+    float4 position [[position]];
+    float2 uv;
+};
+
+vertex MetalPresentVaryings pvz_present_vertex(uint id [[vertex_id]])
+{
+    const float2 uv = float2((id << 1u) & 2u, id & 2u);
+    return {float4(uv * float2(2.0f, -2.0f) + float2(-1.0f, 1.0f), 0.0f, 1.0f), uv};
+}
+
+fragment float4 pvz_present_fragment(MetalPresentVaryings input [[stage_in]],
+    texture2d<float> scene [[texture(0)]], sampler linearClamp [[sampler(0)]])
+{
+    return scene.sample(linearClamp, input.uv);
+}

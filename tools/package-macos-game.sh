@@ -7,7 +7,7 @@ out=$(cd "$2" && pwd -P)
 version=$3
 pak_mode=${4:-with-pak}
 case "$pak_mode" in with-pak|without-pak) ;; *) echo "Invalid PAK mode" >&2; exit 2 ;; esac
-name="PvZ Perf HD"
+name="pvz_perf"
 stem="pvz-perf-hd-macos-arm64-$version"
 stage=$(mktemp -d "$out/.mac-package.XXXXXX")
 trap 'rm -rf "$stage"' EXIT
@@ -43,7 +43,7 @@ done
 python3 - "$app/Contents/Info.plist" "$version" "$name" <<'PY'
 import plistlib, sys
 with open(sys.argv[1], "wb") as f:
-    plistlib.dump(dict(CFBundleName=sys.argv[3], CFBundleExecutable="pvz_perf",
+    plistlib.dump(dict(CFBundleName=sys.argv[3], CFBundleDisplayName=sys.argv[3], CFBundleExecutable="pvz_perf",
         CFBundleIdentifier="io.github.yuhao2006.pvzperf.hd", CFBundlePackageType="APPL",
         CFBundleShortVersionString=sys.argv[2], CFBundleVersion=sys.argv[2],
         LSMinimumSystemVersion="14.0", NSHighResolutionCapable=True), f)

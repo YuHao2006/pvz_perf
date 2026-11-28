@@ -37,6 +37,9 @@ elseif(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
     set(_PVZ_OPENAL_CANDIDATES
         "${CMAKE_SOURCE_DIR}/out/vcpkg_installed/${_PVZ_OPENAL_TRIPLET}/lib/libopenal.a"
         "${CMAKE_SOURCE_DIR}/vcpkg_installed/${_PVZ_OPENAL_TRIPLET}/lib/libopenal.a")
+    foreach(_prefix IN LISTS CMAKE_PREFIX_PATH)
+        list(APPEND _PVZ_OPENAL_CANDIDATES "${_prefix}/lib/libopenal.a")
+    endforeach()
     set(PVZ_OPENAL_LIBRARY "")
     foreach(_candidate IN LISTS _PVZ_OPENAL_CANDIDATES)
         if(EXISTS "${_candidate}")

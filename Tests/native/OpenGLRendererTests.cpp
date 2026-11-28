@@ -22,6 +22,9 @@ using OpenGLScaleStep = D3d9ScaleStep;
 #include "graphics/opengl/OpenGLShaders.h"
 #endif
 #include "PoolGpuChecks.h"
+#if !defined(PVZ_TEST_D3D9)
+#include "AlphaComposeGpuChecks.h"
+#endif
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -1447,6 +1450,10 @@ int main(int argc, char** argv)
         rendererTest("RGBA16F-self-sample-snapshot",FloatAndSelfSample);
         rendererTest("RGBA16F-normal-additive-no-clamp",FloatBlending);
         rendererTest("copy-zero-fill-compose-process",ImageFactories);
+#if !defined(PVZ_TEST_D3D9)
+        rendererTest("compose-final-mask-repairs-transparent-edges",
+            [](auto& renderer) { AlphaComposeGpuChecks::Verify(renderer); });
+#endif
         rendererTest("resource-lifetime-copy-metadata-replacement",ResourceLifetime);
         rendererTest("static-slot-identity-replacement",StaticIdentity);
         rendererTest("upload-adopt-composition-paths",CompositionPaths);

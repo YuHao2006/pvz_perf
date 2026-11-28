@@ -68,8 +68,8 @@ constexpr unsigned int TouchCancelAll = 0x40000000u;
 bool TouchPromotedMouse() {
     return (static_cast<ULONG_PTR>(GetMessageExtraInfo()) & 0xFFFFFF80u) == 0xFF515780u;
 }
-constexpr char MainWindowClass[] = "pvz_perf_hd";
-constexpr char HiddenWindowClass[] = "pvz_perf_hd_hidden";
+constexpr char MainWindowClass[] = "pvz_perf";
+constexpr char HiddenWindowClass[] = "pvz_perf_hidden";
 [[noreturn]] void WindowFailure(const char* operation) {
     throw std::runtime_error(std::string(operation)+" failed: "+std::to_string(GetLastError()));
 }
@@ -111,7 +111,7 @@ void SexyAppBase::MapWindowMouse(double x,double y,int& sx,int& sy) const {
 void SexyAppBase::MakeWindow() {
     if(mHWnd || mGpuContext) throw std::logic_error("Game window already exists");
     if constexpr (!NativeWindowsWindowApi::HdrOutput) mScaleHDREnabled=false;
-    mTitle="pvz_perf HD";
+    mTitle="pvz_perf";
     const DWORD style=WS_OVERLAPPEDWINDOW;
     const DWORD exStyle=WS_EX_APPWINDOW;
     if (mWindowClientWidth <= 0 || mWindowClientHeight <= 0) {
@@ -148,7 +148,7 @@ void SexyAppBase::MakeWindow() {
 #else
     VulkanInitConfig init{};
     init.resolution=mResolution;
-    init.appInfo.pApplicationName="pvz_perf HD";
+    init.appInfo.pApplicationName="pvz_perf";
     init.enableValidation=getenv("PVZ_VULKAN_VALIDATION")!=nullptr;
     // 不再要求 shaderFloat64：字体内核已是纯整数实现，fp64 是 NVIDIA 有而
     // Intel 消费卡（Arc 核显）没有的特性，曾被此行全灭候选卡。
@@ -362,14 +362,6 @@ void SexyAppBase::UpdateWindowGeometry() {
     if(resized!=DDInterface::RESULT_OK)
         throw NativeDisplayError(NativeDisplayOperation::ResizePreparedPresent,resized);
     mNativeResizePending=false;
-#if defined(PVZ_GPU_VULKAN)
-    const auto surface = mGpuContext->swapchainExtent;
-    const auto scene = render.mRenderer->SceneTargetExtent();
-    const auto caption = "pvz_perf HD  |  " + std::to_string(scene.width) + "x" +
-        std::to_string(scene.height) + " -> " + std::to_string(surface.width) + "x" +
-        std::to_string(surface.height);
-    SetWindowTextA(mHWnd, caption.c_str());
-#endif
     mWidgetManager->Resize(mScreenBounds,mDDInterface->mVisibleGameRect);
     mWidgetManager->MarkAllDirty();
 }

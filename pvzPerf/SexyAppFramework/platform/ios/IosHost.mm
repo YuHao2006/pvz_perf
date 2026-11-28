@@ -8,13 +8,19 @@
 #include "../macos/MacWindow.h"
 #include "../macos/MacSystem.h"
 #include "SexyAppFramework/SexyAppBase.h"
+#include "SexyAppFramework/platform/ApplicationHost.h"
 #include "SexyAppFramework/paklib/PakInterface.h"
 #include "SexyAppFramework/widget/WidgetManager.h"
 #include "SexyAppFramework/widget/EditWidget.h"
 #include "SexyAppFramework/misc/KeyCodes.h"
 #include <exception>
 
-void PvzIosUpdateFrame(Sexy::SexyAppBase& app){@autoreleasepool{app.UpdateApp();}}
+void Sexy::HostRunMainLoop(SexyAppBase& app)
+{
+    RunApplicationLoop(app, [](SexyAppBase& current) {
+        @autoreleasepool { current.UpdateApp(); }
+    });
+}
 int PvzIosRun(int argc,char** argv);
 using namespace Sexy;
 static MacWindow* gameWindow;

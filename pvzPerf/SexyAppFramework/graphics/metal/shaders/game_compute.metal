@@ -64,6 +64,40 @@ kernel void pvz_alpha_kernel(
     target.write(value, id);
 }
 
+// Repair RGB under fully transparent pixels after the final alpha layer.
+kernel void pvz_sand_alpha_edges(
+    constant int2& extent [[buffer(0)]],
+    texture2d<float, access::read> source [[texture(0)]],
+    texture2d<float, access::write> target [[texture(1)]],
+    uint2 id [[thread_position_in_grid]])
+{
+    const int2 pixel = int2(id);
+    if (any(pixel >= extent))
+        return;
+    float4 value = source.read(id);
+    if (value.a == 0.0f)
+    {
+        uint3 sum = uint3(0u);
+        uint count = 0u;
+        // Match ImageLib::FixTransparentEdges, which excludes the current row.
+        for (int dy = -1; dy <= 1; dy += 2)
+            for (int dx = -1; dx <= 1; ++dx)
+            {
+                const int2 neighbor = pixel + int2(dx, dy);
+                if (any(neighbor < int2(0)) || any(neighbor >= extent))
+                    continue;
+                const float4 sample = source.read(uint2(neighbor));
+                if (sample.a > 0.0f)
+                {
+                    sum += uint3(rint(sample.rgb * 255.0f));
+                    ++count;
+                }
+            }
+        value.rgb = count != 0u ? float3(sum / count) / 255.0f : float3(0.0f);
+    }
+    target.write(value, id);
+}
+
 // Metal has no native double. These integer operations evaluate the finite,
 // normal binary64 expressions used by MI_SlowStretchBlt, rounding each operation
 // to nearest/even. Positive int32 extents and int32 origins never require

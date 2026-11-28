@@ -80,7 +80,7 @@ struct MetalRenderer::Impl {
     id<MTLRenderPipelineState> poolPipelines[2][3];
     id<MTLBuffer> poolVertices, poolIndices, quadIndices;
     id<MTLSamplerState> samplers[4];
-    id<MTLComputePipelineState> colorKernel, alphaKernel, fontKernel, causticKernel;
+    id<MTLComputePipelineState> colorKernel, alphaKernel, edgeKernel, fontKernel, causticKernel;
     id<MTLCommandBuffer> commands;
     struct TextureBinding {
         uint32_t slot;
@@ -737,9 +737,10 @@ MetalRenderer::~MetalRenderer() = default;
 void MetalRenderer::PrepareLoadingPipelines() {
     auto& s = *impl_;
     if (s.sceneOpen) throw std::logic_error("Prepare Metal pipelines between scenes");
-    if (s.colorKernel && s.alphaKernel && s.fontKernel && s.causticKernel) return;
+    if (s.colorKernel && s.alphaKernel && s.edgeKernel && s.fontKernel && s.causticKernel) return;
     s.colorKernel = s.Kernel(@"pvz_color_kernel");
     s.alphaKernel = s.Kernel(@"pvz_alpha_kernel");
+    s.edgeKernel = s.Kernel(@"pvz_sand_alpha_edges");
     s.fontKernel = s.Kernel(@"pvz_font_kernel");
     s.causticKernel = s.Kernel(@"pvz_caustic_kernel");
 }
@@ -907,13 +908,20 @@ MetalTexture* MetalRenderer::ComposeAlphaRaw(MetalTexture* base, MetalTexture* a
     s.Compute(s.alphaKernel, target, inputs, &constants, sizeof(constants), base->width, base->height);
     return target;
 }
-MetalTexture* MetalRenderer::AdoptComposedTexture(MetalTexture* texture) {
+MetalTexture* MetalRenderer::AdoptComposedTexture(MetalTexture* texture, bool fixTransparentEdges) {
     auto& s = *impl_;
-    auto found = s.raw.find(texture);
-    if (found == s.raw.end() || texture->resource.pixelFormat != MTLPixelFormatRGBA8Unorm)
+    if (!s.raw.contains(texture) || texture->resource.pixelFormat != MTLPixelFormatRGBA8Unorm)
         throw std::invalid_argument("Metal adoption requires a raw alpha composition");
+    if (fixTransparentEdges) {
+        const int width = texture->width;
+        const int height = texture->height;
+        const std::array<int32_t, 2> extent{width, height};
+        const std::array inputs{texture};
+        texture = s.Own(s.Image(width, height, MTLPixelFormatRGBA8Unorm, false, false), false);
+        s.Compute(s.edgeKernel, texture, inputs, extent.data(), sizeof(extent), width, height);
+    }
     s.Register(texture);
-    auto node = s.raw.extract(found);
+    auto node = s.raw.extract(texture);
     s.textures.insert(std::move(node));
     return texture;
 }

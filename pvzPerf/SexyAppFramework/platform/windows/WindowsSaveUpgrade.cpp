@@ -12,7 +12,11 @@ namespace Sexy {
 bool WindowsUpgradeLevelSaveFile(const std::string& path)
 {
     // Lazy load: current saves never load the converter or pay its memory cost.
-    const auto filename = std::filesystem::path(GetExecutableDirectory()) / "data" / "pvz_dfu.dll";
+    wchar_t overridePath[MAX_PATH]{};
+    const DWORD length = GetEnvironmentVariableW(L"PVZ_DFU_DLL", overridePath, MAX_PATH);
+    const auto filename = length > 0 && length < MAX_PATH
+        ? std::filesystem::path(overridePath)
+        : std::filesystem::path(GetExecutableDirectory()) / "data" / "pvz_dfu.dll";
     HMODULE library = LoadLibraryExW(filename.c_str(), nullptr, LOAD_WITH_ALTERED_SEARCH_PATH);
     if (!library) throw std::runtime_error("Save needs an upgrade: " + path + "\nCannot load " + filename.string() +
         " (Win32 error " + std::to_string(GetLastError()) + ")");

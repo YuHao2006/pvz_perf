@@ -30,6 +30,7 @@ with open(sys.argv[1],"wb") as f:
         CFBundlePackageType="APPL",CFBundleVersion=sys.argv[2],CFBundleShortVersionString=sys.argv[2],
         MinimumOSVersion=sys.argv[4],CFBundleSupportedPlatforms=["iPhoneOS"],LSRequiresIPhoneOS=True,
         UIDeviceFamily=[1,2],UIRequiresFullScreen=True,UILaunchScreen={},UIFileSharingEnabled=True,
+        CADisableMinimumFrameDurationOnPhone=True,
         LSSupportsOpeningDocumentsInPlace=True,UISupportedInterfaceOrientations=[
         "UIInterfaceOrientationLandscapeLeft","UIInterfaceOrientationLandscapeRight"]),f)
 PY

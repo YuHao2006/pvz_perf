@@ -32,6 +32,31 @@ struct VulkanSurfacePlatform {
                 static_cast<unsigned int>(client.bottom - client.top)};
     }
 };
+#elif defined(__OHOS__)
+#include <vulkan/vulkan_ohos.h>
+#include <stdexcept>
+struct VulkanSurfacePlatform {
+    static constexpr const char* extension = VK_OHOS_SURFACE_EXTENSION_NAME;
+    static void Validate(NativeWindowHandle window) {
+        if (!window) throw std::invalid_argument("Vulkan requires an OHNativeWindow");
+    }
+    static VkSurfaceKHR Create(VkInstance instance, NativeWindowHandle window) {
+        Validate(window);
+        VkSurfaceCreateInfoOHOS info{};
+        info.sType = VK_STRUCTURE_TYPE_SURFACE_CREATE_INFO_OHOS;
+        info.window = window;
+        VkSurfaceKHR surface{};
+        auto result = vkCreateSurfaceOHOS(instance, &info, nullptr, &surface);
+        if (result != VK_SUCCESS) throw VulkanCallError(result, "vkCreateSurfaceOHOS");
+        return surface;
+    }
+    static VkExtent2D DrawableExtent(NativeWindowHandle window, bool suspended) {
+        int32_t width = 0, height = 0;
+        if (suspended || !window || OH_NativeWindow_NativeWindowHandleOpt(window, GET_BUFFER_GEOMETRY, &height, &width) != 0 ||
+            width <= 0 || height <= 0) return {};
+        return {static_cast<uint32_t>(width), static_cast<uint32_t>(height)};
+    }
+};
 #elif defined(__ANDROID__)
 #include <android/native_window.h>
 #include <stdexcept>

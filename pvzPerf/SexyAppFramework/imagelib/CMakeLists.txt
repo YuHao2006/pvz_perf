@@ -1,3 +1,8 @@
+if(PVZ_HARMONY)
+    target_sources(${PROJECT_NAME} PRIVATE ImageLib.cpp)
+    return()
+endif()
+
 find_package(Threads REQUIRED)
 find_package(hwy CONFIG REQUIRED)
 if(WIN32 AND PVZ_WINDOWS_PLATFORM STREQUAL "WIN7")

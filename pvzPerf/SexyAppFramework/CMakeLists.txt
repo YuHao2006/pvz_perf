@@ -229,7 +229,7 @@ endif()
 # 仅 Reanimator.cpp 包含 → 改版只重编一个 obj）。恒跑目标 + 生成器内容比对：
 # 无变化零写盘，ninja 不重编任何 obj
 set_source_files_properties(${PVZ_STATIC_DEFINITION_SOURCES} PROPERTIES GENERATED TRUE)
-if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
+if(PVZ_HARMONY OR ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
 add_library(${PROJECT_NAME} SHARED ${ALL_FILES})
 elseif(MSVC)
     add_executable(${PROJECT_NAME} WIN32 ${ALL_FILES})
@@ -292,6 +292,20 @@ target_sources(${PROJECT_NAME} PRIVATE
 
 if(WIN32)
     target_sources(${PROJECT_NAME} PRIVATE "platform/windows/WindowsSaveUpgrade.cpp")
+endif()
+
+if(PVZ_HARMONY)
+    get_target_property(_PVZ_GAME_SOURCES ${PROJECT_NAME} SOURCES)
+    list(FILTER _PVZ_GAME_SOURCES EXCLUDE REGEX "(^|/)main\\.cpp$|\\.(rc|cur)$")
+    set_property(TARGET ${PROJECT_NAME} PROPERTY SOURCES "${_PVZ_GAME_SOURCES}")
+    target_sources(${PROJECT_NAME} PRIVATE
+        "platform/linux/LinuxApp.cpp"
+        "platform/linux/VulkanWindowInit.cpp"
+        "platform/linux/WindowGeometry.cpp"
+        "platform/linux/CalendarTime.cpp"
+        "platform/linux/UserDirectories.cpp"
+        "platform/linux/TabletCaret.cpp")
+    pvz_add_harmony_host(${PROJECT_NAME} "${CMAKE_CURRENT_SOURCE_DIR}/platform/harmonyos")
 endif()
 
 if(ANDROID OR CMAKE_SYSTEM_NAME STREQUAL "Android")
@@ -501,7 +515,9 @@ target_compile_definitions(${PROJECT_NAME} PRIVATE
 # Dependencies
 ################################################################################
 # settings.json / scale.json 解析（JsonDoc 是 nlohmann 唯一展开 TU，见 JsonDoc.h 头注）
-find_package(nlohmann_json CONFIG REQUIRED)
+if(NOT PVZ_HARMONY)
+    find_package(nlohmann_json CONFIG REQUIRED)
+endif()
 
 # Native backend source is part of this framework. The game call-site migration is
 # tracked in MODERN_STATUS.md; linking this target alone does NOT switch renderers.
@@ -618,12 +634,25 @@ if(TARGET pvz_dat64_converter)
     endif()
     add_dependencies(${PROJECT_NAME} pvz_save_converter_deploy)
 endif()
+set(pvzRuntimeName pvz_perf)
+if(PVZ_HARMONY)
+    if(PVZ_VULKAN_LEGACY)
+        set(pvzRuntimeName pvz_legacy)
+    else()
+        set(pvzRuntimeName pvz)
+    endif()
+endif()
 set_target_properties(${PROJECT_NAME} PROPERTIES
-    OUTPUT_NAME "pvz_perf"
-    OUTPUT_NAME_RELEASE "pvz_perf"
-    OUTPUT_NAME_DEBUG "pvz_perf"
-    RUNTIME_OUTPUT_NAME_RELEASE "pvz_perf"
-    RUNTIME_OUTPUT_NAME_DEBUG "pvz_perf")
+    OUTPUT_NAME "${pvzRuntimeName}"
+    OUTPUT_NAME_RELEASE "${pvzRuntimeName}"
+    OUTPUT_NAME_DEBUG "${pvzRuntimeName}"
+    RUNTIME_OUTPUT_NAME_RELEASE "${pvzRuntimeName}"
+    RUNTIME_OUTPUT_NAME_DEBUG "${pvzRuntimeName}")
+if(PVZ_HARMONY)
+    set_target_properties(${PROJECT_NAME} PROPERTIES
+        LIBRARY_OUTPUT_NAME_RELEASE "${pvzRuntimeName}"
+        LIBRARY_OUTPUT_NAME_DEBUG "${pvzRuntimeName}")
+endif()
 # Scaling source is compiled during configuration loading, never during drawing.
 if(PVZ_RENDER_BACKEND STREQUAL "D3D12")
     target_link_libraries(${PROJECT_NAME} PRIVATE sexy_d3d12_effects)

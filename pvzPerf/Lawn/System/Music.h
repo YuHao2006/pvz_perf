@@ -92,6 +92,8 @@ public:
 	{
 #if defined(__ANDROID__)
 		return mMusicDisabled;
+#elif defined(__OHOS__)
+        return __atomic_load_n(&mMusicDisabled, __ATOMIC_RELAXED);
 #else
 		static_assert(std::atomic_ref<bool>::is_always_lock_free);
 		static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));
@@ -102,6 +104,8 @@ public:
 	{
 #if defined(__ANDROID__)
 		mMusicDisabled = theDisabled;
+#elif defined(__OHOS__)
+        __atomic_store_n(&mMusicDisabled, theDisabled, __ATOMIC_RELAXED);
 #else
 		static_assert(std::atomic_ref<bool>::is_always_lock_free);
 		static_assert(std::atomic_ref<bool>::required_alignment <= alignof(bool));

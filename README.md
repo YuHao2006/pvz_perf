@@ -63,6 +63,7 @@ Android HDR 当前禁用。高清版以资源声明的分辨率确定渲染范�
 | Windows 7 DX9 | `tools/build-win7-opengl.ps1 -RenderBackend D3D9` |
 | Android | NDK 原生构建后用 `tools/build-android-apk.ps1 -BuildDirectory <tree> -Sign` 打包，详见[Android](docs/android-port.md) |
 | Linux Vulkan 源码目标 | `sh tools/build-linux-game.sh x11` 或 `wayland` |
+| 鸿蒙 | 根目录 CMake 和 DevEco Studio，详见[鸿蒙构建](docs/harmonyos.md) |
 | 网页版（WebGPU／WebGL 2） | `tools/build-web-toy.ps1`；[构建与本地运行说明](tools/wasm/README.md) |
 
 Android 不需要安装 Android Studio；可使用命令行 SDK、NDK、JDK、CMake 和 Ninja。兼容包使用 `PVZ_VULKAN_LEGACY=ON`，必须配套 Android API 24 原生构建；现代包与兼容包不得交叉混用 `.so`、PAK 和 shader。

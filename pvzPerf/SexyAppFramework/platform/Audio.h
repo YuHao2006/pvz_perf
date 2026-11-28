@@ -6,6 +6,9 @@ namespace Sexy {
 using NativeSoundManager = DSoundManager;
 using NativeSoundInstance = DSoundInstance;
 }
+#elif defined(__OHOS__)
+#include "harmonyos/HarmonySound.h"
+namespace Sexy { using NativeSoundManager = HarmonySoundManager; using NativeSoundInstance = HarmonySoundInstance; }
 #elif defined(SEXY_WINDOW_BROWSER)
 #include "web/WebAudio.h"
 namespace Sexy {

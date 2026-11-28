@@ -17,6 +17,7 @@
 | [裁剪与文字布局](clipping-and-text-layout.md) | 必要业务裁剪与无绘制文字测量 |
 | [触控](touch-input.md) | 原生触点、鼠标并用、共享选择与拖放规则 |
 | [Android](android-port.md) | 平台边界、构建打包、窗口和存档目录 |
+- [鸿蒙构建](harmonyos.md)
 | [Web 网页版](../tools/wasm/README.md) | v3.3.3 WebGPU／WebGL 2 包、能力检测、本地存档与自定义无尽 |
 
 ## 性能、缺陷与证据

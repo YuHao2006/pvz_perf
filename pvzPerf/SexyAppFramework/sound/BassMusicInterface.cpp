@@ -180,7 +180,7 @@ bool BassMusicInterface::LoadMusic(int theSongId, const std::string& theFileName
 	const int aSize = p_ftell(aFile.get());
 	if (aSize <= 0 || p_fseek(aFile.get(), 0, SEEK_SET) != 0)
 		return false;
-	auto aData = std::make_unique_for_overwrite<char[]>(static_cast<size_t>(aSize));
+	auto aData = std::unique_ptr<char[]>(new char[static_cast<size_t>(aSize)]);
 	if (p_fread(aData.get(), 1, aSize, aFile.get()) != static_cast<size_t>(aSize))
 		return false;
 	aFile.reset();

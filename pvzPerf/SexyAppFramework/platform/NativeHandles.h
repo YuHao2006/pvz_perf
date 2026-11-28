@@ -9,6 +9,10 @@ struct MacMonitor;
 }
 using NativeWindowHandle = Sexy::MacWindow*;
 using NativeMonitorHandle = Sexy::MacMonitor*;
+#elif defined(__OHOS__)
+#include <native_window/external_window.h>
+using NativeWindowHandle = OHNativeWindow*;
+using NativeMonitorHandle = void*;
 #elif defined(__ANDROID__)
 #include <android/native_window.h>
 using NativeWindowHandle = ANativeWindow*;

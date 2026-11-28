@@ -33,6 +33,20 @@ std::wstring                    SEHCatcher::mCrashMessage = L"An unexpected erro
 static bool gUseDefaultFonts = true;
 static DWORD gOriginalExceptionCode = 0;
 
+struct CrashAddresses
+{
+    DWORD64 pc, stack, frame;
+};
+
+static CrashAddresses GetCrashAddresses(const CONTEXT& context)
+{
+#if defined(_M_ARM64)
+    return {context.Pc, context.Sp, context.Fp};
+#else
+    return {context.Rip, context.Rsp, context.Rbp};
+#endif
+}
+
 // The exception filter is allowed to protect only its own diagnostic code.
 // This record is written when the reporter itself faults; the outer/original
 // exception still returns EXCEPTION_CONTINUE_SEARCH below and is never turned
@@ -51,14 +65,17 @@ static void WriteMinimalExceptionRecord(LPEXCEPTION_POINTERS lpEP, bool reporter
 	strncat_s(aPath, MAX_PATH, "log\\crash-minimal.txt", _TRUNCATE);
 
 	char aText[1024];
-	uintptr_t aRip = (uintptr_t)lpEP->ContextRecord->Rip;
-	uintptr_t aRsp = (uintptr_t)lpEP->ContextRecord->Rsp;
+	const auto addresses = GetCrashAddresses(*lpEP->ContextRecord);
 	int aCount = snprintf(aText, sizeof(aText),
+#if defined(_M_ARM64)
+		"%s code=0x%08lX address=%p pc=0x%llX sp=0x%llX thread=%lu\r\n"
+#else
 		"%s code=0x%08lX address=%p rip=0x%llX rsp=0x%llX thread=%lu\r\n"
+#endif
 		"original crash code=0x%08lX dump-error=0x%08lX\r\n",
 		reporterFault ? "exception reporter fault" : "original exception",
 		(unsigned long)lpEP->ExceptionRecord->ExceptionCode, lpEP->ExceptionRecord->ExceptionAddress,
-		(unsigned long long)aRip, (unsigned long long)aRsp, (unsigned long)GetCurrentThreadId(),
+		addresses.pc, addresses.stack, (unsigned long)GetCurrentThreadId(),
 		(unsigned long)gOriginalExceptionCode, (unsigned long)dumpError);
 	if (aCount <= 0)
 		return;
@@ -466,12 +483,22 @@ void SEHCatcher::DoHandleDebugEvent(LPEXCEPTION_POINTERS lpEP)
 		aWalkString = ImageHelpWalk(lpEP->ContextRecord, 0);
 
 	if (aWalkString.length() == 0)
-		aWalkString = IntelWalk(lpEP->ContextRecord);
+		aWalkString = FramePointerWalk(lpEP->ContextRecord);
 
 	aDebugDump += aWalkString;
 
 	aDebugDump += "\r\n";
 
+#if defined(_M_ARM64)
+	for (int i = 0; i < 29; ++i)
+	{
+		sprintf(aBuffer, "X%02d:%016llX%s", i, aCrashContext.X[i], (i % 4 == 3 || i == 28) ? "\r\n" : " ");
+		aDebugDump += aBuffer;
+	}
+	sprintf(aBuffer, "PC:%016llX SP:%016llX FP:%016llX LR:%016llX CPSR:%08lX\r\n",
+		aCrashContext.Pc, aCrashContext.Sp, aCrashContext.Fp, aCrashContext.Lr, aCrashContext.Cpsr);
+	aDebugDump += aBuffer;
+#else
 	sprintf(aBuffer, ("RAX:%016llX RBX:%016llX RCX:%016llX RDX:%016llX RSI:%016llX RDI:%016llX\r\n"),
 			aCrashContext.Rax, aCrashContext.Rbx, aCrashContext.Rcx, aCrashContext.Rdx, aCrashContext.Rsi, aCrashContext.Rdi);
 	aDebugDump += aBuffer;
@@ -484,6 +511,8 @@ void SEHCatcher::DoHandleDebugEvent(LPEXCEPTION_POINTERS lpEP)
 	aDebugDump += aBuffer;
 	sprintf(aBuffer, "Flags:%08lX\r\n", aCrashContext.EFlags );
 	aDebugDump += aBuffer;
+
+#endif
 
 	aDebugDump += "\r\n";
 	aDebugDump += GetSysInfo(); 
@@ -528,15 +557,14 @@ void SEHCatcher::DoHandleDebugEvent(LPEXCEPTION_POINTERS lpEP)
 	UnloadImageHelp();  
 }
 
-std::string SEHCatcher::IntelWalk(PCONTEXT theContext)
+std::string SEHCatcher::FramePointerWalk(PCONTEXT theContext)
 {
 	std::string aDebugDump;
 	char aBuffer[2048];
 
-	intptr_t pc = theContext->Rip;
-	intptr_t *pFrame, *pPrevFrame;
-	
-	pFrame = (intptr_t*)theContext->Rbp;
+	const auto addresses = GetCrashAddresses(*theContext);
+	intptr_t pc = static_cast<intptr_t>(addresses.pc);
+	auto* pFrame = reinterpret_cast<intptr_t*>(addresses.frame);
 
 	for (;;)
 	{
@@ -549,20 +577,13 @@ std::string SEHCatcher::IntelWalk(PCONTEXT theContext)
 				  pc, pFrame, section, offset, GetFilename(szModule).c_str());
 		aDebugDump += aBuffer;
 
-		pc = pFrame[1];
-
-		pPrevFrame = pFrame;
-
-		pFrame = (intptr_t*)(pFrame[0]); // proceed to next higher frame on stack
-
-		if ((intptr_t)pFrame & 3)    // Frame pointer must be aligned on a
-			break;                  // DWORD boundary.  Bail if not so.
-
-		if (pFrame <= pPrevFrame)
+		if ((reinterpret_cast<uintptr_t>(pFrame) % alignof(intptr_t)) != 0 ||
+			IsBadReadPtr(pFrame, sizeof(intptr_t) * 2))
 			break;
-
-		// Can two DWORDs be read from the supposed frame address?          
-		if (IsBadWritePtr(pFrame, sizeof(PVOID)*2))
+		pc = pFrame[1];
+		auto* previous = pFrame;
+		pFrame = reinterpret_cast<intptr_t*>(pFrame[0]);
+		if (pFrame <= previous)
 			break;
 	};
 
@@ -577,13 +598,12 @@ std::string SEHCatcher::ImageHelpWalk(PCONTEXT theContext, int theSkipCount)
 	STACKFRAME sf;
 	memset( &sf, 0, sizeof(sf) );   
 
-	// Initialize the STACKFRAME structure for the first call.  This is only
-	// necessary for Intel CPUs, and isn't mentioned in the documentation.
-	sf.AddrPC.Offset       = theContext->Rip;
+	const auto addresses = GetCrashAddresses(*theContext);
+	sf.AddrPC.Offset       = addresses.pc;
 	sf.AddrPC.Mode         = AddrModeFlat;
-	sf.AddrStack.Offset    = theContext->Rsp;
+	sf.AddrStack.Offset    = addresses.stack;
 	sf.AddrStack.Mode      = AddrModeFlat;
-	sf.AddrFrame.Offset    = theContext->Rbp;
+	sf.AddrFrame.Offset    = addresses.frame;
 	sf.AddrFrame.Mode      = AddrModeFlat;
 	
 	int aLevelCount = 0;
@@ -592,7 +612,9 @@ std::string SEHCatcher::ImageHelpWalk(PCONTEXT theContext, int theSkipCount)
 	for (;;)
 	{
 		if (!mStackWalk(
-#if defined(_M_X64) || defined(_M_AMD64)
+#if defined(_M_ARM64)
+						IMAGE_FILE_MACHINE_ARM64,
+#elif defined(_M_X64) || defined(_M_AMD64)
 						IMAGE_FILE_MACHINE_AMD64,
 #else
 						IMAGE_FILE_MACHINE_I386,

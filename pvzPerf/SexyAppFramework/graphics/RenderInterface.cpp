@@ -328,7 +328,8 @@ GpuTexture* UploadDecodedRaw(GpuRenderer& renderer,const ImageLib::Image& image,
 	return base;
 }
 
-GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,bool opaque)
+GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& image,bool opaque,
+	[[maybe_unused]] bool fixTransparentEdges)
 {
 	RequireImageDimensions(&renderer,image.mWidth,image.mHeight);
 	// 2026-10-11 用户裁决：只有最终可绘制结果进全局纹理表。合成链的底图/
@@ -351,7 +352,11 @@ GpuTexture* UploadDecodedImage(GpuRenderer& renderer,const ImageLib::Image& imag
 		}
 		// GL/DX9 adoption destroys the other raw handles on success; the
 		// non-owning list must never be visited again after this returns.
+#if defined(PVZ_GPU_METAL)
+		return renderer.AdoptComposedTexture(base,fixTransparentEdges);
+#else
 		return renderer.AdoptComposedTexture(base);
+#endif
 	}
 	catch (...)
 	{
@@ -621,7 +626,10 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 	const auto& decoded=*image->mPendingDecoded;
 	if (decoded.mWidth!=image->mWidth || decoded.mHeight!=image->mHeight)
 		throw std::logic_error("Image loading payload dimensions differ");
-	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans);
+	const bool fixTransparentEdges=decoded.HasComposition() &&
+		(image->mGpuSamplingFlags & GpuVertex::kAlphaEdgeFilter) != 0;
+	auto* texture=UploadDecodedImage(*mRenderer,decoded,!image->mHasAlpha && !image->mHasTrans,
+		fixTransparentEdges);
 	if (!texture)
 		throw std::runtime_error("Image upload returned no GPU texture");
 	try
@@ -633,6 +641,10 @@ GpuTexture* RenderInterface::CreateImageTexture(Image *image)
 	image->mTexture=texture;
 	image->mRenderTarget=false;
 	image->mRenderOwner=this;
+#if defined(PVZ_GPU_METAL)
+	if (fixTransparentEdges)
+		image->mGpuSamplingFlags &= ~GpuVertex::kAlphaEdgeFilter;
+#endif
 	image->PurgeBits();
 	return texture;
 }

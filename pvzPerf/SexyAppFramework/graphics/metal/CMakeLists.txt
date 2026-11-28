@@ -19,7 +19,7 @@ if(CMAKE_SYSTEM_NAME STREQUAL "iOS")
         set(metalSdk iphonesimulator)
         string(APPEND metalTarget "-simulator")
     endif()
-    set(metalTargetArgs -target "${metalTarget}" -DPVZ_METAL_IOS=1)
+    set(metalTargetArgs -target "${metalTarget}")
 endif()
 set(shaderDirectory "${CMAKE_CURRENT_BINARY_DIR}/shaders")
 # Both animation definitions and particles use the resident GPU arenas.

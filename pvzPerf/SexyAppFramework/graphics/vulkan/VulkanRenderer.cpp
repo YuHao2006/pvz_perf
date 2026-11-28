@@ -319,6 +319,7 @@ struct VulkanRenderer::Impl {
     VulkanContext& window;
     TextureMemoryPool texturePool;
     VkDevice device;
+    VkPhysicalDeviceProperties deviceProperties{};
     int width, height;
     bool sceneInitialized = false;
     uint64_t frameSerial = 0;
@@ -523,7 +524,10 @@ struct VulkanRenderer::Impl {
         mode.reset(); // borrowed image lives in the scale pipeline.
     }
 
-    Impl(VulkanContext& w, int sw, int sh) : window(w), device(w.device), width(sw), height(sh) {}
+    Impl(VulkanContext& w, int sw, int sh) : window(w), device(w.device), width(sw), height(sh)
+    {
+        vkGetPhysicalDeviceProperties(w.physicalDevice, &deviceProperties);
+    }
     ~Impl() {
         if (frame.valid) window.AbortFrame();
         // Lifetime failure is not a fallback: this only releases partial or
@@ -1469,8 +1473,6 @@ std::unique_ptr<VulkanTexture> VulkanRenderer::Impl::RenderImage(int w, int h) {
     VkImageFormatProperties properties{};
     VK_REQUIRE(vkGetPhysicalDeviceImageFormatProperties(window.physicalDevice,
         VK_FORMAT_R16G16B16A16_SFLOAT, VK_IMAGE_TYPE_2D, VK_IMAGE_TILING_OPTIMAL, usage, 0, &properties));
-    VkPhysicalDeviceProperties deviceProperties{};
-    vkGetPhysicalDeviceProperties(window.physicalDevice, &deviceProperties);
     if (uint32_t(w) > std::min(properties.maxExtent.width, deviceProperties.limits.maxFramebufferWidth) ||
         uint32_t(h) > std::min(properties.maxExtent.height, deviceProperties.limits.maxFramebufferHeight) ||
         uint32_t(w) > deviceProperties.limits.maxViewportDimensions[0] ||
@@ -1725,9 +1727,7 @@ uint32_t VulkanRenderer::SlotOf(const VulkanTexture* texture) {
         (texture->opaque ? VulkanVertex::kOpaqueInput : 0u) : 0u;
 }
 uint32_t VulkanRenderer::MaxImageDimension2D() const {
-    VkPhysicalDeviceProperties properties{};
-    vkGetPhysicalDeviceProperties(impl_->window.physicalDevice,&properties);
-    return properties.limits.maxImageDimension2D;
+    return impl_->deviceProperties.limits.maxImageDimension2D;
 }
 VulkanRenderer::ResourceCounts VulkanRenderer::GetResourceCounts() const {
     const auto& s = *impl_;

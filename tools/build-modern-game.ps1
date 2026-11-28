@@ -6,7 +6,14 @@ $root=Split-Path -Parent $PSScriptRoot
 $vs=(& "$PSScriptRoot/workspace-path.ps1" 'vs' 'VC/Auxiliary/Build/vcvars64.bat')
 $cmake=(Get-Command cmake -ErrorAction Stop).Source
 $ninja=(& "$PSScriptRoot/workspace-path.ps1" 'ninja')
-$build=if($BuildDirectory){[IO.Path]::GetFullPath($BuildDirectory)}elseif($WindowsPlatform -eq 'WIN7'){Join-Path $root 'out\x64-win7-vulkan'}else{Join-Path $root 'out\x64-win32-vulkan'}
+$edition=(Split-Path -Leaf $root)
+$target=if($WindowsPlatform -eq 'WIN7'){'win7-vulkan'}else{'win10-vulkan'}
+$preferred=(& "$PSScriptRoot/workspace-path.ps1" 'buildRoot' "windows/$edition/$target" -Fallback 'out/builds')
+$existing=if($WindowsPlatform -eq 'WIN7'){Join-Path $root 'out/x64-win7-vulkan'}else{Join-Path $root 'out/x64-win32-vulkan'}
+$build=if($BuildDirectory){[IO.Path]::GetFullPath($BuildDirectory)}
+    elseif(!(Test-Path -LiteralPath (Join-Path $preferred 'CMakeCache.txt')) -and
+        (Test-Path -LiteralPath (Join-Path $existing 'CMakeCache.txt'))){$existing}
+    else{$preferred}
 [Diagnostics.Process]::GetCurrentProcess().ProcessorAffinity=[IntPtr]0x3FFF
 $installed=Join-Path (Split-Path -Parent $root) '_shared\vcpkg_installed'
 $env:VULKAN_SDK=(& "$PSScriptRoot/workspace-path.ps1" 'vulkanSdk')

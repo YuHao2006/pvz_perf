@@ -832,56 +832,51 @@ void Music::StartGameMusic()
 //0x45B930
 void Music::GameMusicPause(bool thePause)
 {
-	if (thePause)
-	{
-		if (!mPaused && mCurMusicTune != MusicTune::MUSIC_TUNE_NONE)
-		{
-			if (IsMusicDisabled())
-			{
-				// Preserve saved positions, but keep logical pause/resume usable.
-				mPaused = true;
-				return;
-			}
-			BassMusicInterface* aBass = (BassMusicInterface*)mMusicInterface;
-			const std::unique_ptr<BassMusicInfo>& aSlot = aBass->mMusicSlots.at((size_t)mCurMusicFileMain);
-			TOD_ASSERT(aSlot != nullptr);
-			BassMusicInfo* aMusicInfo = aSlot.get();
-			
-			if (aMusicInfo->mHStream)
-			{
-				// BASS_POS_MUSIC_ORDER 只对 HMUSIC 有效；Credits 的 OGG 是
-				// HSTREAM，暂停位置必须取字节位置，恢复时按 BASS_POS_BYTE 回设。
-				mPauseOffset = static_cast<int>(aMusicInfo->mPlayback.Position(BASS_POS_BYTE));
-				mMusicInterface->StopMusic(mCurMusicFileMain);
-			}
-			else
-			{
-				int aOrderMain = GetMusicOrder(mCurMusicFileMain);
-				mPauseOffset = MAKELONG(LOWORD(aOrderMain), HIWORD(aOrderMain) / 4);
-				mMusicInterface->StopMusic(mCurMusicFileMain);
+    if (mPaused == thePause || (thePause && mCurMusicTune == MusicTune::MUSIC_TUNE_NONE))
+        return;
 
-				if (mCurMusicTune == MusicTune::MUSIC_TUNE_DAY_GRASSWALK || mCurMusicTune == MusicTune::MUSIC_TUNE_POOL_WATERYGRAVES ||
-					mCurMusicTune == MusicTune::MUSIC_TUNE_FOG_RIGORMORMIST || mCurMusicTune == MusicTune::MUSIC_TUNE_ROOF_GRAZETHEROOF)
-				{
-					mMusicInterface->StopMusic(mCurMusicFileDrums);
-					mMusicInterface->StopMusic(mCurMusicFileHihats);
-				}
-				else if (mCurMusicTune == MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS)
-				{
-					int aOrderDrum = GetMusicOrder(mCurMusicFileDrums);
-					mPauseOffsetDrums = MAKELONG(LOWORD(aOrderDrum), HIWORD(aOrderDrum) / 4);
-					mMusicInterface->StopMusic(mCurMusicFileDrums);
-				}
-			}
-			mPaused = true;
-		}
-	}
-	else if (mPaused)
-	{
-		if (mCurMusicTune != MusicTune::MUSIC_TUNE_NONE)
-			PlayMusic(mCurMusicTune, mPauseOffset, mPauseOffsetDrums);
-		mPaused = false;
-	}
+    mPaused = thePause;
+    if (IsMusicDisabled() || mCurMusicTune == MusicTune::MUSIC_TUNE_NONE)
+        return;
+
+    auto* bass = static_cast<BassMusicInterface*>(mMusicInterface);
+    const auto& main = bass->mMusicSlots.at(static_cast<size_t>(mCurMusicFileMain));
+    TOD_ASSERT(main != nullptr);
+    const MusicFile layers[] = {mCurMusicFileMain, mCurMusicFileDrums, mCurMusicFileHihats};
+
+    if (thePause)
+    {
+        for (const MusicFile layer : layers)
+            if (layer != MusicFile::MUSIC_FILE_NONE)
+                bass->PauseMusic(layer);
+
+        // Preserve the DAT64 pause positions for restores that have no live decoder.
+        if (main->mHStream)
+            mPauseOffset = static_cast<int>(main->mPlayback.Position(BASS_POS_BYTE));
+        else
+        {
+            const auto order = GetMusicOrder(mCurMusicFileMain);
+            mPauseOffset = MAKELONG(LOWORD(order), HIWORD(order) / 4);
+            if (mCurMusicTune == MusicTune::MUSIC_TUNE_NIGHT_MOONGRAINS)
+            {
+                const auto drums = GetMusicOrder(mCurMusicFileDrums);
+                mPauseOffsetDrums = MAKELONG(LOWORD(drums), HIWORD(drums) / 4);
+            }
+        }
+        return;
+    }
+
+    if (main->mPlayback.State() != BASS_ACTIVE_PAUSED)
+    {
+        PlayMusic(mCurMusicTune, mPauseOffset, mPauseOffsetDrums);
+        return;
+    }
+
+    // An in-game pause keeps the decoder's current row, tempo, PCM and track gains.
+    for (const MusicFile layer : layers)
+        if (layer != MusicFile::MUSIC_FILE_NONE &&
+            bass->mMusicSlots.at(static_cast<size_t>(layer))->mPlayback.State() == BASS_ACTIVE_PAUSED)
+            bass->ResumeMusic(layer);
 }
 
 int Music::GetNumLoadingTasks()

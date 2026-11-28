@@ -1,4 +1,5 @@
 #include "VulkanRenderer.h"
+#include "../../../../../Tests/native/AlphaComposeGpuChecks.h"
 #include "../../../../../Tests/native/PoolGpuChecks.h"
 #include "TestWin32Window.h"
 #include "VulkanSurfaceExtent.h"
@@ -945,6 +946,8 @@ void Run() {
             "Texture lifetime cycle left uploads queued or grew the staging buffer");
     }
     std::cout << "PASS: repeated texture/descriptor allocation and deferred destruction\n";
+    AlphaComposeGpuChecks::Verify(renderer);
+    std::cout << "PASS final-mask transparent-edge repair: exact layered and solid-color pixels\n";
     CoveragePixels(renderer);
     RawFilterAliasEdges(renderer);
         HdrFilterBlackBoundary(renderer);

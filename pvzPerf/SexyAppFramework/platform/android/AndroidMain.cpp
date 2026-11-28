@@ -8,6 +8,8 @@
 #include "SexyAppFramework/Common.h"
 #include "SexyAppFramework/misc/FloatingPointMode.h"
 #include "SexyAppFramework/JsonDoc.h"
+#include "SexyAppFramework/graphics/DDInterface.h"
+#include "SexyAppFramework/graphics/RenderInterface.h"
 #include <android/log.h>
 #include <cerrno>
 #include <cstdlib>
@@ -47,10 +49,48 @@ namespace {
 LawnApp* app = nullptr;
 bool started = false;
 
-void ExtractAsset(AAssetManager* manager, const char* name, const std::filesystem::path& destination) {
+class AndroidLawnApp : public LawnApp
+{
+public:
+    void LoadingThreadCompleted() override
+    {
+        if (mDDInterface && mDDInterface->mRenderInterface && mDDInterface->mRenderInterface->mRenderer)
+            mDDInterface->mRenderInterface->mRenderer->SavePipelineCache();
+        LawnApp::LoadingThreadCompleted();
+    }
+};
+
+// Only benchmark sessions need a transition after the title has prebuilt
+// its render cache. Normal games do not run the benchmark update step.
+class AndroidBenchmarkApp final : public AndroidLawnApp
+{
+public:
+    bool UpdateApp() override
+    {
+        const bool updated = LawnApp::UpdateApp();
+        if (mRestoreFixture && mTitleScreen && mLoaded && mCacheFramesPrebuilt)
+        {
+            mRestoreFixture = false;
+            LoadingCompleted();
+            KillGameSelector();
+            PreNewGame(GAMEMODE_SURVIVAL_ENDLESS_STAGE_3, true);
+            if (!mBoard || !GetDialog(DIALOG_CONTINUE))
+                throw std::runtime_error("GPU benchmark failed to restore the paused fixture");
+        }
+        return updated;
+    }
+private:
+    bool mRestoreFixture = true;
+};
+
+bool ExtractAsset(AAssetManager* manager, const char* name, const std::filesystem::path& destination,
+    bool optional = false) {
     if (!manager) throw std::runtime_error("Android asset manager is unavailable");
     AAsset* asset = AAssetManager_open(manager, name, AASSET_MODE_STREAMING);
-    if (!asset) throw std::runtime_error(std::string("Android asset is missing: ") + name);
+    if (!asset) {
+        if (optional) return false;
+        throw std::runtime_error(std::string("Android asset is missing: ") + name);
+    }
     const auto closeAsset = [&] { AAsset_close(asset); };
     std::filesystem::create_directories(destination.parent_path());
     std::ofstream output(destination, std::ios::binary | std::ios::trunc);
@@ -64,6 +104,7 @@ void ExtractAsset(AAssetManager* manager, const char* name, const std::filesyste
         if (!output) { closeAsset(); throw std::runtime_error("Cannot write extracted Android asset"); }
     }
     closeAsset();
+    return true;
 }
 
 // 把 APK assets 下的整目录（如 shaders/）解到运行目录。
@@ -96,6 +137,7 @@ void android_main(android_app* state) {
     std::string settingsPath;
     int requestedTargetFps=0;
     int resetEndless=0;
+    bool restoreGpuFixture = false;
     try {
     // Prefer the Activity's Android/media directory. Keep the former external
     // files directory as a migration source and a fallback when media is absent.
@@ -122,65 +164,31 @@ void android_main(android_app* state) {
                 env->DeleteLocalRef(key);env->DeleteLocalRef(intentClass);env->DeleteLocalRef(intent);
             }
             if (env->ExceptionCheck()) {env->ExceptionClear();requestedTargetFps=0;}
-            const jmethodID mid = env->GetMethodID(
-                cls, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;");
-            if (mid) {
-                const auto file = static_cast<jobject>(
-                    env->CallObjectMethod(state->activity->clazz, mid, nullptr));
-                if (!env->ExceptionCheck() && file) {
-                    const jclass fileCls = env->GetObjectClass(file);
-                    const jmethodID getAbs = env->GetMethodID(
-                        fileCls, "getAbsolutePath", "()Ljava/lang/String;");
-                    const auto jstr = static_cast<jstring>(
-                        env->CallObjectMethod(file, getAbs));
-                    const char* chars = env->GetStringUTFChars(jstr, nullptr);
-                    const std::string external = chars;
-                    legacyExternalDir = external;
-                    env->ReleaseStringUTFChars(jstr, chars);
-                    // 探测可写：真实 app 进程视角（run-as 域测试会失真）
-                    const std::filesystem::path probe =
-                        std::filesystem::path(external) / "pvz_probe";
-                    if (FILE* f = std::fopen(probe.c_str(), "w")) {
-                        std::fputc('x', f);
-                        std::fclose(f);
-                        std::remove(probe.c_str());
-                        appDataDir = external;
-                    }
-                } else if (env->ExceptionCheck()) {
-                    env->ExceptionClear();
-                }
-            }
-            const jmethodID getMedia = env->GetMethodID(cls, "getExternalMediaDirs", "()[Ljava/io/File;");
-            const auto mediaDirs = getMedia ? static_cast<jobjectArray>(
-                env->CallObjectMethod(state->activity->clazz, getMedia)) : nullptr;
-            if (!env->ExceptionCheck() && mediaDirs) {
-                for (jsize i = 0; i < env->GetArrayLength(mediaDirs); ++i) {
-                    jobject directory = env->GetObjectArrayElement(mediaDirs, i);
-                    if (!directory) continue;
-                    jclass fileClass = env->GetObjectClass(directory);
-                    jmethodID getPath = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
-                    auto path = getPath ? static_cast<jstring>(env->CallObjectMethod(directory, getPath)) : nullptr;
-                    std::string media;
-                    if (!env->ExceptionCheck() && path) {
-                        if (const char* chars = env->GetStringUTFChars(path, nullptr)) {
-                            media = chars;
-                            env->ReleaseStringUTFChars(path, chars);
-                        }
-                    }
-                    if (path) env->DeleteLocalRef(path);
-                    env->DeleteLocalRef(fileClass);
-                    env->DeleteLocalRef(directory);
-                    if (env->ExceptionCheck()) { env->ExceptionClear(); continue; }
-                    if (media.empty()) continue;
-                    const auto probe = std::filesystem::path(media) / ".pvz-write-probe";
-                    if (FILE* file = std::fopen(probe.string().c_str(), "w")) {
-                        const bool writable = std::fputc('x', file) != EOF;
-                        const bool closed = std::fclose(file) == 0;
-                        std::remove(probe.string().c_str());
-                        if (writable && closed) { appDataDir = media; break; }
+            const jmethodID getSaveDir = env->GetMethodID(cls, "androidSaveDirectory", "()Ljava/lang/String;");
+            const auto saveDir = getSaveDir
+                ? static_cast<jstring>(env->CallObjectMethod(state->activity->clazz, getSaveDir)) : nullptr;
+            if (env->ExceptionCheck()) env->ExceptionClear();
+            if (!saveDir) throw std::runtime_error("Android save directory is busy or unavailable");
+            const char* path = env->GetStringUTFChars(saveDir, nullptr);
+            if (!path) throw std::runtime_error("Cannot read Android save directory");
+            appDataDir = path;
+            env->ReleaseStringUTFChars(saveDir, path);
+            env->DeleteLocalRef(saveDir);
+            const jmethodID getLegacy = env->GetMethodID(cls, "getExternalFilesDir", "(Ljava/lang/String;)Ljava/io/File;");
+            const jobject legacyDir = getLegacy ? env->CallObjectMethod(state->activity->clazz, getLegacy, nullptr) : nullptr;
+            if (legacyDir && !env->ExceptionCheck()) {
+                const jclass fileClass = env->GetObjectClass(legacyDir);
+                const jmethodID getPath = env->GetMethodID(fileClass, "getAbsolutePath", "()Ljava/lang/String;");
+                const auto legacyPath = getPath ? static_cast<jstring>(env->CallObjectMethod(legacyDir, getPath)) : nullptr;
+                if (legacyPath && !env->ExceptionCheck()) {
+                    if (const char* chars = env->GetStringUTFChars(legacyPath, nullptr)) {
+                        legacyExternalDir = chars;
+                        env->ReleaseStringUTFChars(legacyPath, chars);
                     }
                 }
-                env->DeleteLocalRef(mediaDirs);
+                if (legacyPath) env->DeleteLocalRef(legacyPath);
+                env->DeleteLocalRef(fileClass);
+                env->DeleteLocalRef(legacyDir);
             }
             if (env->ExceptionCheck()) env->ExceptionClear();
             env->DeleteLocalRef(cls);
@@ -203,7 +211,7 @@ void android_main(android_app* state) {
                 std::filesystem::copy_file(fixture / name, session / name,
                     std::filesystem::copy_options::overwrite_existing);
             appDataDir = session.string();
-            setenv("PVZ_ANDROID_GPU_FIXTURE", "1", 1);
+            restoreGpuFixture = true;
         }
         setenv("PVZ_APPDATA_DIR", appDataDir.c_str(), 1);
         // Import once, preferring the latest external files over old internal
@@ -295,13 +303,31 @@ void android_main(android_app* state) {
             std::ofstream marker(internal / "endless-reset-token", std::ios::trunc);
             if (!(marker << resetEndless)) throw std::runtime_error("Cannot record completed endless reset");
         }
-        app = new LawnApp();
+        if (restoreGpuFixture)
+            app = new AndroidBenchmarkApp();
+        else
+            app = new AndroidLawnApp();
         // main.cpp 在安卓构建被排除；gLawnApp（PoolEffect/关卡逻辑依赖）
         // 必须在此补赋值，否则资源加载在 LoadingThreadCompleted 处终止。
         gLawnApp = app;
         const std::filesystem::path runtimeRoot(state->activity->internalDataPath);
-        ExtractAsset(state->activity->assetManager, "main.pak64", runtimeRoot / "main.pak64");
-        ExtractAssetDirectory(state->activity->assetManager, "shaders", runtimeRoot / "shaders");
+        const auto archivePath = runtimeRoot / "main.pak64";
+        if (!ExtractAsset(state->activity->assetManager, "main.pak64", archivePath, true) &&
+            !std::filesystem::is_regular_file(archivePath))
+            throw std::runtime_error("Import main.pak64 in the Android launcher before starting the game");
+#ifdef PVZ_VULKAN_LEGACY
+        constexpr const char* shaderAssets = "shaders-vk10";
+#else
+        constexpr const char* shaderAssets = "shaders";
+#endif
+        __android_log_print(ANDROID_LOG_INFO, "pvz_perf", "Launching %s",
+#ifdef PVZ_VULKAN_LEGACY
+            "Vulkan 1.0"
+#else
+            "Vulkan 1.3"
+#endif
+        );
+        ExtractAssetDirectory(state->activity->assetManager, shaderAssets, runtimeRoot / "shaders");
         // libbass.so 不走 assets：数据目录的 so 在 targetSdk 29+ 无法 dlopen，
         // 它随 APK 装进 nativeLibraryDir，由 BassLoader 按 soname 加载。
         SetAndroidRuntimeDirectory(runtimeRoot.string());

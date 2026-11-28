@@ -272,11 +272,22 @@ int main(int argc, char** argv)
         Require(music.mMusicDrumsState == MUSIC_DRUMS_OFF && Gain(playback, MUSIC_FILE_DRUMS) == 0,
             "Real daytime drums remained audible after release");
         dayRow(1, 40);
+        const auto dayHandle = playback.mMusicSlots[MUSIC_FILE_MAIN_MUSIC]->mHMusic;
+        const float changedBpm = music.mBaseBPM - 5;
+        const float changedSpeed = music.mBaseModSpeed + 1;
+        Require(Sexy::gBass->BASS_ChannelSetAttribute(dayHandle, BASS_ATTRIB_MUSIC_BPM, changedBpm) &&
+            Sexy::gBass->BASS_ChannelSetAttribute(dayHandle, BASS_ATTRIB_MUSIC_SPEED, changedSpeed),
+            "Could not apply the active daytime tempo and tracker speed");
         music.GameMusicPause(true);
         Require(HIWORD(music.mPauseOffset) == 40,
             "Day pause stored a row scaled down twice");
         music.GameMusicPause(false);
         dayMain.Pause();
+        float resumedBpm = 0, resumedSpeed = 0;
+        Require(Sexy::gBass->BASS_ChannelGetAttribute(dayHandle, BASS_ATTRIB_MUSIC_BPM, &resumedBpm) &&
+            Sexy::gBass->BASS_ChannelGetAttribute(dayHandle, BASS_ATTRIB_MUSIC_SPEED, &resumedSpeed) &&
+            resumedBpm == changedBpm && resumedSpeed == changedSpeed,
+            "Game pause changed the active tempo or tracker speed");
         Require(HIWORD(dayMain.Position(BASS_POS_MUSIC_ORDER)) / 4 == 40,
             "Day resume returned to a different raw decoder row");
         std::cout << "PASS production day BASS: raw row 31/32 entry, pattern-wrap release, zero gain and exact pause row\n";

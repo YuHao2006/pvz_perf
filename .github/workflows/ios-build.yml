@@ -1,5 +1,8 @@
 name: Native iOS IPA
-on: workflow_dispatch
+on:
+  push:
+    branches: [build/v4.0.10]
+  workflow_dispatch:
 permissions:
   contents: read
 jobs:
@@ -35,7 +38,7 @@ jobs:
             -DPVZ_WINDOW_BACKEND=COCOA -DPVZ_RENDER_BACKEND=METAL -DPVZ_BUILD_FRAMEWORK_D3D12=OFF \
             -DPVZ_BUILD_FRAMEWORK_VULKAN=OFF -DPVZ_BUILD_NATIVE_WINDOW_ADAPTER=OFF -DBUILD_TESTING=OFF
           cmake --build out/ios --target LawnProject --parallel 3 -- -k 0
-          version=$(sed -n 's/.*mProductVersion = "\([0-9.]*\(beta\)\{0,1\}\)";.*/\1/p' pvzPerf/LawnApp.cpp )
+          version=$(sed -n 's/.*mProductVersion = "\([0-9.]*\)";.*/\1/p' pvzPerf/LawnApp.cpp)
           edition=$(python3 -c 'import json; print({"pvz_perf":"standard","pvz_perf-hd":"hd"}[json.load(open("config/workspace-paths.json"))["assetEdition"]])')
           sh tools/package-ios-game.sh out/ios/Release out/bass/bass.xcframework/ios-arm64_armv7_armv7s/bass.framework out/packages "$version" "$edition"
       - uses: actions/upload-artifact@v4

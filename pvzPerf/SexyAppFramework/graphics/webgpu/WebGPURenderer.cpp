@@ -791,14 +791,14 @@ WebGPUTexture *WebGPURenderer::ProcessImage(WebGPUTexture *source, const GpuImag
     return t;
 }
 WebGPUTexture *WebGPURenderer::ComposeAlphaRaw(WebGPUTexture *base, WebGPUTexture *alpha, unsigned int color,
-                                               bool colorOnly)
+                                               bool colorOnly, bool fixTransparentEdges)
 {
     auto &s = *impl_;
     if (base->width != alpha->width || base->height != alpha->height)
         throw std::invalid_argument("WebGPU alpha dimensions mismatch");
     auto *t = s.Allocate(base->width, base->height, TextureFormat::RGBA8Unorm, false);
     Impl::ImageParams p;
-    p.operation = 2;
+    p.operation = fixTransparentEdges ? 4 : 2;
     p.color = color;
     p.colorOnly = colorOnly;
     s.ImagePass(t, base, alpha, p);

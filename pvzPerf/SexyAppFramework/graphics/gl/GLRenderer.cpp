@@ -676,14 +676,23 @@ bool GLRenderer::Impl::Present()
 {
     if (!context.BeginPresent()) return false;
     glBindFramebuffer(GL_FRAMEBUFFER, 0);
-    glDisable(GL_SCISSOR_TEST); glClearColor(0, 0, 0, 1); glClear(GL_COLOR_BUFFER_BIT);
     const auto rect = FitSceneToSurface(width, height, context.width, context.height);
+    if (static_cast<unsigned int>(rect.width) != context.width ||
+        static_cast<unsigned int>(rect.height) != context.height) {
+        glDisable(GL_SCISSOR_TEST);
+        glClearColor(0, 0, 0, 1);
+        glClear(GL_COLOR_BUFFER_BIT);
+    }
     glViewport(rect.x, context.height - rect.y - rect.height, rect.width, rect.height);
     glUseProgram(presentProgram); glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, scene->image);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-    scene->sampler=1;
+    if (scene->sampler != 1) {
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+        scene->sampler = 1;
+    }
     glUniform1i(presentUniforms[uImage], 0);
     Quad(); Check("Present retained OpenGL scene"); context.Present();
     return true;

@@ -5,12 +5,6 @@
 #include "MetalShaderTypes.h"
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
-#if TARGET_OS_IOS
-#include <CoreFoundation/CFRunLoop.h>
-#include <dispatch/dispatch.h>
-#include <chrono>
-#include <thread>
-#endif
 #include <algorithm>
 #include <array>
 #include <bitset>
@@ -29,44 +23,13 @@ constexpr uint32_t Generated = 0x80000000u;
     throw std::runtime_error(std::string(operation) + ": " +
         (error ? error.localizedDescription.UTF8String : "Metal returned nil"));
 }
-#if TARGET_OS_IOS
-// Keep UIKit responsive while Metal compiles the startup draw pipelines.
-id<MTLRenderPipelineState> CreateIosPipeline(id<MTLDevice> device,
-    MTLRenderPipelineDescriptor* descriptor, NSError* __autoreleasing* error)
-{
-    auto completion = dispatch_semaphore_create(0);
-    __block id<MTLRenderPipelineState> pipeline = nil;
-    __block NSError* pipelineError = nil;
-    MTLRenderPipelineDescriptor* request = [descriptor copy];
-    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
-        [device newRenderPipelineStateWithDescriptor:request
-            completionHandler:^(id<MTLRenderPipelineState> result, NSError* failure) {
-                pipeline = result;
-                pipelineError = failure;
-                dispatch_semaphore_signal(completion);
-            }];
-    });
-
-    using namespace std::chrono;
-    const auto deadline = steady_clock::now() + seconds(20);
-    while (dispatch_semaphore_wait(completion, DISPATCH_TIME_NOW) != 0) {
-        if (steady_clock::now() >= deadline)
-            throw std::runtime_error("Metal render pipeline compilation timed out");
-        const auto run = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.02, true);
-        if (run == kCFRunLoopRunFinished || run == kCFRunLoopRunStopped)
-            std::this_thread::sleep_for(milliseconds(10));
-    }
-    *error = pipelineError;
-    return pipeline;
-}
-#endif
-
 }
 struct MetalTexture {
     id<MTLTexture> resource;
     int width{}, height{};
     uint32_t slot = InvalidSlot, staticSlot = InvalidSlot;
-    bool generated = false, opaque = false, sampled = false, renderable = false;
+    uint64_t sampledBatch = 0;
+    bool generated = false, opaque = false, renderable = false;
 };
 struct MetalRenderer::Impl {
     MetalContext& context;
@@ -77,6 +40,7 @@ struct MetalRenderer::Impl {
     id<MTLArgumentEncoder> argumentEncoder;
     id<MTLRenderPipelineState> pipelines[2][3];
     id<MTLRenderPipelineState> poolPipelines[2][3];
+    id<MTLRenderPipelineState> presentPipeline;
     id<MTLBuffer> poolVertices, poolIndices, quadIndices;
     id<MTLSamplerState> samplers[4];
     id<MTLComputePipelineState> colorKernel, alphaKernel, edgeKernel, fontKernel, causticKernel;
@@ -109,13 +73,13 @@ struct MetalRenderer::Impl {
         id<MTLCommandBuffer> submitted;
         NSMutableArray* resources;
         id<MTLBuffer> vertices;
-        id<MTLBuffer> presentationVertices;
         size_t vertexCount = 0;
         std::vector<id<MTLBuffer>> arguments;
         size_t argumentCount = 0;
     };
     std::array<FrameResources, 2> frames{};
     unsigned int frameIndex = 0;
+    uint64_t currentBatch = 1;
     // Explicit retention also covers resources referenced indirectly via argument buffers.
     NSMutableArray* recordingResources = [NSMutableArray new];
     std::unordered_map<MetalTexture*, std::unique_ptr<MetalTexture>> textures, raw;
@@ -174,13 +138,20 @@ struct MetalRenderer::Impl {
                 attachment.sourceAlphaBlendFactor = MTLBlendFactorOne;
                 attachment.destinationAlphaBlendFactor = blend == unsigned(GpuBlend::Additive) ?
                     MTLBlendFactorOne : MTLBlendFactorOneMinusSourceAlpha;
-                pipelines[generated][blend] = RenderPipeline(desc, &error);
+                pipelines[generated][blend] = [device newRenderPipelineStateWithDescriptor:desc error:&error];
                 if (!pipelines[generated][blend]) MetalError(error, "Create Metal draw pipeline");
                 desc.vertexFunction = Function(@"pvz_pool_vertex");
-                poolPipelines[generated][blend] = RenderPipeline(desc, &error);
+                poolPipelines[generated][blend] =
+                    [device newRenderPipelineStateWithDescriptor:desc error:&error];
                 if (!poolPipelines[generated][blend]) MetalError(error, "Create Metal pool pipeline");
             }
         }
+        MTLRenderPipelineDescriptor* present = [MTLRenderPipelineDescriptor new];
+        present.vertexFunction = Function(@"pvz_present_vertex");
+        present.fragmentFunction = Function(@"pvz_present_fragment");
+        present.colorAttachments[0].pixelFormat = MTLPixelFormatBGRA8Unorm;
+        presentPipeline = [device newRenderPipelineStateWithDescriptor:present error:&error];
+        if (!presentPipeline) MetalError(error, "Create Metal presentation pipeline");
         // The shared vertex ABI still supplies a filter bit. Both values use the same state.
         for (unsigned i = 0; i < 4; i += 2) {
             MTLSamplerDescriptor* desc = [MTLSamplerDescriptor new];
@@ -209,14 +180,6 @@ struct MetalRenderer::Impl {
         }
         for (auto& frame : frames)
             if (frame.submitted) [frame.submitted waitUntilCompleted];
-    }
-    id<MTLRenderPipelineState> RenderPipeline(MTLRenderPipelineDescriptor* descriptor,
-        NSError* __autoreleasing* error) {
-#if TARGET_OS_IOS
-        return CreateIosPipeline(device, descriptor, error);
-#else
-        return [device newRenderPipelineStateWithDescriptor:descriptor error:error];
-#endif
     }
     id<MTLFunction> Function(NSString* name) {
         id<MTLFunction> result = [library newFunctionWithName:name];
@@ -276,14 +239,19 @@ struct MetalRenderer::Impl {
         return result;
     }
     void ReleaseSlots(MetalTexture* image) {
-        for (auto& owner : owners) if (owner == image) owner = nullptr;
+        for (const auto slot : {image->slot, image->staticSlot})
+            if (slot < SlotCount && owners[slot] == image) owners[slot] = nullptr;
+    }
+    bool WasSampled(const MetalTexture* image) const {
+        return image->sampledBatch == currentBatch;
+    }
+    void MarkSampled(MetalTexture* image) {
+        image->sampledBatch = currentBatch;
     }
     void Completed() {
         for (auto& image : retired) ReleaseSlots(image.get());
         retired.clear();
-        for (auto& entry : textures) entry.first->sampled = false;
-        for (auto& entry : raw) entry.first->sampled = false;
-        scene->sampled = false;
+        ++currentBatch;
     }
     void Wait() {
         for (auto& frame : frames) {
@@ -443,7 +411,7 @@ struct MetalRenderer::Impl {
     // Give the stable handle a new writable resource and slot. Old vertex slots
     // continue to address their immutable version until the command fence.
     void Snapshot(MetalTexture* image, bool force = false) {
-        if (!force && !image->sampled) return;
+        if (!force && !WasSampled(image)) return;
         auto next = Image(image->width, image->height, image->resource.pixelFormat,
             image->generated, image->renderable);
         Register(next.get());
@@ -502,7 +470,7 @@ struct MetalRenderer::Impl {
         for (auto* input : inputs) {
             [encoder setTexture:input->resource atIndex:index++];
             Keep(input->resource);
-            input->sampled = true;
+            MarkSampled(input);
         }
         [encoder setTexture:target->resource atIndex:index];
         Keep(target->resource);
@@ -570,7 +538,7 @@ struct MetalRenderer::Impl {
                 (source->opaque ? GpuVertex::kOpaqueInput : 0);
         }
 
-        if (feedback || target->sampled) {
+        if (feedback || WasSampled(target)) {
             Snapshot(target, feedback);
             auto* old = retired.back().get();
             for (auto& binding : drawBindings)
@@ -578,7 +546,7 @@ struct MetalRenderer::Impl {
         }
         TargetPass(target, drawBindings);
         for (const auto& binding : drawBindings)
-            binding.image->sampled = true;
+            MarkSampled(binding.image);
 
         const DrawState state{blend, {NSUInteger(left), NSUInteger(top),
             NSUInteger(right - left), NSUInteger(bottom - top)}, coverage, quads};
@@ -600,47 +568,25 @@ struct MetalRenderer::Impl {
         if (!drawable) return false;
         Begin();
         id<MTLTexture> source = scene->resource;
-        const auto rectangle = Rectangle(int(drawable.texture.width), int(drawable.texture.height));
-        // Use the game shader for SDR presentation so generated/straight-alpha
-        // semantics remain identical to normal scene sampling.
-        const float x = float(rectangle.x), y = float(rectangle.y);
-        const float r = x + rectangle.width, b = y + rectangle.height;
-        const std::array<GpuVertex, 6> vertices{{
-            {x,y,1,1,1,1,0,0,0,1}, {r,y,1,1,1,1,1,0,0,1}, {x,b,1,1,1,1,0,1,0,1},
-            {x,b,1,1,1,1,0,1,0,1}, {r,y,1,1,1,1,1,0,0,1}, {r,b,1,1,1,1,1,1,0,1}
-        }};
-        auto& frame = frames[frameIndex];
-        id<MTLBuffer> args = DrawArguments();
-        if (!frame.presentationVertices) {
-            frame.presentationVertices = [device newBufferWithLength:sizeof(vertices)
-                options:MTLResourceStorageModeShared];
-            if (!frame.presentationVertices) MetalError(nil, "Allocate Metal presentation vertices");
-        }
-        id<MTLBuffer> stream = frame.presentationVertices;
-        std::memcpy(stream.contents, vertices.data(), sizeof(vertices));
-        std::memset(args.contents, 0, args.length);
-        [argumentEncoder setArgumentBuffer:args offset:0];
-        [argumentEncoder setTexture:source atIndex:0];
+        const int width = int(drawable.texture.width), height = int(drawable.texture.height);
+        const auto rectangle = Rectangle(width, height);
+        const bool fullSurface = rectangle.width == width && rectangle.height == height;
         MTLRenderPassDescriptor* desc = [MTLRenderPassDescriptor renderPassDescriptor];
         desc.colorAttachments[0].texture = drawable.texture;
-        desc.colorAttachments[0].loadAction = MTLLoadActionClear;
+        desc.colorAttachments[0].loadAction = fullSurface ? MTLLoadActionDontCare : MTLLoadActionClear;
         desc.colorAttachments[0].storeAction = MTLStoreActionStore;
         desc.colorAttachments[0].clearColor = MTLClearColorMake(0, 0, 0, 1);
         id<MTLRenderCommandEncoder> encoder = [commands renderCommandEncoderWithDescriptor:desc];
         if (!encoder) MetalError(nil, "Create Metal presentation encoder");
-        const MetalSceneConstants constants{float(drawable.texture.width), float(drawable.texture.height), 0, 0};
-        [encoder setRenderPipelineState:pipelines[0][unsigned(GpuBlend::Opaque)]];
-        [encoder setVertexBuffer:stream offset:0 atIndex:0];
-        [encoder setVertexBytes:&constants length:sizeof(constants) atIndex:1];
-        [encoder setFragmentBytes:&constants length:sizeof(constants) atIndex:1];
-        [encoder setFragmentBuffer:args offset:0 atIndex:2];
-        for (unsigned i = 0; i < 4; ++i) [encoder setFragmentSamplerState:samplers[i] atIndex:i];
-        [encoder useResource:source usage:MTLResourceUsageRead stages:MTLRenderStageFragment];
-        const MTLViewport viewport{0, 0, double(drawable.texture.width), double(drawable.texture.height), 0, 1};
+        [encoder setRenderPipelineState:presentPipeline];
+        [encoder setFragmentTexture:source atIndex:0];
+        [encoder setFragmentSamplerState:samplers[1] atIndex:0];
+        const MTLViewport viewport{double(rectangle.x), double(rectangle.y),
+            double(rectangle.width), double(rectangle.height), 0, 1};
         [encoder setViewport:viewport];
-        [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:6];
+        [encoder drawPrimitives:MTLPrimitiveTypeTriangle vertexStart:0 vertexCount:3];
         [encoder endEncoding];
-        Keep(args); Keep(stream); Keep(source); Keep(drawable);
+        Keep(source); Keep(drawable);
         [commands presentDrawable:drawable];
         return true;
     }
@@ -756,7 +702,7 @@ MetalTexture* MetalRenderer::ReplaceTexture(MetalTexture* previous, int w, int h
     if (!bytes || pitch < int64_t(w) * 4 || previous == s.white || previous->generated)
         throw std::invalid_argument("Invalid Metal texture replacement");
     if (previous->width == w && previous->height == h &&
-        previous->resource.pixelFormat == MTLPixelFormatBGRA8Unorm && !previous->sampled) {
+        previous->resource.pixelFormat == MTLPixelFormatBGRA8Unorm && !s.WasSampled(previous)) {
         previous->opaque = opaque;
         s.Upload(previous, bytes, pitch, 4);
         return previous;
@@ -785,7 +731,7 @@ void MetalRenderer::BindStaticTexture(MetalTexture* texture, uint32_t symbol) {
     const auto slot = s.staticBase + symbol;
     if (texture->staticSlot != InvalidSlot && texture->staticSlot != slot)
         throw std::invalid_argument("Metal texture already has a different static symbol");
-    if (texture->sampled) throw std::logic_error("Cannot migrate a recorded Metal texture");
+    if (s.WasSampled(texture)) throw std::logic_error("Cannot migrate a recorded Metal texture");
     if (s.owners[slot] && s.owners[slot] != texture)
         throw std::logic_error("Metal static symbol already occupied");
     s.ReleaseSlots(texture);
@@ -853,7 +799,7 @@ MetalTexture* MetalRenderer::CopyTextureRegion(MetalTexture* source, int x, int 
         toTexture:target->resource destinationSlice:0 destinationLevel:0 destinationOrigin:MTLOriginMake(0, 0, 0)];
     [encoder endEncoding];
     s.Keep(source->resource); s.Keep(target->resource);
-    source->sampled = true;
+    s.MarkSampled(source);
     return target;
 }
 MetalTexture* MetalRenderer::ProcessImage(MetalTexture* source, const GpuImageProcessing& p) {
@@ -1043,7 +989,7 @@ void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
     if (source == target) {
         s.Snapshot(target, true);
         source = s.retired.back().get();
-    } else if (target->sampled) s.Snapshot(target);
+    } else if (s.WasSampled(target)) s.Snapshot(target);
     const std::array bindings{Impl::TextureBinding{source->slot, source}};
     id<MTLRenderCommandEncoder> encoder = s.TargetPass(target, bindings);
     s.FlushPendingDraw();
@@ -1066,7 +1012,7 @@ void MetalRenderer::SubmitPool(MetalTexture* texture, const GpuPoolParams& p) {
     [encoder setScissorRect:scissor];
     [encoder drawIndexedPrimitives:MTLPrimitiveTypeTriangle indexCount:GpuPoolIndices.size()
         indexType:MTLIndexTypeUInt16 indexBuffer:s.poolIndices indexBufferOffset:0];
-    source->sampled = true;
+    s.MarkSampled(source);
 }
 void MetalRenderer::EndSceneAndPresent() {
     auto& s = *impl_;

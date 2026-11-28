@@ -5,6 +5,12 @@
 #include "MetalShaderTypes.h"
 #import <Metal/Metal.h>
 #import <QuartzCore/CAMetalLayer.h>
+#if TARGET_OS_IOS
+#include <CoreFoundation/CFRunLoop.h>
+#include <dispatch/dispatch.h>
+#include <chrono>
+#include <thread>
+#endif
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -22,6 +28,38 @@ constexpr uint32_t Generated = 0x80000000u;
     throw std::runtime_error(std::string(operation) + ": " +
         (error ? error.localizedDescription.UTF8String : "Metal returned nil"));
 }
+#if TARGET_OS_IOS
+// Keep UIKit responsive while Metal compiles the startup draw pipelines.
+id<MTLRenderPipelineState> CreateIosPipeline(id<MTLDevice> device,
+    MTLRenderPipelineDescriptor* descriptor, NSError* __autoreleasing* error)
+{
+    auto completion = dispatch_semaphore_create(0);
+    __block id<MTLRenderPipelineState> pipeline = nil;
+    __block NSError* pipelineError = nil;
+    MTLRenderPipelineDescriptor* request = [descriptor copy];
+    dispatch_async(dispatch_get_global_queue(QOS_CLASS_USER_INITIATED, 0), ^{
+        [device newRenderPipelineStateWithDescriptor:request
+            completionHandler:^(id<MTLRenderPipelineState> result, NSError* failure) {
+                pipeline = result;
+                pipelineError = failure;
+                dispatch_semaphore_signal(completion);
+            }];
+    });
+
+    using namespace std::chrono;
+    const auto deadline = steady_clock::now() + seconds(20);
+    while (dispatch_semaphore_wait(completion, DISPATCH_TIME_NOW) != 0) {
+        if (steady_clock::now() >= deadline)
+            throw std::runtime_error("Metal render pipeline compilation timed out");
+        const auto run = CFRunLoopRunInMode(kCFRunLoopDefaultMode, 0.02, true);
+        if (run == kCFRunLoopRunFinished || run == kCFRunLoopRunStopped)
+            std::this_thread::sleep_for(milliseconds(10));
+    }
+    *error = pipelineError;
+    return pipeline;
+}
+#endif
+
 }
 struct MetalTexture {
     id<MTLTexture> resource;
@@ -111,11 +149,10 @@ struct MetalRenderer::Impl {
                 attachment.sourceAlphaBlendFactor = MTLBlendFactorOne;
                 attachment.destinationAlphaBlendFactor = blend == unsigned(GpuBlend::Additive) ?
                     MTLBlendFactorOne : MTLBlendFactorOneMinusSourceAlpha;
-                pipelines[generated][blend] = [device newRenderPipelineStateWithDescriptor:desc error:&error];
+                pipelines[generated][blend] = RenderPipeline(desc, &error);
                 if (!pipelines[generated][blend]) MetalError(error, "Create Metal draw pipeline");
                 desc.vertexFunction = Function(@"pvz_pool_vertex");
-                poolPipelines[generated][blend] =
-                    [device newRenderPipelineStateWithDescriptor:desc error:&error];
+                poolPipelines[generated][blend] = RenderPipeline(desc, &error);
                 if (!poolPipelines[generated][blend]) MetalError(error, "Create Metal pool pipeline");
             }
         }
@@ -146,6 +183,14 @@ struct MetalRenderer::Impl {
         }
         for (auto& frame : frames)
             if (frame.submitted) [frame.submitted waitUntilCompleted];
+    }
+    id<MTLRenderPipelineState> RenderPipeline(MTLRenderPipelineDescriptor* descriptor,
+        NSError* __autoreleasing* error) {
+#if TARGET_OS_IOS
+        return CreateIosPipeline(device, descriptor, error);
+#else
+        return [device newRenderPipelineStateWithDescriptor:descriptor error:error];
+#endif
     }
     id<MTLFunction> Function(NSString* name) {
         id<MTLFunction> result = [library newFunctionWithName:name];

@@ -170,6 +170,7 @@ static float4 pvz_filter_sample(float4 source, unsigned int slot, bool straight)
     return source;
 }
 
+#if !PVZ_METAL_IOS
 static float4 pvz_filter_texel(texture2d<float> image, int2 pixel, int2 extent,
     unsigned int slot, unsigned int samplerIndex, bool straight)
 {
@@ -222,6 +223,8 @@ static float4 pvz_filter_source(texture2d<float> image, unsigned int slot,
     return mix(top, bottom, weight.y);
 }
 
+#endif
+
 fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
     constant MetalSceneConstants& scene [[buffer(1)]],
     constant MetalGameImages& resources [[buffer(2)]],
@@ -230,9 +233,6 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
     const unsigned int slot = input.slot;
     const unsigned int samplerIndex = input.samplerIndex;
     const unsigned int index = slot & 0xfffu;
-    const unsigned int kind = (slot >> 28u) & 3u;
-    const bool sandStraight = (slot & 0x08000000u) != 0u &&
-        (slot & 0x80000000u) == 0u;
     float4 source = resources.images[index].sample(samplers[samplerIndex], input.uv);
     if ((slot & 0x04000000u) != 0u)
         source.a = 1.0f;
@@ -245,6 +245,17 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
         return scene.premultipliedOutput != 0u ?
             float4(source.rgb * source.a, source.a) : source;
     }
+#if PVZ_METAL_IOS
+    // Sample through the hardware linear sampler before applying color and alpha.
+    const bool premultiply = scene.premultipliedOutput != 0u;
+    source = pvz_filter_sample(source, slot, !premultiply);
+    if (premultiply)
+        return float4(source.rgb * input.color.rgb * input.color.a, source.a * input.color.a);
+    return source * input.color;
+#else
+    const unsigned int kind = (slot >> 28u) & 3u;
+    const bool sandStraight = (slot & 0x08000000u) != 0u &&
+        (slot & 0x80000000u) == 0u;
     const bool generated = (slot & 0x80000000u) != 0u;
     if (scene.premultipliedOutput != 0u)
     {
@@ -272,4 +283,5 @@ fragment float4 pvz_game_fragment(MetalGameVaryings input [[stage_in]],
     if (generated || filteredPremult)
         source.rgb = source.a > 0.0f ? source.rgb / source.a : float3(0.0f);
     return source * input.color;
+#endif
 }

@@ -109,12 +109,11 @@ void SexyApp::ReadFromRegistry()
 {
 	SexyAppBase::ReadFromRegistry();
 
-	// ScreenMode belongs to the original executable, where fullscreen was the
-	// normal startup mode.  This 64-bit port must always create its first window
-	// without changing the desktop display mode.  A later, explicit in-game
-	// fullscreen request is still handled by SwitchScreenMode.
+#ifndef _WIN32
+	// Preserve the startup mode on the other native window backends.
 	mIsWindowed = true;
 	mForceFullscreen = false;
+#endif
 
 	// No registry / popcinfo.dat: the port is fully self-contained.
 	mTimesPlayed = 0;

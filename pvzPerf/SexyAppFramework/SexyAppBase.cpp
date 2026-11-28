@@ -1754,8 +1754,9 @@ void SexyAppBase::ReadFromRegistry()
         mSfxVolume = std::clamp(aDoc.GetInt("sfxVolume", 0), 0LL, 100LL) / 100.0 * 0.65;
 	if (aDoc.Has("muted"))
 		mMuteCount = (int)aDoc.GetInt("muted", 0);
-	if (aDoc.Has("screenMode"))
-		mIsWindowed = LowerScaleText(aDoc.GetString("screenMode", "")) == "windowed";
+	const std::string screenMode = LowerScaleText(aDoc.GetString("screenMode", ""));
+	if (screenMode == "windowed" || screenMode == "fullscreen")
+		mIsWindowed = screenMode == "windowed";
 #ifdef _WIN32
     mWindowClientWidth=int(std::clamp(aDoc.GetInt("windowWidth",0),0LL,static_cast<long long>(INT_MAX / 2)));
     mWindowClientHeight=int(std::clamp(aDoc.GetInt("windowHeight",0),0LL,static_cast<long long>(INT_MAX / 2)));
